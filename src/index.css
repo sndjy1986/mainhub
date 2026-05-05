@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-blue: #3b82f6;
+  --color-brand-indigo: #6366f1;
+  --color-brand-emerald: #10b981;
+  --color-brand-panel: #1e293b;
+  --color-brand-border: #334155;
+  --color-brand-bg: #0f172a;
+  --color-brand-field: #1e293b;
+  --color-brand-accent: #60a5fa;
+
+  --color-bg-main: #0a0c10;
+  --color-bg-surface: #1a1d23;
+
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+
+  --color-border-subtle: #1e293b;
+}
+
+@layer components {
+  .glass-effect {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+}

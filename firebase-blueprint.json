@@ -1,0 +1,61 @@
+{
+  "entities": {
+    "Unit": {
+      "title": "Dispatch Unit",
+      "description": "Represents an ambulance or rescue unit",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "status": { "type": "string" },
+        "statusStart": { "type": "string", "format": "date-time" },
+        "pos": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lon": { "type": "number" }
+          }
+        },
+        "stagedAt": { "type": "string" },
+        "isOos": { "type": "boolean" },
+        "isInactive": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "CalendarEvent": {
+      "title": "Calendar Event",
+      "description": "Operational event or advisory",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["event", "info", "alert"] },
+        "createdBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "type"]
+    },
+    "GlobalSettings": {
+      "title": "Global System Settings",
+      "description": "UI and system-wide configurations",
+      "type": "object",
+      "properties": {
+        "emergencyBackgroundOpacity": { "type": "number" },
+        "ambienceMode": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/units/{unitId}": {
+      "schema": "Unit",
+      "description": "Real-time unit tracking"
+    },
+    "/calendar_events/{eventId}": {
+      "schema": "CalendarEvent",
+      "description": "Ops calendar events"
+    },
+    "/settings/global": {
+      "schema": "GlobalSettings",
+      "description": "System settings"
+    }
+  }
+}
