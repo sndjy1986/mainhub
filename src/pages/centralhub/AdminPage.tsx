@@ -133,6 +133,37 @@ export function AdminPage() {
     if (user) await updateGlobalSettings({ defaultCameraIds: newIds });
   };
 
+  const seedPersonnel = async () => {
+    if (!user) return;
+    if (personnel.length > 0 && !window.confirm("Personnel records already exist. This will append new records. Proceed?")) return;
+
+    const seedData: PersonnelMember[] = [
+      { id: crypto.randomUUID(), name: "Crystal Culbertson", shift: 'A' },
+      { id: crypto.randomUUID(), name: "Courtney Fletcher", shift: 'A' },
+      { id: crypto.randomUUID(), name: "Brian Blair", shift: 'A' },
+      { id: crypto.randomUUID(), name: "Corrine Skelly", shift: 'B' },
+      { id: crypto.randomUUID(), name: "Dayonna", shift: 'B' },
+      { id: crypto.randomUUID(), name: "Joey Sanders", shift: 'C' },
+      { id: crypto.randomUUID(), name: "Michael Senn", shift: 'C' },
+      { id: crypto.randomUUID(), name: "Rea Roberson", shift: 'C' },
+      { id: crypto.randomUUID(), name: "Erin Brandenburg", shift: 'D' },
+      { id: crypto.randomUUID(), name: "Asha Williams", shift: 'D' },
+      { id: crypto.randomUUID(), name: "Darren Chestein", shift: 'D' },
+      { id: crypto.randomUUID(), name: "Donna Wiles", shift: 'Other' }
+    ];
+
+    const merged = [...personnel];
+    seedData.forEach(s => {
+      if (!merged.find(p => p.name === s.name)) {
+        merged.push(s);
+      }
+    });
+
+    setPersonnel(merged);
+    await updateGlobalSettings({ personnel: merged });
+    setShowToast("Shift Personnel Synchronized");
+  };
+
   const loadHistory = useCallback(async () => {
     if (!user) return;
     setLoadingReports(true);
@@ -207,9 +238,18 @@ export function AdminPage() {
                 </h3>
                 <p className="text-xs text-slate-500 uppercase tracking-widest font-black mt-2">Manage roster, shifts, and contact information</p>
               </div>
-              <button 
-                disabled={!user}
-                onClick={() => {
+              <div className="flex items-center gap-3">
+                <button 
+                  disabled={!user}
+                  onClick={seedPersonnel}
+                  className="px-6 py-3 bg-white/5 border border-white/10 text-slate-400 rounded-xl font-bold uppercase tracking-widest text-xs hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
+                  title="Import from Legacy Constants"
+                >
+                  Sync Shift Data
+                </button>
+                <button 
+                  disabled={!user}
+                  onClick={() => {
                   setEditingPerson(null);
                   setPersonForm({ name: '', shift: 'A', phone: '' });
                   setShowPersonnelModal(true);
@@ -220,6 +260,7 @@ export function AdminPage() {
                 Add Personnel
               </button>
             </div>
+          </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
               {['A', 'B', 'C', 'D', 'Other'].map(shift => (
