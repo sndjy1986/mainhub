@@ -165,16 +165,24 @@ export default function Directory() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {section.contacts.map((contact, cIdx) => (
                   <div key={cIdx} className="p-6 transition-all bg-white/5 border border-white/5 rounded-3xl hover:bg-white/10 hover:border-white/10 group flex items-center justify-between">
-                    <div>
+                    <div className="flex-1">
                       <div className="text-sm font-bold text-white tracking-tight">{contact.name}</div>
                       <div className="text-[10px] uppercase font-black tracking-widest text-slate-500 mt-1">{contact.title}</div>
+                      <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 rounded-xl border border-indigo-500/20">
+                        <Phone className="w-3 h-3 text-indigo-400" />
+                        <span className="text-xs font-mono font-bold text-indigo-300">{contact.phone}</span>
+                      </div>
                     </div>
-                    <a 
-                      href={`tel:${contact.phone}`}
-                      className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-lg active:scale-95"
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(contact.phone);
+                        setShowToast(`Copied: ${contact.phone}`);
+                      }}
+                      className="p-3 bg-white/5 text-slate-400 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-lg active:scale-95"
+                      title="Copy Number"
                     >
-                      <Phone className="w-5 h-5" />
-                    </a>
+                      <Clipboard className="w-5 h-5" />
+                    </button>
                   </div>
                 ))}
               </div>
