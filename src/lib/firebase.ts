@@ -86,6 +86,8 @@ testConnection();
 export type GlobalSettings = {
   backgroundStyle: 'glow' | 'emergency';
   lightIntensity: number;
+  employees?: string[];
+  supervisors?: Record<string, string>;
   updatedAt?: any;
   updatedBy?: string | null;
 };
