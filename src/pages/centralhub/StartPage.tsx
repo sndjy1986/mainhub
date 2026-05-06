@@ -96,49 +96,6 @@ export function StartPage() {
           <WeatherDashboard />
         </section>
       </div>
-
-      {/* Shift Teams Section */}
-      <div className="space-y-6">
-        <h2 className="text-[10px] uppercase font-bold text-slate-500 tracking-widest flex items-center gap-2">
-           <User className="w-3 h-3 text-indigo-400" />
-           Active Shift Personnel
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {Object.entries(SHIFT_TEAMS).map(([name, team]) => (
-            <div key={name} className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-colors">
-              <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-4 flex items-center justify-between">
-                {name} Shift
-                <span className="text-[9px] text-slate-500 font-bold">ACTIVE</span>
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-                    <Shield className="w-3 h-3 text-emerald-400" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-white leading-tight">{team.lead}</p>
-                    <p className="text-[8px] text-emerald-500 font-bold uppercase tracking-tighter">Team Lead</p>
-                  </div>
-                </div>
-                {team.members.map(member => (
-                  <div key={member} className="flex items-center gap-3 pl-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
-                    <p className="text-[10px] font-medium text-slate-300">{member}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-8 relative z-0">
-        <h2 className="text-[10px] uppercase font-bold text-slate-500 tracking-widest flex items-center gap-2">
-           <CalendarIcon className="w-3 h-3 text-indigo-400" />
-           Operations Calendar
-        </h2>
-        <OpsCalendar />
-      </div>
     </>
   );
 }
