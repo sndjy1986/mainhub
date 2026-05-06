@@ -323,16 +323,7 @@ export function WeatherDashboard() {
               </p>
            </div>
 
-           <div className="mt-8 flex gap-4">
-              <div className="p-3 bg-white/5 rounded-2xl border border-white/5 flex items-center gap-3">
-                 <Wind className="w-4 h-4 text-emerald-400" />
-                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Normal Yield</span>
-              </div>
-              <div className="p-3 bg-white/5 rounded-2xl border border-white/5 flex items-center gap-3">
-                 <Navigation className="w-4 h-4 text-indigo-400" />
-                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Winds: 5 MPH</span>
-              </div>
-           </div>
+           {/* Removed cut-off status boxes */}
         </div>
 
         {/* Right Side: Alerts & Forecast */}
