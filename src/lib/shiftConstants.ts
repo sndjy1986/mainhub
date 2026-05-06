@@ -8,11 +8,28 @@ export interface Employee {
   email?: string;
 }
 
+export const SHIFT_TEAMS: Record<string, { lead: string; members: string[] }> = {
+  "Alpha": {
+    lead: "Crystal Culbertson",
+    members: ["Courtney Fletcher", "Brian Blair"]
+  },
+  "Bravo": {
+    lead: "Corrine Skelly",
+    members: ["Dayonna"]
+  },
+  "Charlie": {
+    lead: "Joey Sanders",
+    members: ["Michael Senn", "Rea Roberson"]
+  },
+  "Delta": {
+    lead: "Erin Brandenburg",
+    members: ["Asha Williams", "Darren Chestein"]
+  }
+};
+
 export const TEAM_MEMBERS: string[] = [
-  "Joey Sanders", "Michael Senn", "Rea Roberson",
-  "Courtney Fletcher", "Crystal Culbertson", "Brian Blair",
-  "Erin Brandenburg", "Corrine Skelly", "Asha Williams",
-  "Dyonna Williams", "Darren Chastein", "Donna Wiles"
+  ...Object.values(SHIFT_TEAMS).flatMap(team => [team.lead, ...team.members]),
+  "Donna Wiles"
 ];
 
 export const ALSSUP_OPTIONS: string[] = [

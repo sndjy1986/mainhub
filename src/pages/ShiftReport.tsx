@@ -91,6 +91,7 @@ const EmergencyBackground = ({ intensity = 0.5, type = 'glow' }: { intensity?: n
 };
 import { 
   TEAM_MEMBERS, 
+  SHIFT_TEAMS,
   ALSSUP_OPTIONS, 
   MEDSUP_OPTIONS, 
   MEDSUP_MAP, 
@@ -212,19 +213,15 @@ export default function ShiftReport() {
   }, [user]);
 
   // Dynamic Data State
-  const [employees, setEmployees] = useState<string[]>(() => {
-    const saved = localStorage.getItem("shiftReport_employees");
-    return saved ? JSON.parse(saved) : TEAM_MEMBERS;
-  });
+  const [employees, setEmployees] = useState<string[]>(TEAM_MEMBERS);
   
   const [supervisors, setSupervisors] = useState<Record<string, string>>(() => {
     const saved = localStorage.getItem("shiftReport_supervisors");
     return saved ? JSON.parse(saved) : MEDSUP_MAP;
   });
 
-  // Persist settings
   useEffect(() => {
-    localStorage.setItem("shiftReport_employees", JSON.stringify(employees));
+    // We no longer persist employees to localStorage as they are managed via shiftConstants.ts
   }, [employees]);
 
   useEffect(() => {
@@ -566,7 +563,17 @@ export default function ShiftReport() {
                   <Field label="Name">
                     <select name="name" value={data.name} onChange={handleChange}>
                       <option value="">-- Select --</option>
-                      {employees.map(m => <option key={m} value={m}>{m}</option>)}
+                      {Object.entries(SHIFT_TEAMS).map(([shiftName, team]) => (
+                        <optgroup key={shiftName} label={`${shiftName} Shift`}>
+                          <option value={team.lead}>{team.lead} (Lead)</option>
+                          {team.members.map(m => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                        </optgroup>
+                      ))}
+                      <optgroup label="Other">
+                        <option value="Donna Wiles">Donna Wiles</option>
+                      </optgroup>
                     </select>
                   </Field>
                   <Field label="Date">
@@ -588,19 +595,40 @@ export default function ShiftReport() {
                   <Field label="Ch.1">
                     <select name="channel1" value={data.channel1} onChange={handleChange}>
                       <option value="">-- Select --</option>
-                      {employees.map(m => <option key={m} value={m}>{m}</option>)}
+                      {Object.entries(SHIFT_TEAMS).map(([shiftName, team]) => (
+                        <optgroup key={shiftName} label={`${shiftName} Shift`}>
+                          <option value={team.lead}>{team.lead}</option>
+                          {team.members.map(m => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                        </optgroup>
+                      ))}
                     </select>
                   </Field>
                   <Field label="Ch.2">
                     <select name="channel2" value={data.channel2} onChange={handleChange}>
                       <option value="">-- Select --</option>
-                      {employees.map(m => <option key={m} value={m}>{m}</option>)}
+                      {Object.entries(SHIFT_TEAMS).map(([shiftName, team]) => (
+                        <optgroup key={shiftName} label={`${shiftName} Shift`}>
+                          <option value={team.lead}>{team.lead}</option>
+                          {team.members.map(m => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                        </optgroup>
+                      ))}
                     </select>
                   </Field>
                   <Field label="Third Person">
                     <select name="thirdPerson" value={data.thirdPerson} onChange={handleChange}>
                       <option value="">-- Select --</option>
-                      {employees.map(m => <option key={m} value={m}>{m}</option>)}
+                      {Object.entries(SHIFT_TEAMS).map(([shiftName, team]) => (
+                        <optgroup key={shiftName} label={`${shiftName} Shift`}>
+                          <option value={team.lead}>{team.lead}</option>
+                          {team.members.map(m => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                        </optgroup>
+                      ))}
                     </select>
                   </Field>
                 </div>

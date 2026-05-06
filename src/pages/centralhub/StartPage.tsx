@@ -1,11 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Shield, Activity, AlertCircle, Plus, Trash2, Info, MessageSquare, PlusCircle, X } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Calendar as CalendarIcon, Clock, Shield, Activity, AlertCircle, Plus, Trash2, Info, MessageSquare, PlusCircle, X, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { WeatherDashboard } from '../../components/centralhub/WeatherDashboard';
 import { useTerminal } from '../../context/TerminalContext';
 import { onSnapshot, collection, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { db, auth, handleFirestoreError } from '../../lib/firebase';
 import { useAuthRole } from '../../hooks/useAuthRole';
 import { motion, AnimatePresence } from 'motion/react';
+import { SHIFT_TEAMS } from '../../lib/shiftConstants';
+import { 
+  format, 
+  startOfMonth, 
+  endOfMonth, 
+  startOfWeek, 
+  endOfWeek, 
+  eachDayOfInterval, 
+  isSameMonth, 
+  isSameDay, 
+  addMonths, 
+  subMonths,
+  parseISO
+} from 'date-fns';
 
 export function StartPage() {
   const [shift, setShift] = useState(() => localStorage.getItem('selectedShift') || 'A');
@@ -55,7 +69,7 @@ export function StartPage() {
           <div className="space-y-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-                <Calendar className="w-6 h-6 text-indigo-400" />
+                <CalendarIcon className="w-6 h-6 text-indigo-400" />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-white">Operations Date</h2>
@@ -77,18 +91,53 @@ export function StartPage() {
           </div>
         </section>
 
-        {/* Operations Calendar Section */}
-        <section className="lg:col-span-8 backdrop-blur-md bg-white/5 border border-white/10 rounded-3xl p-8">
-          <OpsCalendar />
+        {/* Environmental Monitoring in old Calendar slot */}
+        <section className="lg:col-span-8">
+          <WeatherDashboard />
         </section>
+      </div>
+
+      {/* Shift Teams Section */}
+      <div className="space-y-6">
+        <h2 className="text-[10px] uppercase font-bold text-slate-500 tracking-widest flex items-center gap-2">
+           <User className="w-3 h-3 text-indigo-400" />
+           Active Shift Personnel
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Object.entries(SHIFT_TEAMS).map(([name, team]) => (
+            <div key={name} className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-colors">
+              <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-4 flex items-center justify-between">
+                {name} Shift
+                <span className="text-[9px] text-slate-500 font-bold">ACTIVE</span>
+              </h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+                    <Shield className="w-3 h-3 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-white leading-tight">{team.lead}</p>
+                    <p className="text-[8px] text-emerald-500 font-bold uppercase tracking-tighter">Team Lead</p>
+                  </div>
+                </div>
+                {team.members.map(member => (
+                  <div key={member} className="flex items-center gap-3 pl-1">
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
+                    <p className="text-[10px] font-medium text-slate-300">{member}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-8 relative z-0">
         <h2 className="text-[10px] uppercase font-bold text-slate-500 tracking-widest flex items-center gap-2">
-           <Activity className="w-3 h-3 text-indigo-400" />
-           Regional Environmental Monitoring
+           <CalendarIcon className="w-3 h-3 text-indigo-400" />
+           Operations Calendar
         </h2>
-        <WeatherDashboard />
+        <OpsCalendar />
       </div>
     </>
   );
@@ -98,6 +147,8 @@ function OpsCalendar() {
   const { isAdmin } = useAuthRole();
   const [events, setEvents] = useState<any[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [newEvent, setNewEvent] = useState({ title: '', description: '', type: 'event', eventDate: '', eventTime: '' });
 
   useEffect(() => {
@@ -109,13 +160,6 @@ function OpsCalendar() {
           unsub = onSnapshot(q, (snapshot) => {
             const items: any[] = [];
             snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
-            // Firebase orderBy might fail if index isn't created, so we keep the client sort fallback if needed
-            // But usually we want chronologically closest first
-            items.sort((a, b) => {
-               const dateA = new Date(`${a.eventDate} ${a.eventTime}`).getTime();
-               const dateB = new Date(`${b.eventDate} ${b.eventTime}`).getTime();
-               return dateA - dateB;
-            });
             setEvents(items);
           }, (err) => handleFirestoreError(err, 'list' as any, 'calendar_events'));
         }
@@ -159,74 +203,163 @@ function OpsCalendar() {
     }
   };
 
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(monthStart);
+  const startDate = startOfWeek(monthStart);
+  const endDate = endOfWeek(monthEnd);
+
+  const calendarDays = eachDayOfInterval({
+    start: startDate,
+    end: endDate,
+  });
+
+  const getEventsForDay = (day: Date) => {
+    const dayStr = format(day, 'yyyy-MM-dd');
+    return events.filter(e => e.eventDate === dayStr);
+  };
+
+  const selectedDayEvents = selectedDate ? getEventsForDay(selectedDate) : [];
+
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
-            <Calendar className="w-4 h-4 text-indigo-400" />
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* Monthly View */}
+      <div className="lg:col-span-8 bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+             <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+                <CalendarIcon className="w-5 h-5 text-indigo-400" />
+             </div>
+             <div>
+                <h3 className="text-xl font-bold text-white uppercase tracking-tight">{format(currentMonth, 'MMMM yyyy')}</h3>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Global Ops Schedule</p>
+             </div>
           </div>
-          <h3 className="text-lg font-bold text-white tracking-tight uppercase">Ops Calendar</h3>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+              className="p-2 hover:bg-white/5 rounded-full text-slate-400 transition-colors"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button 
+              onClick={() => setCurrentMonth(new Date())}
+              className="px-3 py-1 text-[9px] font-black uppercase tracking-widest text-indigo-400 border border-indigo-400/30 rounded-lg hover:bg-indigo-400/10"
+            >
+              Today
+            </button>
+            <button 
+              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+              className="p-2 hover:bg-white/5 rounded-full text-slate-400 transition-colors"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
         </div>
-        {isAdmin && (
-          <button 
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/20"
-          >
-            <Plus className="w-3.5 h-3.5" /> Add Event
-          </button>
-        )}
+
+        <div className="grid grid-cols-7 gap-2">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <div key={day} className="text-center text-[9px] font-black text-slate-500 uppercase py-2 tracking-widest">{day}</div>
+          ))}
+          {calendarDays.map((day, i) => {
+            const isToday = isSameDay(day, new Date());
+            const isCurrentMonth = isSameMonth(day, monthStart);
+            const isSelected = selectedDate && isSameDay(day, selectedDate);
+            const dayEvents = getEventsForDay(day);
+
+            return (
+              <button
+                key={i}
+                onClick={() => setSelectedDate(day)}
+                className={`
+                  relative aspect-square md:aspect-video rounded-xl border p-2 flex flex-col items-start gap-1 transition-all
+                  ${!isCurrentMonth ? 'opacity-20 grayscale' : 'opacity-100'}
+                  ${isSelected ? 'bg-indigo-500/20 border-indigo-500/50' : 'bg-black/20 border-white/5 hover:border-white/10 hover:bg-black/40'}
+                  ${isToday ? 'ring-1 ring-emerald-500/50' : ''}
+                `}
+              >
+                <span className={`text-xs font-bold ${isToday ? 'text-emerald-400' : isSelected ? 'text-indigo-400' : 'text-slate-400'}`}>
+                   {format(day, 'd')}
+                </span>
+                
+                <div className="flex flex-wrap gap-1 mt-auto">
+                   {dayEvents.slice(0, 3).map((e, idx) => (
+                     <div 
+                       key={idx} 
+                       className={`w-1.5 h-1.5 rounded-full ${
+                         e.type === 'alert' ? 'bg-red-500' : 
+                         e.type === 'info' ? 'bg-indigo-400' : 'bg-emerald-500'
+                       }`} 
+                     />
+                   ))}
+                   {dayEvents.length > 3 && (
+                     <span className="text-[8px] text-slate-500 font-bold">+{dayEvents.length - 3}</span>
+                   )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar pr-2 max-h-[400px]">
-        {events.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-slate-500 py-12">
-            <Info className="w-12 h-12 opacity-10 mb-4" />
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold italic">No scheduled operations available</p>
+      {/* Daily Detail View */}
+      <div className="lg:col-span-4 flex flex-col gap-6">
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-md flex-1 flex flex-col">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h4 className="text-sm font-black text-white uppercase tracking-widest">
+                {selectedDate ? format(selectedDate, 'MMM d, yyyy') : 'Select a date'}
+              </h4>
+              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Daily Operations</p>
+            </div>
+            {isAdmin && selectedDate && (
+              <button 
+                onClick={() => {
+                  setNewEvent({ ...newEvent, eventDate: format(selectedDate, 'yyyy-MM-dd') });
+                  setShowAddModal(true);
+                }}
+                className="w-8 h-8 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white flex items-center justify-center transition-colors shadow-lg shadow-indigo-500/20"
+              >
+                <Plus size={16} />
+              </button>
+            )}
           </div>
-        ) : (
-          events.map(event => (
-            <div key={event.id} className="group p-5 bg-black/20 border border-white/5 rounded-2xl transition-all hover:bg-black/30 hover:border-white/10">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${
-                    event.type === 'alert' ? 'bg-red-500/10 border-red-500/20 text-red-400' :
-                    event.type === 'info' ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400' :
-                    'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                  }`}>
-                    {event.type === 'alert' ? <AlertCircle className="w-4 h-4" /> :
-                     event.type === 'info' ? <Info className="w-4 h-4" /> :
-                     <Calendar className="w-4 h-4" />}
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-white uppercase tracking-tight">{event.title}</h4>
-                    <div className="flex items-center gap-3 mt-1">
-                      <p className="text-[9px] font-mono text-indigo-400 uppercase flex items-center gap-1.5 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
-                        <Calendar className="w-2.5 h-2.5" />
-                        {event.eventDate || 'No Date'}
-                      </p>
-                      <p className="text-[9px] font-mono text-slate-500 uppercase flex items-center gap-1.5">
-                        <Clock className="w-2.5 h-2.5" />
-                        {event.eventTime || 'No Time'}
-                      </p>
+
+          <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar max-h-[500px] pr-2">
+            {selectedDayEvents.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center py-12 text-center opacity-30">
+                <Shield className="w-10 h-10 mb-4" />
+                <p className="text-[10px] font-black uppercase tracking-widest">No Sector Events</p>
+              </div>
+            ) : (
+              selectedDayEvents.map(event => (
+                <div key={event.id} className="group p-4 bg-black/40 border border-white/5 rounded-2xl">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-1.5 h-1.5 rounded-full ${
+                         event.type === 'alert' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 
+                         event.type === 'info' ? 'bg-indigo-400' : 'bg-emerald-500'
+                       }`} />
+                      <h5 className="text-xs font-bold text-white uppercase tracking-tight">{event.title}</h5>
                     </div>
+                    {isAdmin && (
+                      <button 
+                        onClick={() => handleDeleteEvent(event.id)}
+                        className="text-slate-600 hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-400 leading-relaxed mb-3">{event.description}</p>
+                  <div className="flex items-center gap-2">
+                    <Clock size={10} className="text-slate-500" />
+                    <span className="text-[9px] font-mono text-slate-500 uppercase">{event.eventTime || 'All Day'}</span>
                   </div>
                 </div>
-                {isAdmin && (
-                  <button 
-                    onClick={() => handleDeleteEvent(event.id)}
-                    className="p-1.5 opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-500 transition-all rounded-lg hover:bg-red-500/10"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              <p className="text-sm text-slate-400 leading-relaxed pl-11">
-                {event.description}
-              </p>
-            </div>
-          ))
-        )}
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
       <AnimatePresence>
