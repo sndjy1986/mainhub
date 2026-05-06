@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore';
 import { ToneTestRecord } from '../types';
 import { useAuthRole as useRole } from '../hooks/useAuthRole';
-import { Check, X, Loader2, Plus, Trash2, Users, ClipboardCopy, Trash } from 'lucide-react';
+import { Check, X, Loader2, Plus, Trash2, Users, ClipboardCopy, Trash, RefreshCw } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -31,12 +31,44 @@ export default function ToneTestTable() {
   const { isEditor, isAdmin } = useRole();
 
   const ALL_UNITS = [
-    ...Array.from({ length: 20 }, (_, i) => `MED-${i}`),
-    'ALS-02', 'ALS-03', 'ALS-04', 'ALS-06', 'ALS-07', 'ALS-11', 'ALS-12', 'ALS-17', 'ALS-19', 'ALS-21', 'ALS-23', 'ALS-24', 'ALS-27'
+    ...Array.from({ length: 25 }, (_, i) => `MED-${i}`),
+    'ALS-01', 'ALS-02', 'ALS-03', 'ALS-04', 'ALS-06', 'ALS-07', 'ALS-11', 'ALS-12', 'ALS-17', 'ALS-19', 'ALS-21', 'ALS-23', 'ALS-24', 'ALS-27'
   ];
 
+  const handleResetTable = async () => {
+    if (!isAdmin || !confirm('This will RESET the table to default units. Existing data will be purged. Continue?')) return;
+    try {
+      // 1. Clear all
+      const snap = await getDocs(collection(db, 'toneTests'));
+      const deletePromises = snap.docs.map(d => deleteDoc(doc(db, 'toneTests', d.id)));
+      await Promise.all(deletePromises);
+
+      // 2. Seed Defaults
+      const DEFAULT_UNITS = [
+        ...Array.from({ length: 10 }, (_, i) => `MED-${i}`), // 0-9
+        ...Array.from({ length: 7 }, (_, i) => `MED-${i + 12}`) // 12-18
+      ];
+
+      const addPromises = DEFAULT_UNITS.map(unit => 
+        addDoc(collection(db, 'toneTests'), {
+          unit,
+          date: new Date().toLocaleDateString(),
+          time: '',
+          callSign: '',
+          tenFortyTwo: '',
+          ttDone: true, // DEFAULT TO UP STATE
+          updatedAt: new Date().toISOString(),
+          updatedBy: auth.currentUser?.email
+        })
+      );
+      await Promise.all(addPromises);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'toneTests/resetTable');
+    }
+  };
+
   const handleClearFleet = async () => {
-    if (!isAdmin || !confirm('This will DELETE all recorded units. Are you sure?')) return;
+    if (!isAdmin || !confirm('This will CLEAR all recorded units. Are you sure?')) return;
     try {
       const snap = await getDocs(collection(db, 'toneTests'));
       const batchPromises = snap.docs.map(d => deleteDoc(doc(db, 'toneTests', d.id)));
@@ -137,7 +169,7 @@ export default function ToneTestTable() {
       const entry = {
         ...newUnit,
         callSign: newUnit.unit.toUpperCase().startsWith('MED') ? '' : newUnit.callSign,
-        ttDone: false,
+        ttDone: true, // DEFAULT TO UP STATE
         duration: '',
         updatedAt: new Date().toISOString(),
         updatedBy: auth.currentUser?.email
@@ -198,47 +230,46 @@ export default function ToneTestTable() {
   return (
     <div className="space-y-4">
       {/* Control Bar */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-3">
         {isEditor && (
           <div className="flex gap-2">
             <button
+              onClick={handleResetTable}
+              className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Reset Table
+            </button>
+
+            <button
               onClick={() => setIsAdding(!isAdding)}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 border border-border-subtle hover:border-brand-blue/50 text-[10px] font-bold uppercase tracking-widest transition-all rounded",
-                isAdding ? "bg-brand-blue text-white" : "bg-[#1A1D23] text-text-secondary"
+                "flex items-center gap-2 px-6 py-2.5 border text-[11px] font-black uppercase tracking-[0.2em] transition-all rounded-xl active:scale-95",
+                isAdding 
+                  ? "bg-slate-700 border-white/20 text-white" 
+                  : "bg-white/5 border-white/10 text-slate-300 hover:border-white/20"
               )}
             >
-              <Plus className="w-3.5 h-3.5" />
-              {isAdding ? "Cancel Entry" : "Register New Unit"}
+              <Plus className="w-4 h-4" />
+              {isAdding ? "Cancel" : "Add Unit"}
             </button>
-          </div>
-        )}
 
-        {isAdmin && (
-          <div className="flex gap-2">
-            <button
-              onClick={handleResetShift}
-              className="flex items-center gap-2 px-3 py-1.5 bg-[#1A1D23] border border-border-subtle hover:border-brand-blue/50 text-[10px] font-bold uppercase tracking-widest text-brand-blue hover:text-blue-300 transition-all rounded"
-            >
-              <Users className="w-3.5 h-3.5" />
-              Reset Times
-            </button>
             <button
               onClick={handleClearFleet}
-              className="flex items-center gap-2 px-3 py-1.5 bg-[#1A1D23] border border-border-subtle hover:border-red-500/50 text-[10px] font-bold uppercase tracking-widest text-red-500 hover:text-red-400 transition-all rounded"
+              className="flex items-center gap-2 px-6 py-2.5 bg-rose-600/10 border border-rose-500/30 text-rose-500 hover:bg-rose-500 hover:text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all rounded-xl active:scale-95"
             >
-              <Trash className="w-3.5 h-3.5" />
-              Clear Table
+              <Trash2 className="w-4 h-4" />
+              Save/Clear
             </button>
           </div>
         )}
 
         <button
           onClick={handleCopyTable}
-          className="flex items-center gap-2 px-3 py-1.5 ml-auto bg-brand-blue/20 border border-brand-blue/30 text-[10px] font-bold uppercase tracking-widest text-brand-blue hover:bg-brand-blue/30 transition-all rounded"
+          className="flex items-center gap-2 px-4 py-2 ml-auto bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/10 transition-all rounded-xl"
         >
           <ClipboardCopy className="w-3.5 h-3.5" />
-          Copy Table
+          Export Table
         </button>
       </div>
 
