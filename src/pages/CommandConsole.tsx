@@ -771,91 +771,99 @@ export default function CommandConsolePage() {
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -20 }}
-        className="h-full flex flex-col"
+        className="h-full flex flex-col gap-4 p-4"
       >
-        <div className="flex-1 flex gap-6 overflow-hidden">
-          {/* Main Posting Grid */}
-          <div className="flex-1 bento-panel flex flex-col overflow-hidden">
-            <div className="px-5 py-3 border-b border-white/5 bg-white/5 backdrop-blur-md flex items-center justify-between">
-              <span className="typography-label !text-hosp-orange italic">Regional Posting Directives</span>
-              <span className="text-[9px] font-mono text-slate-500 tracking-widest">OPTIMIZED_FLEET_ALIGNMENT</span>
+        <div className="grid grid-cols-12 gap-4 flex-1 min-h-0">
+          {/* Left: Map Preview */}
+          <div className="col-span-12 lg:col-span-7 h-full bento-panel overflow-hidden border-white/5 bg-black/20 relative group">
+            <div className="absolute top-4 left-4 z-[1000] px-3 py-1 bg-black/60 backdrop-blur rounded-full text-[9px] font-mono text-indigo-400 border border-white/10 shadow-xl">
+              GEOGRAPHIC POSTING OVERLAY // LIVE
+            </div>
+            <MapContainer center={[34.523, -82.648]} zoom={11} className="w-full h-full" zoomControl={false} attributionControl={false}>
+              <TileLayer url={theme === 'dark' ? "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"} />
+              {POST_DATA.map(p => (
+                <Marker key={p.name} position={[p.lat, p.lon]} icon={L.divIcon({ className: 'custom-post-marker', html: `<div class="post-dot"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] })} />
+              ))}
+              {INITIAL_UNITS.map(u => {
+                const pos = unitPositions[u.id];
+                const pName = unitStagedAt[u.id] || u.home;
+                const pData = POST_DATA.find(p => p.name === pName);
+                const finalPos = pos ? [pos.lat, pos.lon] as [number, number] : (pData ? [pData.lat, pData.lon] as [number, number] : null);
+                
+                if (!finalPos) return null;
+                const isOutOfChute = unitStates[u.id]?.type === 'CALL';
+                const isTransport = unitStates[u.id]?.type === 'DEST';
+                
+                return (
+                   <Marker 
+                      key={u.id} 
+                      position={finalPos} 
+                      icon={L.divIcon({
+                        className: `custom-unit-marker mini ${oosUnits.has(u.id) ? 'oos' : ''} ${isOutOfChute ? 'emergency' : ''} ${isTransport ? 'transport' : ''}`,
+                        html: `<div class="unit-marker-inner">${u.id.split('-')[1]}</div>`,
+                        iconSize: [24,24], iconAnchor: [12,12]
+                      })}
+                   />
+                );
+              })}
+            </MapContainer>
+            <div className="absolute bottom-4 right-4 z-[1000] flex gap-2">
+               <button onClick={() => setIsMapExpanded(true)} className="p-2 bg-black/60 backdrop-blur border border-white/5 rounded-lg text-white hover:bg-white/10 transition-all">
+                 <Maximize2 className="w-4 h-4" />
+               </button>
+            </div>
+          </div>
+
+          {/* Right: Grid List */}
+          <div className="col-span-12 lg:col-span-5 h-full bento-panel flex flex-col overflow-hidden bg-black/20 border-white/5">
+            <div className="px-5 py-3 border-b border-white/5 bg-white/5 backdrop-blur-md flex items-center justify-between shrink-0">
+              <span className="typography-label !text-hosp-orange italic">Fleet Posting Matrix</span>
+              <div className="flex gap-4">
+                 <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Surplus</span>
+                 </div>
+                 <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Deficit</span>
+                 </div>
+              </div>
             </div>
             
-            <div className="flex-1 p-6 overflow-y-auto custom-scrollbar bg-black/20">
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {POST_DATA.map(postInfo => {
                   const post = postInfo.name;
-                  const assigned = INITIAL_UNITS.filter(u => {
-                    return (unitStagedAt[u.id] || u.home) === post;
-                  });
+                  const assigned = INITIAL_UNITS.filter(u => (unitStagedAt[u.id] || u.home) === post);
                   const rawPlanLevel = readyUnits.length;
                   const planLevel = Math.min(rawPlanLevel, Math.max(...Object.keys(POSTING_PLAN).map(Number)));
                   const activePlan = POSTING_PLAN[planLevel] || [];
                   const requirement = activePlan.filter(p => p === post).length;
-                  
                   const delta = assigned.length - requirement;
                   
                   return (
-                    <div key={post} className="group p-5 rounded-3xl border border-white/5 bg-white/5 transition-all hover:bg-white/10 shadow-2xl">
-                      <div className="flex justify-between items-center mb-4">
+                    <div key={post} className="group p-4 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all">
+                      <div className="flex justify-between items-start mb-3">
                         <div className="flex flex-col">
-                          <span className="font-black uppercase tracking-tighter text-indigo-accent text-sm leading-none">{post}</span>
-                          <span className="text-[8px] font-mono text-slate-600 uppercase mt-1 tracking-widest">Sector: Anderson County</span>
+                          <span className="font-black uppercase tracking-tighter text-indigo-accent text-xs leading-none">{post}</span>
+                          <span className="text-[7px] font-mono text-slate-600 uppercase mt-1 tracking-widest">Vector: Anderson Co</span>
                         </div>
-                        <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black tracking-widest flex items-center gap-1.5 ${delta >= 0 ? 'bg-emerald-accent/10 text-emerald-accent shadow-[0_0_10px_rgba(16,185,129,0.1)]' : 'bg-bright-red/10 text-bright-red animate-pulse shadow-[0_0_10px_rgba(244,63,94,0.1)]'}`}>
-                          {delta >= 0 ? '+' : ''}{delta} // REQ: {requirement}
+                        <div className={`px-2 py-0.5 rounded text-[8px] font-black tracking-widest ${delta >= 0 ? 'text-emerald-accent' : 'text-bright-red animate-pulse'}`}>
+                          {delta >= 0 ? '+' : ''}{delta}
                         </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-1.5">
                         {assigned.map(u => (
-                           <div key={u.id} className="w-fit">
+                           <div key={u.id} className="scale-75 origin-left">
                               {renderUnitIcon(u)}
                            </div>
                         ))}
-                        {assigned.length === 0 && <span className="text-[9px] font-mono text-slate-700 uppercase italic tracking-widest">Awaiting Asset Deployment...</span>}
+                        {assigned.length === 0 && <span className="text-[8px] font-mono text-slate-700 uppercase italic">Awaiting Asset...</span>}
                       </div>
                     </div>
                   );
                 })}
               </div>
-            </div>
-          </div>
-
-          {/* Logistics Map Panel */}
-          <div className="w-[450px] shrink-0 bento-panel flex flex-col bg-slate-900/40 backdrop-blur-md border-white/5 overflow-hidden">
-            <div className="p-4 border-b border-white/5 flex items-center justify-between">
-               <span className="typography-label !text-emerald-400">Tactical Posting Map</span>
-               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            </div>
-            <div className="flex-1 relative">
-              <MapContainer 
-                center={[34.523, -82.648]} 
-                zoom={11} 
-                className="w-full h-full"
-                zoomControl={true}
-                attributionControl={false}
-              >
-                <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png" />
-                {INITIAL_UNITS.map(u => {
-                  const pos = unitPositions[u.id];
-                  if (!pos || !pos.lat || !pos.lon) return null;
-                  return (
-                    <Marker
-                      key={u.id}
-                      position={[pos.lat, pos.lon]}
-                      icon={L.divIcon({
-                        className: `custom-unit-marker mini ${oosUnits.has(u.id) ? 'oos' : ''}`,
-                        html: `<div class="w-8 h-8 rounded-full bg-indigo-500 border-2 border-white flex items-center justify-center text-[10px] font-black text-white shadow-xl">${u.id.split('-')[1]}</div>`,
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 16]
-                      })}
-                    />
-                  );
-                })}
-              </MapContainer>
-            </div>
-            <div className="p-4 border-t border-white/5 bg-black/20 text-[10px] font-mono text-slate-500 leading-relaxed">
-              MAP_DATA: CARTOCDN // LIVE_FLEET_LATENCY: 42MS
             </div>
           </div>
         </div>

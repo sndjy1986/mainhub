@@ -558,7 +558,7 @@ export default function ShiftReport() {
           <div className="flex flex-col gap-8">
             {/* Row 1: Info, Radio, Supervisors */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="bg-white rounded-3xl p-8 space-y-8 shadow-2xl scale-[1.02] border border-slate-200">
+              <div className="bg-slate-50 rounded-3xl p-8 space-y-8 shadow-2xl scale-[1.02] border border-slate-200">
                 <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
                   <User className="w-4 h-4" /> Info
                 </div>
@@ -580,7 +580,7 @@ export default function ShiftReport() {
                 </div>
               </div>
 
-              <div className="bg-white border border-slate-200 shadow-2xl rounded-2xl p-6 space-y-6">
+              <div className="bg-slate-50 border border-slate-200 shadow-2xl rounded-2xl p-6 space-y-6">
                 <div className="flex items-center gap-2 text-indigo-500 font-bold text-sm tracking-widest uppercase">
                   <Phone className="w-4 h-4" /> Radio Assignment
                 </div>
@@ -606,7 +606,7 @@ export default function ShiftReport() {
                 </div>
               </div>
 
-              <div className="bg-white border border-slate-200 shadow-2xl rounded-2xl p-6 space-y-6">
+              <div className="bg-slate-50 border border-slate-200 shadow-2xl rounded-2xl p-6 space-y-6">
                 <div className="flex items-center gap-2 text-indigo-500 font-bold text-sm tracking-widest uppercase">
                   <User className="w-4 h-4" /> Supervisors
                 </div>
@@ -629,7 +629,7 @@ export default function ShiftReport() {
 
             {/* Row 2: Zulu, Avail Trucks */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-white rounded-3xl p-8 space-y-8 shadow-2xl border border-slate-200">
+              <div className="bg-slate-50 rounded-3xl p-8 space-y-8 shadow-2xl border border-slate-200">
                 <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
                   <Truck className="w-4 h-4" /> Zulu On Call (After 1700)
                 </div>
@@ -643,7 +643,7 @@ export default function ShiftReport() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-3xl p-8 space-y-8 shadow-2xl border border-slate-200">
+              <div className="bg-slate-50 rounded-3xl p-8 space-y-8 shadow-2xl border border-slate-200">
                 <div className="flex items-center gap-3 text-emerald-600 font-bold text-[10px] uppercase tracking-widest">
                   <Truck className="w-4 h-4" /> Avail Trucks
                 </div>
@@ -665,7 +665,7 @@ export default function ShiftReport() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-white rounded-3xl p-8 space-y-6 shadow-2xl border border-slate-200">
+              <div className="bg-slate-50 rounded-3xl p-8 space-y-6 shadow-2xl border border-slate-200">
                 <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
                   <Clock className="w-4 h-4" /> Late Trucks
                 </div>
@@ -679,7 +679,7 @@ export default function ShiftReport() {
                 />
               </div>
 
-              <div className="bg-white rounded-3xl p-8 space-y-6 shadow-2xl border border-slate-200">
+              <div className="bg-slate-50 rounded-3xl p-8 space-y-6 shadow-2xl border border-slate-200">
                 <div className="flex items-center gap-3 text-emerald-600 font-bold text-[10px] uppercase tracking-widest">
                   <Clock className="w-4 h-4" /> Out of Chute
                 </div>
@@ -695,7 +695,7 @@ export default function ShiftReport() {
             </div>
 
             {/* Row 4: Other Issues */}
-            <div className="bg-white rounded-3xl p-8 space-y-6 shadow-2xl border border-slate-200">
+            <div className="bg-slate-50 rounded-3xl p-8 space-y-6 shadow-2xl border border-slate-200">
               <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
                 <FileText className="w-4 h-4" /> Other Issues
               </div>
@@ -710,7 +710,7 @@ export default function ShiftReport() {
             </div>
 
             {/* Row 5: ROSTER/TIME UP */}
-            <div className="bg-white rounded-3xl p-8 space-y-6 shadow-2xl border border-slate-200">
+            <div className="bg-slate-50 rounded-3xl p-8 space-y-6 shadow-2xl border border-slate-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
                   <Clipboard className="w-4 h-4" /> ROSTER/TIME UP
@@ -735,9 +735,9 @@ export default function ShiftReport() {
             </div>
 
             {/* Actions Bar */}
-            <div className="mt-8 p-8 glass-effect rounded-3xl flex flex-wrap items-center justify-between gap-6">
-              <div className="flex items-center gap-3 text-slate-500 text-[10px] font-black uppercase tracking-widest">
-                <CheckCircle2 className="w-5 h-5 text-brand-emerald" />
+            <div className="mt-8 p-8 bg-slate-50 border border-slate-200 rounded-3xl flex flex-wrap items-center justify-between gap-6 shadow-2xl">
+              <div className="flex items-center gap-3 text-slate-600 text-[10px] font-black uppercase tracking-widest">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 Draft saved {lastSaved ? `at ${lastSaved}` : 'now'}
               </div>
               <div className="flex items-center gap-6">
@@ -751,7 +751,7 @@ export default function ShiftReport() {
                 <button 
                   type="button"
                   onClick={handleSend}
-                  className="bg-brand-emerald hover:bg-emerald-600 px-10 py-4 rounded-2xl text-white font-black text-sm shadow-xl shadow-emerald-500/25 flex items-center gap-3 transition-all active:scale-95 uppercase tracking-widest"
+                  className="bg-emerald-600 hover:bg-emerald-700 px-10 py-4 rounded-2xl text-white font-black text-sm shadow-xl shadow-emerald-500/25 flex items-center gap-3 transition-all active:scale-95 uppercase tracking-widest"
                 >
                   <Mail className="w-5 h-5" /> Copy & Send Report
                 </button>
@@ -1102,7 +1102,7 @@ export default function ShiftReport() {
             </div>
             <button 
               onClick={() => setShowDirectoryDrawer(false)}
-              className="p-3 hover:bg-white/5 rounded-2xl transition-colors text-slate-400 hover:text-white"
+              className="p-3 hover:bg-slate-100 rounded-2xl transition-colors text-slate-500"
             >
               <X className="w-8 h-8" />
             </button>
@@ -1139,8 +1139,8 @@ export default function ShiftReport() {
             ))}
           </div>
 
-          <div className="p-8 border-t border-white/10 bg-white/5">
-            <p className="text-[10px] text-slate-500 text-center uppercase tracking-widest font-black opacity-40">
+          <div className="p-8 border-t border-slate-100 bg-slate-50">
+            <p className="text-[10px] text-slate-400 text-center uppercase tracking-widest font-black">
               Internal Ops Only • Medshore Ambulance
             </p>
           </div>
@@ -1154,12 +1154,12 @@ export default function ShiftReport() {
           setSelectedArchivedReport(null);
         }} className="absolute inset-0 bg-black/90 backdrop-blur-md" />
         <aside 
-          className={`absolute top-0 right-0 h-full w-full max-w-lg bg-brand-bg/90 backdrop-blur-3xl border-l border-white/10 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${showPreviewDrawer ? 'translate-x-0' : 'translate-x-full'}`}
+          className={`absolute top-0 right-0 h-full w-full max-w-lg bg-white border-l border-slate-200 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${showPreviewDrawer ? 'translate-x-0' : 'translate-x-full'}`}
         >
-          <div className="p-8 border-b border-white/10 flex items-center justify-between">
+          <div className="p-8 border-b border-slate-100 flex items-center justify-between">
             <div>
-              <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-4">
-                {selectedArchivedReport ? <History className="w-7 h-7 text-brand-indigo" /> : <Eye className="w-7 h-7 text-brand-indigo" />}
+              <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-4">
+                {selectedArchivedReport ? <History className="w-7 h-7 text-indigo-600" /> : <Eye className="w-7 h-7 text-indigo-600" />}
                 Report Preview
               </h3>
               <p className="text-[10px] text-slate-500 mt-2 uppercase tracking-widest font-black">
@@ -1243,30 +1243,33 @@ export default function ShiftReport() {
       {/* Roster Modal */}
       {showPasteModal && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-6">
-          <div onClick={() => setShowPasteModal(false)} className="absolute inset-0 bg-brand-bg/90 backdrop-blur-md" />
-          <div className="relative w-full max-w-5xl glass-effect border-white/10 rounded-[3rem] shadow-2xl overflow-hidden flex flex-col h-[90vh]">
-            <div className="p-10 border-b border-white/10 flex items-center justify-between">
+          <div onClick={() => setShowPasteModal(false)} className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" />
+          <div className="relative w-full max-w-5xl bg-white border border-slate-200 rounded-[3rem] shadow-2xl overflow-hidden flex flex-col h-[90vh]">
+            <div className="p-10 border-b border-slate-100 flex items-center justify-between bg-white">
               <div>
-                <h3 className="text-3xl font-black text-white tracking-tight uppercase">Roster Processing</h3>
+                <h3 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Roster Processing</h3>
                 <p className="text-[10px] text-slate-500 mt-2 uppercase tracking-widest font-black">Paste data grid from source system</p>
               </div>
-              <button onClick={() => setShowPasteModal(false)} className="p-4 hover:bg-white/5 rounded-3xl transition-colors">
-                <X className="w-10 h-10 text-slate-500" />
+              <button 
+                onClick={() => setShowPasteModal(false)} 
+                className="p-4 hover:bg-slate-100 rounded-3xl transition-colors text-slate-500"
+              >
+                <X className="w-10 h-10" />
               </button>
             </div>
-            <div className="p-10 flex-1 relative">
+            <div className="p-10 flex-1 relative bg-slate-50">
               <textarea 
-                className="w-full h-full bg-black/40 text-slate-200 p-8 rounded-[2rem] border border-white/10 font-mono text-base resize-none outline-none focus:ring-4 focus:ring-brand-indigo/10 transition-all font-medium"
+                className="w-full h-full bg-white text-slate-900 p-8 rounded-[2rem] border border-slate-200 font-mono text-base resize-none outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium shadow-inner"
                 placeholder="Ctrl+V roster data here..."
                 value={data.pasteNotes}
                 onChange={(e) => setData(prev => ({ ...prev, pasteNotes: e.target.value }))}
                 autoFocus
               />
             </div>
-            <div className="p-10 bg-white/5 flex justify-end gap-6 border-t border-white/10">
+            <div className="p-10 bg-white flex justify-end gap-6 border-t border-slate-100">
               <button 
                 onClick={() => setShowPasteModal(false)}
-                className="bg-brand-emerald hover:bg-emerald-600 px-14 py-5 rounded-3xl text-white font-black uppercase tracking-widest text-sm transition-all shadow-2xl shadow-emerald-500/20 active:scale-95"
+                className="bg-emerald-600 hover:bg-emerald-700 px-14 py-5 rounded-3xl text-white font-black uppercase tracking-widest text-sm transition-all shadow-2xl shadow-emerald-500/20 active:scale-95"
               >
                 Incorporate Data
               </button>

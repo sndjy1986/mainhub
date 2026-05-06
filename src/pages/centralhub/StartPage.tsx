@@ -98,19 +98,24 @@ function OpsCalendar() {
   const { isAdmin } = useAuthRole();
   const [events, setEvents] = useState<any[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newEvent, setNewEvent] = useState({ title: '', description: '', type: 'event' });
+  const [newEvent, setNewEvent] = useState({ title: '', description: '', type: 'event', eventDate: '', eventTime: '' });
 
   useEffect(() => {
     let unsub: (() => void) | null = null;
     const unsubAuth = auth.onAuthStateChanged((user) => {
       if (user) {
         if (!unsub) {
-          const q = query(collection(db, 'calendar_events'));
+          const q = query(collection(db, 'calendar_events'), orderBy('eventDate', 'desc'));
           unsub = onSnapshot(q, (snapshot) => {
             const items: any[] = [];
             snapshot.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
-            // Sort client-side for now
-            items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+            // Firebase orderBy might fail if index isn't created, so we keep the client sort fallback if needed
+            // But usually we want chronologically closest first
+            items.sort((a, b) => {
+               const dateA = new Date(`${a.eventDate} ${a.eventTime}`).getTime();
+               const dateB = new Date(`${b.eventDate} ${b.eventTime}`).getTime();
+               return dateA - dateB;
+            });
             setEvents(items);
           }, (err) => handleFirestoreError(err, 'list' as any, 'calendar_events'));
         }
@@ -138,7 +143,7 @@ function OpsCalendar() {
         createdBy: auth.currentUser?.email,
         createdAt: serverTimestamp()
       });
-      setNewEvent({ title: '', description: '', type: 'event' });
+      setNewEvent({ title: '', description: '', type: 'event', eventDate: '', eventTime: '' });
       setShowAddModal(false);
     } catch (err) {
       handleFirestoreError(err, 'write' as any, 'calendar_events');
@@ -195,10 +200,16 @@ function OpsCalendar() {
                   </div>
                   <div>
                     <h4 className="font-bold text-white uppercase tracking-tight">{event.title}</h4>
-                    <p className="text-[9px] font-mono text-slate-500 uppercase flex items-center gap-2 mt-0.5">
-                      <Clock className="w-3 h-3" />
-                      {event.createdAt?.toDate ? event.createdAt.toDate().toLocaleDateString() : 'Scheduling...'}
-                    </p>
+                    <div className="flex items-center gap-3 mt-1">
+                      <p className="text-[9px] font-mono text-indigo-400 uppercase flex items-center gap-1.5 bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-500/20">
+                        <Calendar className="w-2.5 h-2.5" />
+                        {event.eventDate || 'No Date'}
+                      </p>
+                      <p className="text-[9px] font-mono text-slate-500 uppercase flex items-center gap-1.5">
+                        <Clock className="w-2.5 h-2.5" />
+                        {event.eventTime || 'No Time'}
+                      </p>
+                    </div>
                   </div>
                 </div>
                 {isAdmin && (
@@ -266,6 +277,29 @@ function OpsCalendar() {
                     className="w-full h-14 bg-black/20 border border-white/10 rounded-xl px-6 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                     placeholder="Enter event title..."
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Date</label>
+                    <input 
+                      type="date"
+                      required
+                      value={newEvent.eventDate}
+                      onChange={(e) => setNewEvent({ ...newEvent, eventDate: e.target.value })}
+                      className="w-full h-14 bg-black/20 border border-white/10 rounded-xl px-6 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Time</label>
+                    <input 
+                      type="time"
+                      required
+                      value={newEvent.eventTime}
+                      onChange={(e) => setNewEvent({ ...newEvent, eventTime: e.target.value })}
+                      className="w-full h-14 bg-black/20 border border-white/10 rounded-xl px-6 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
