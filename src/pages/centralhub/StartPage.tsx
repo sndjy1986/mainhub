@@ -49,7 +49,7 @@ export function StartPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-50">
         {/* Date Selection Card */}
         <section className="lg:col-span-4 backdrop-blur-md bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col justify-between">
           <div className="space-y-6">
@@ -83,7 +83,7 @@ export function StartPage() {
         </section>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-8 relative z-0">
         <h2 className="text-[10px] uppercase font-bold text-slate-500 tracking-widest flex items-center gap-2">
            <Activity className="w-3 h-3 text-indigo-400" />
            Regional Environmental Monitoring
@@ -231,7 +231,7 @@ function OpsCalendar() {
 
       <AnimatePresence>
         {showAddModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 backdrop-blur-md bg-black/60">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 backdrop-blur-md bg-black/60">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}

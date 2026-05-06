@@ -27,6 +27,17 @@ const formatTime = (ms: number) => {
   return `${sign}${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
+function MapResizer() {
+  const map = useMap();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [map]);
+  return null;
+}
+
 export default function CommandConsolePage() {
   // --- STATE ---
   const [unitStates, setUnitStates] = useState<Record<string, UnitState>>({});
@@ -647,26 +658,6 @@ export default function CommandConsolePage() {
              </div>
              <h1 className="text-sm font-black uppercase tracking-widest text-white">Dispatch Ops Central</h1>
           </div>
-          
-          <nav className="flex items-center gap-1">
-            {[
-              { id: 'tactical', label: 'Tactical Map' },
-              { id: 'logistics', label: 'Unit Posting' },
-              { id: 'console', label: 'System Logs' },
-            ].map((page) => (
-              <button
-                key={page.id}
-                onClick={() => setActivePage(page.id as any)}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] transition-all ${
-                  activePage === page.id 
-                    ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
-                    : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'
-                }`}
-              >
-                {page.label}
-              </button>
-            ))}
-          </nav>
         </div>
 
         <div className="flex items-center gap-4">
@@ -693,223 +684,24 @@ export default function CommandConsolePage() {
       {/* MAIN VIEWPORT */}
       <main className="flex-1 flex flex-col min-w-0 relative">
         <div className="flex-1 overflow-hidden">
-          <AnimatePresence mode="wait">
-            {activePage === 'tactical' && (
-              <motion.div 
-                key="tactical"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.2 }}
-                className="relative w-full h-full overflow-hidden rounded-3xl group"
-              >
-                {/* CENTER: TACTICAL MAP (Google My Maps Embed) */}
-                <div className={`absolute inset-0 z-0 bg-black ${theme === 'dark' ? 'border-zinc-800' : 'border-slate-200'}`}>
-                  <div className="absolute top-4 left-4 flex gap-2 z-[1000]">
-                    <div className="px-3 py-1 bg-black/60 backdrop-blur border border-zinc-800 rounded-full text-[9px] font-mono whitespace-nowrap text-logistics-blue shadow-lg">
-                      TACTICAL SECTOR FEED // RC-35
-                    </div>
-                  </div>
-
-                  <iframe 
-                    src="https://www.google.com/maps/d/embed?mid=1sVuk-qPshgccqAlOzQvumzq7OdeVII8" 
-                    width="100%" 
-                    height="100%" 
-                    className="w-full h-full border-none opacity-80 group-hover:opacity-100 transition-opacity"
-                    style={{ filter: theme === 'dark' ? 'invert(90%) hue-rotate(180deg) brightness(0.8) contrast(1.2)' : 'none' }}
-                  />
-                  
-                  {/* Floating Overlays for Units (Optional but difficult to sync, so we keep the info panels) */}
-                </div>
-
-                {/* OVERLAY PANELS (Floating at the bottom, pointer events controlled) */}
-                <div className="absolute inset-x-4 bottom-4 z-10 grid grid-cols-12 gap-3 h-[280px] pointer-events-none">
-                  {/* LEFT COLUMN: FLEET LIST */}
-                  <div className="col-span-4 h-full pointer-events-auto bento-panel flex flex-col bg-slate-900/30 backdrop-blur-sm border-white/5">
-                  <div className="p-4 border-b border-white/5 bg-transparent flex justify-between items-center shrink-0">
-                    <span className="typography-label !text-slate-400">Fleet Status</span>
-                    <span className="px-2 py-0.5 bg-emerald-accent/10 text-emerald-accent text-[10px] rounded border border-emerald-accent/20 font-bold">LIVE</span>
-                  </div>
-                  <FleetGrid 
-                    unitPositions={unitPositions}
-                    unitStagedAt={unitStagedAt}
-                    unitStates={unitStates}
-                    oosUnits={oosUnits}
-                    inactiveUnits={inactiveUnits}
-                    onRenderIcon={renderUnitIcon}
-                  />
-                </div>
-
-                {/* BOTTOM: MISSION TIMERS */}
-                <div className="col-span-8 h-full pointer-events-auto bento-panel flex flex-col gap-4 bg-slate-900/30 backdrop-blur-sm border-white/5 overflow-hidden">
-                  <div className="px-4 py-2 border-b border-white/5 bg-transparent flex justify-between items-center shrink-0">
-                    <span className="typography-label !text-slate-400">Active Mission Timers</span>
-                    <div className="flex gap-4">
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-bright-red shadow-[0_0_8px_#f43f5e]"></div>
-                        <span className="text-[9px] uppercase font-black text-slate-500 tracking-widest">Emergency</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-hosp-orange shadow-[0_0_8px_#f59e0b]"></div>
-                        <span className="text-[9px] uppercase font-black text-slate-500 tracking-widest">Transport</span>
-                      </div>
-                    </div>
-                  </div>
-                  <MissionTimers 
-                    unitStates={unitStates}
-                    onSetStatus={setStatus}
-                  />
+          <div className="relative w-full h-full overflow-hidden group">
+            <div className={`absolute inset-0 z-0 bg-[#0f172a] ${theme === 'dark' ? 'border-zinc-800' : 'border-slate-200'}`}>
+              <div className="absolute top-4 left-4 flex gap-2 z-[1000] pointer-events-none">
+                <div className="px-3 py-1 bg-black/60 backdrop-blur border border-zinc-800 rounded-full text-[9px] font-mono whitespace-nowrap text-logistics-blue shadow-lg">
+                  TACTICAL SECTOR FEED // RC-35
                 </div>
               </div>
 
-      </motion.div>
-    )}
-
-    {activePage === 'logistics' && (
-      <motion.div 
-        key="logistics"
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20 }}
-        className="h-full flex flex-col gap-4 p-4"
-      >
-        <div className="grid grid-cols-12 gap-4 flex-1 min-h-0">
-          {/* Left: Map Preview */}
-          <div className="col-span-12 lg:col-span-7 h-full bento-panel overflow-hidden border-white/5 bg-black/20 relative group">
-            <div className="absolute top-4 left-4 z-[1000] px-3 py-1 bg-black/60 backdrop-blur rounded-full text-[9px] font-mono text-indigo-400 border border-white/10 shadow-xl">
-              GEOGRAPHIC POSTING OVERLAY // LIVE
-            </div>
-            <MapContainer center={[34.523, -82.648]} zoom={11} className="w-full h-full" zoomControl={false} attributionControl={false}>
-              <TileLayer url={theme === 'dark' ? "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png" : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"} />
-              {POST_DATA.map(p => (
-                <Marker key={p.name} position={[p.lat, p.lon]} icon={L.divIcon({ className: 'custom-post-marker', html: `<div class="post-dot"></div>`, iconSize: [12, 12], iconAnchor: [6, 6] })} />
-              ))}
-              {INITIAL_UNITS.map(u => {
-                const pos = unitPositions[u.id];
-                const pName = unitStagedAt[u.id] || u.home;
-                const pData = POST_DATA.find(p => p.name === pName);
-                const finalPos = pos ? [pos.lat, pos.lon] as [number, number] : (pData ? [pData.lat, pData.lon] as [number, number] : null);
-                
-                if (!finalPos) return null;
-                const isOutOfChute = unitStates[u.id]?.type === 'CALL';
-                const isTransport = unitStates[u.id]?.type === 'DEST';
-                
-                return (
-                   <Marker 
-                      key={u.id} 
-                      position={finalPos} 
-                      icon={L.divIcon({
-                        className: `custom-unit-marker mini ${oosUnits.has(u.id) ? 'oos' : ''} ${isOutOfChute ? 'emergency' : ''} ${isTransport ? 'transport' : ''}`,
-                        html: `<div class="unit-marker-inner">${u.id.split('-')[1]}</div>`,
-                        iconSize: [24,24], iconAnchor: [12,12]
-                      })}
-                   />
-                );
-              })}
-            </MapContainer>
-            <div className="absolute bottom-4 right-4 z-[1000] flex gap-2">
-               <button onClick={() => setIsMapExpanded(true)} className="p-2 bg-black/60 backdrop-blur border border-white/5 rounded-lg text-white hover:bg-white/10 transition-all">
-                 <Maximize2 className="w-4 h-4" />
-               </button>
-            </div>
-          </div>
-
-          {/* Right: Grid List */}
-          <div className="col-span-12 lg:col-span-5 h-full bento-panel flex flex-col overflow-hidden bg-black/20 border-white/5">
-            <div className="px-5 py-3 border-b border-white/5 bg-white/5 backdrop-blur-md flex items-center justify-between shrink-0">
-              <span className="typography-label !text-hosp-orange italic">Fleet Posting Matrix</span>
-              <div className="flex gap-4">
-                 <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Surplus</span>
-                 </div>
-                 <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Deficit</span>
-                 </div>
-              </div>
-            </div>
-            
-            <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {POST_DATA.map(postInfo => {
-                  const post = postInfo.name;
-                  const assigned = INITIAL_UNITS.filter(u => (unitStagedAt[u.id] || u.home) === post);
-                  const rawPlanLevel = readyUnits.length;
-                  const planLevel = Math.min(rawPlanLevel, Math.max(...Object.keys(POSTING_PLAN).map(Number)));
-                  const activePlan = POSTING_PLAN[planLevel] || [];
-                  const requirement = activePlan.filter(p => p === post).length;
-                  const delta = assigned.length - requirement;
-                  
-                  return (
-                    <div key={post} className="group p-4 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex flex-col">
-                          <span className="font-black uppercase tracking-tighter text-indigo-accent text-xs leading-none">{post}</span>
-                          <span className="text-[7px] font-mono text-slate-600 uppercase mt-1 tracking-widest">Vector: Anderson Co</span>
-                        </div>
-                        <div className={`px-2 py-0.5 rounded text-[8px] font-black tracking-widest ${delta >= 0 ? 'text-emerald-accent' : 'text-bright-red animate-pulse'}`}>
-                          {delta >= 0 ? '+' : ''}{delta}
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {assigned.map(u => (
-                           <div key={u.id} className="scale-75 origin-left">
-                              {renderUnitIcon(u)}
-                           </div>
-                        ))}
-                        {assigned.length === 0 && <span className="text-[8px] font-mono text-slate-700 uppercase italic">Awaiting Asset...</span>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <iframe 
+                src="https://www.google.com/maps/d/u/0/embed?mid=1sVuk-qPshgccqAlOzQvumzq7OdeVII8&ehbc=2E312F" 
+                className="w-full h-full border-none absolute inset-0 z-10"
+                title="Google My Maps Tactical"
+                allowFullScreen
+              />
             </div>
           </div>
         </div>
-      </motion.div>
-    )}
-
-    {activePage === 'console' && (
-      <motion.div 
-        key="console"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 1.05 }}
-        className="h-full bento-panel flex flex-col overflow-hidden bg-black/40 backdrop-blur-md pb-6"
-      >
-        <div className="px-6 py-4 border-b border-white/5 bg-indigo-500/10 flex justify-between items-center">
-           <div className="flex items-center gap-3">
-              <Terminal className="w-4 h-4 text-indigo-400" />
-              <span className="typography-label !text-indigo-accent">System Matrix Output</span>
-           </div>
-           <button onClick={() => setConsoleLogs([])} className="text-[10px] font-black text-slate-500 hover:text-white transition-colors uppercase">Clear Buffer</button>
-        </div>
-        <div className="flex-1 p-6 overflow-y-auto font-mono text-[11px] space-y-1 custom-scrollbar">
-          {consoleLogs.map((log) => (
-            <div key={log.id} className="flex gap-4 group">
-              <span className="text-slate-700 shrink-0 select-none">[{new Date(log.timestamp).toLocaleTimeString([], { hour12: false })}]</span>
-              <span className={`
-                ${log.type === 'system' ? 'text-indigo-400' : ''}
-                ${log.type === 'user' ? 'text-slate-300' : ''}
-                ${log.type === 'unit' ? 'text-emerald-400' : ''}
-                ${log.type === 'error' ? 'text-bright-red' : ''}
-                ${log.type === 'success' ? 'text-emerald-500' : ''}
-              `}>
-                {log.type === 'user' ? '> ' : ''}{log.message}
-              </span>
-            </div>
-          ))}
-          {consoleLogs.length === 0 && <div className="text-slate-800 italic">SYSTEM_IDLE: Awaiting input...</div>}
-        </div>
-        <div className="px-6 py-4 border-t border-white/5 bg-black/20">
-           <CommandConsoleComponent onCommand={handleTerminalCommand} />
-        </div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-</div>
-</main>
+      </main>
 
       {/* SYSTEM OVERLAYS */}
       <AnimatePresence>
