@@ -59,10 +59,11 @@ export function AdminPage() {
   // Personnel Form State
   const [showPersonnelModal, setShowPersonnelModal] = useState(false);
   const [editingPerson, setEditingPerson] = useState<PersonnelMember | null>(null);
-  const [personForm, setPersonForm] = useState<{name: string, shift: 'A' | 'B' | 'C' | 'D' | 'Other', phone: string}>({
+  const [personForm, setPersonForm] = useState<{name: string, shift: 'A' | 'B' | 'C' | 'D' | 'Other', phone: string, certifications: {id: string, name: string, expirationDate: string, required: boolean}[]}>({
     name: '',
     shift: 'A',
-    phone: ''
+    phone: '',
+    certifications: []
   });
 
   // Track auth state
@@ -111,7 +112,7 @@ export function AdminPage() {
     if (user) await updateGlobalSettings({ personnel: newPersonnel });
     setShowPersonnelModal(false);
     setEditingPerson(null);
-    setPersonForm({ name: '', shift: 'A', phone: '' });
+    setPersonForm({ name: '', shift: 'A', phone: '', certifications: [] });
     setShowToast("Personnel Updated");
   };
 
@@ -251,7 +252,7 @@ export function AdminPage() {
                   disabled={!user}
                   onClick={() => {
                   setEditingPerson(null);
-                  setPersonForm({ name: '', shift: 'A', phone: '' });
+                  setPersonForm({ name: '', shift: 'A', phone: '', certifications: [] });
                   setShowPersonnelModal(true);
                 }}
                 className="flex items-center gap-3 px-6 py-3 bg-indigo-500 text-white rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-indigo-400 transition-all disabled:opacity-50 shadow-xl shadow-indigo-500/20"
@@ -286,7 +287,7 @@ export function AdminPage() {
                             <button 
                               onClick={() => {
                                 setEditingPerson(p);
-                                setPersonForm({ name: p.name, shift: p.shift, phone: p.phone || '' });
+                                setPersonForm({ name: p.name, shift: p.shift, phone: p.phone || '', certifications: p.certifications || [] });
                                 setShowPersonnelModal(true);
                               }}
                               className="p-1.5 text-slate-400 hover:text-indigo-400 transition-colors"
@@ -486,6 +487,75 @@ export function AdminPage() {
                       className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pl-12 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       placeholder="864-XXX-XXXX"
                     />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-2">Certifications</label>
+                    <button 
+                      onClick={() => setPersonForm({...personForm, certifications: [...personForm.certifications, {id: crypto.randomUUID(), name: '', expirationDate: '', required: false}]})}
+                      className="text-[10px] bg-indigo-500/20 text-indigo-400 px-3 py-1.5 rounded-lg uppercase font-bold tracking-widest hover:bg-indigo-500 hover:text-white transition-all flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" /> Add Cert
+                    </button>
+                  </div>
+                  <div className="space-y-3 max-h-[240px] overflow-y-auto pr-2 scrollbar-thin">
+                    {personForm.certifications.map((cert, index) => (
+                      <div key={cert.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-3 relative group">
+                        <button 
+                          onClick={() => {
+                            const newCerts = [...personForm.certifications];
+                            newCerts.splice(index, 1);
+                            setPersonForm({...personForm, certifications: newCerts});
+                          }}
+                          className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                        <input 
+                          type="text" 
+                          value={cert.name}
+                          onChange={e => {
+                            const newCerts = [...personForm.certifications];
+                            newCerts[index].name = e.target.value;
+                            setPersonForm({...personForm, certifications: newCerts});
+                          }}
+                          className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          placeholder="Cert Name (e.g. CPR)"
+                        />
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="date" 
+                            value={cert.expirationDate}
+                            onChange={e => {
+                              const newCerts = [...personForm.certifications];
+                              newCerts[index].expirationDate = e.target.value;
+                              setPersonForm({...personForm, certifications: newCerts});
+                            }}
+                            className="flex-1 bg-black/40 border border-white/5 rounded-xl p-3 text-xs text-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 [color-scheme:dark]"
+                          />
+                          <label className="flex items-center gap-2 cursor-pointer bg-black/40 px-4 py-3 rounded-xl border border-white/5">
+                            <input 
+                              type="checkbox" 
+                              checked={cert.required}
+                              onChange={e => {
+                                const newCerts = [...personForm.certifications];
+                                newCerts[index].required = e.target.checked;
+                                setPersonForm({...personForm, certifications: newCerts});
+                              }}
+                              className="w-4 h-4 accent-indigo-500 rounded bg-white/5 border-white/10"
+                            />
+                            <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase mt-0.5">Required</span>
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                    {personForm.certifications.length === 0 && (
+                      <div className="text-center py-6 bg-white/5 rounded-2xl border border-white/5 border-dashed">
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">No Certifications</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 

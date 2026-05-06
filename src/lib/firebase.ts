@@ -83,12 +83,20 @@ async function testConnection() {
 }
 testConnection();
 
+export type Certification = {
+  id: string;
+  name: string;
+  expirationDate: string;
+  required: boolean;
+};
+
 export type PersonnelMember = {
   id: string;
   name: string;
   shift: 'A' | 'B' | 'C' | 'D' | 'Other';
   phone?: string;
   email?: string;
+  certifications?: Certification[];
 };
 
 export type GlobalSettings = {
