@@ -3,6 +3,7 @@ import { Camera } from '../../lib/camsTypes';
 import { ALL_CAMERAS } from '../../lib/camsConstants';
 import { CameraPlayer } from './CameraPlayer';
 import { RefreshCw, Activity } from 'lucide-react';
+import { doc, onSnapshot, db } from '../../lib/firebase';
 
 export const CameraGrid: React.FC = React.memo(() => {
   const [gridSize, setGridSize] = useState<4 | 6>(() => {
@@ -13,26 +14,8 @@ export const CameraGrid: React.FC = React.memo(() => {
   React.useEffect(() => {
     localStorage.setItem('cameraGridSize', String(gridSize));
   }, [gridSize]);
-  const defaultCamIds = ['cam2', 'cam3', 'cam4', 'cam8']; // MM 19, 21, 23, 34
-  const [activeCameras, setActiveCameras] = useState<Camera[]>(() => {
-    const saved = localStorage.getItem('activeCameras');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      } catch (e) {
-        console.error('Failed to parse saved cameras', e);
-      }
-    }
-    return defaultCamIds.map(id => ALL_CAMERAS.find(c => c.id === id) || ALL_CAMERAS[0]);
-  });
 
-  React.useEffect(() => {
-    localStorage.setItem('activeCameras', JSON.stringify(activeCameras));
-  }, [activeCameras]);
-
+  const [activeCameras, setActiveCameras] = useState<Camera[]>([]);
   const [globalAiEnabled, setGlobalAiEnabled] = useState(() => {
     return localStorage.getItem('globalAiEnabled') === 'true';
   });
@@ -40,6 +23,55 @@ export const CameraGrid: React.FC = React.memo(() => {
   React.useEffect(() => {
     localStorage.setItem('globalAiEnabled', String(globalAiEnabled));
   }, [globalAiEnabled]);
+
+  // Sync with Firestore Global Settings for default cameras
+  React.useEffect(() => {
+    const settingsRef = doc(db, 'settings', 'global');
+    const unsubscribe = onSnapshot(settingsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data.defaultCameraIds && Array.isArray(data.defaultCameraIds)) {
+          const cams = data.defaultCameraIds
+            .map((id: string) => ALL_CAMERAS.find(c => c.id === id))
+            .filter(Boolean) as Camera[];
+          
+          if (cams.length > 0) {
+            const saved = localStorage.getItem('activeCameras');
+            if (!saved) {
+              setActiveCameras(cams);
+            }
+          }
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Initial load from localStorage or hardcoded defaults
+  React.useEffect(() => {
+    const saved = localStorage.getItem('activeCameras');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setActiveCameras(parsed);
+          return;
+        }
+      } catch (e) {
+        console.error('Failed to parse saved cameras', e);
+      }
+    }
+    
+    if (activeCameras.length === 0) {
+      const defaultCamIds = ['cam2', 'cam3', 'cam4', 'cam8'];
+      setActiveCameras(defaultCamIds.map(id => ALL_CAMERAS.find(c => c.id === id) || ALL_CAMERAS[0]));
+    }
+  }, []);
+
+  React.useEffect(() => {
+    localStorage.setItem('activeCameras', JSON.stringify(activeCameras));
+  }, [activeCameras]);
   const REFRESH_RATE = 900000; // Hardcoded 15 min (900,000ms)
 
   const handleSwitchCamera = (index: number, newCam: Camera) => {

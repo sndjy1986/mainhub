@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Clipboard, 
@@ -101,47 +101,21 @@ import {
   INITIAL_DATA,
   ShiftReportData 
 } from '../lib/shiftConstants';
-import { saveReport, getReports, ShiftReport as ShiftReportType, auth, signIn, googleProvider, doc, onSnapshot, db, updateGlobalSettings } from '../lib/firebase';
+import { 
+  saveReport, 
+  getReports, 
+  ShiftReport as ShiftReportType, 
+  auth, 
+  signIn, 
+  googleProvider, 
+  doc, 
+  onSnapshot, 
+  db, 
+  updateGlobalSettings,
+  PersonnelMember
+} from '../lib/firebase';
 
 const STORAGE_KEY = "shiftReportDraft_v2";
-
-const DIRECTORY_DATA = [
-  {
-    title: "Emergency & Public Services",
-    contacts: [
-      { name: "Steven Kelly", title: "(EMS-1) EMS Director", phone: "864-844-4131" },
-      { name: "Don McCown", title: "(EMS-2) EMS Coordinator", phone: "864-444-0715" },
-      { name: "Cory Freeman", title: "(EMS 3) Operations Manager", phone: "864-532-1065" },
-      { name: "Geneva Williams", title: "Communications Supervisor", phone: "864-791-0121" },
-      { name: "Rhonda Brooks", title: "Operations Manager", phone: "864-276-9936" },
-      { name: "Supervisor Number", title: "Medshore (Multiple)", phone: "864-844-4354" },
-      { name: "Anmed Comms Room", title: "Comm Room", phone: "864-512-1344" },
-    ]
-  },
-  {
-    title: "Coroner's Office",
-    contacts: [
-      { name: "G. Shore", title: "Z-1", phone: "864-444-6727" },
-      { name: "D. McCown", title: "Z-3", phone: "864-444-0715" },
-      { name: "T. Blackwell", title: "Z-7", phone: "864-318-4915" },
-      { name: "A. Whitfield", title: "Z-9", phone: "864-795-2633" },
-      { name: "S. Sullivan", title: "Z-10", phone: "864-795-0886" },
-      { name: "K. Williamson", title: "Z-11", phone: "864-749-9159" },
-      { name: "C. Freeman", title: "Z-14", phone: "864-532-1065" },
-      { name: "R. Ables", title: "Z-15", phone: "864-642-8853" },
-      { name: "S. Kaufman", title: "Z-18", phone: "864-932-7179" },
-    ]
-  },
-  {
-    title: "QRV Supervisor's",
-    contacts: [
-      { name: "Shanda Shore", title: "A Shift Captain", phone: "864-749-7004" },
-      { name: "Joe Kennedy", title: "B Shift Captain", phone: "864-749-7008" },
-      { name: "Jared Bingel", title: "C Shift Captain", phone: "864-749-6208" },
-      { name: "Joseph \"Alex\" Kay", title: "D Shift Captain", phone: "864-749-7013" },
-    ]
-  }
-];
 
 export default function ShiftReport() {
   const [data, setData] = useState<ShiftReportData>(() => {
@@ -167,24 +141,46 @@ export default function ShiftReport() {
   const [user, setUser] = useState(auth.currentUser);
   const [backgroundStyle, setBackgroundStyle] = useState<'glow' | 'emergency'>('glow');
   const [lightIntensity, setLightIntensity] = useState<number>(0.5);
+  const [personnel, setPersonnel] = useState<PersonnelMember[]>([]);
 
   // Sync with Firestore Global Settings
   useEffect(() => {
-    // This listener works even if user isn't logged in (depending on rules)
-    // but typically we want it to be real-time for everyone
     const settingsRef = doc(db, 'settings', 'global');
     const unsubscribe = onSnapshot(settingsRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
         if (data.backgroundStyle) setBackgroundStyle(data.backgroundStyle);
         if (typeof data.lightIntensity === 'number') setLightIntensity(data.lightIntensity);
-        if (data.employees) setEmployees(data.employees);
+        if (data.personnel) setPersonnel(data.personnel);
         if (data.supervisors) setSupervisors(data.supervisors);
       }
     });
 
     return () => unsubscribe();
   }, []);
+
+  // Compute shift teams from personnel
+  const shiftTeams = useMemo(() => {
+    const teams: Record<string, { lead: string; members: string[] }> = {
+      'A': { lead: '', members: [] },
+      'B': { lead: '', members: [] },
+      'C': { lead: '', members: [] },
+      'D': { lead: '', members: [] },
+      'Other': { lead: '', members: [] }
+    };
+
+    personnel.forEach(p => {
+      if (teams[p.shift]) {
+        if (!teams[p.shift].lead) {
+          teams[p.shift].lead = p.name;
+        } else {
+          teams[p.shift].members.push(p.name);
+        }
+      }
+    });
+
+    return teams;
+  }, [personnel]);
 
   // Track auth state
   useEffect(() => {
@@ -554,17 +550,14 @@ export default function ShiftReport() {
                   <Field label="Name">
                     <select name="name" value={data.name} onChange={handleChange}>
                       <option value="">-- Select --</option>
-                      {Object.entries(SHIFT_TEAMS).map(([shiftName, team]) => (
+                      {Object.entries(shiftTeams).map(([shiftName, team]) => (
                         <optgroup key={shiftName} label={`${shiftName} Shift`}>
-                          <option value={team.lead}>{team.lead} (Lead)</option>
+                          {team.lead && <option value={team.lead}>{team.lead} (Lead)</option>}
                           {team.members.map(m => (
                             <option key={m} value={m}>{m}</option>
                           ))}
                         </optgroup>
                       ))}
-                      <optgroup label="Other">
-                        <option value="Donna Wiles">Donna Wiles</option>
-                      </optgroup>
                     </select>
                   </Field>
                   <Field label="Date">
@@ -586,9 +579,9 @@ export default function ShiftReport() {
                   <Field label="Ch.1">
                     <select name="channel1" value={data.channel1} onChange={handleChange}>
                       <option value="">-- Select --</option>
-                      {Object.entries(SHIFT_TEAMS).map(([shiftName, team]) => (
+                      {Object.entries(shiftTeams).map(([shiftName, team]) => (
                         <optgroup key={shiftName} label={`${shiftName} Shift`}>
-                          <option value={team.lead}>{team.lead}</option>
+                          {team.lead && <option value={team.lead}>{team.lead}</option>}
                           {team.members.map(m => (
                             <option key={m} value={m}>{m}</option>
                           ))}
@@ -599,9 +592,9 @@ export default function ShiftReport() {
                   <Field label="Ch.2">
                     <select name="channel2" value={data.channel2} onChange={handleChange}>
                       <option value="">-- Select --</option>
-                      {Object.entries(SHIFT_TEAMS).map(([shiftName, team]) => (
+                      {Object.entries(shiftTeams).map(([shiftName, team]) => (
                         <optgroup key={shiftName} label={`${shiftName} Shift`}>
-                          <option value={team.lead}>{team.lead}</option>
+                          {team.lead && <option value={team.lead}>{team.lead}</option>}
                           {team.members.map(m => (
                             <option key={m} value={m}>{m}</option>
                           ))}
@@ -612,9 +605,9 @@ export default function ShiftReport() {
                   <Field label="Third Person">
                     <select name="thirdPerson" value={data.thirdPerson} onChange={handleChange}>
                       <option value="">-- Select --</option>
-                      {Object.entries(SHIFT_TEAMS).map(([shiftName, team]) => (
+                      {Object.entries(shiftTeams).map(([shiftName, team]) => (
                         <optgroup key={shiftName} label={`${shiftName} Shift`}>
-                          <option value={team.lead}>{team.lead}</option>
+                          {team.lead && <option value={team.lead}>{team.lead}</option>}
                           {team.members.map(m => (
                             <option key={m} value={m}>{m}</option>
                           ))}
@@ -821,67 +814,6 @@ export default function ShiftReport() {
         </div>
       )}
 
-      {/* Slide-out Directory Drawer */}
-      <div className={`fixed inset-0 z-[120] transition-opacity duration-300 ${showDirectoryDrawer ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <div onClick={() => setShowDirectoryDrawer(false)} className="absolute inset-0 bg-black/80 backdrop-blur-md" />
-        <aside 
-          className={`absolute top-0 right-0 h-full w-full max-w-lg bg-brand-bg/90 backdrop-blur-3xl border-l border-white/10 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${showDirectoryDrawer ? 'translate-x-0' : 'translate-x-full'}`}
-        >
-          <div className="p-8 border-b border-white/10 flex items-center justify-between">
-            <div>
-              <h3 className="text-2xl font-black text-white flex items-center gap-4 tracking-tight uppercase">
-                <Phone className="w-6 h-6 text-brand-indigo" />
-                Directory
-              </h3>
-              <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest font-black">Medshore Emergency Services</p>
-            </div>
-            <button 
-              onClick={() => setShowDirectoryDrawer(false)}
-              className="p-3 hover:bg-white/10 rounded-2xl transition-colors text-slate-500"
-            >
-              <X className="w-8 h-8" />
-            </button>
-          </div>
-          
-          <div className="flex-1 p-8 overflow-y-auto scrollbar-thin space-y-10">
-            {DIRECTORY_DATA.map((section, sIdx) => (
-              <div key={sIdx} className="space-y-6">
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-indigo/70 border-b border-brand-indigo/20 pb-3 flex items-center justify-between">
-                  {section.title}
-                  <span className="opacity-40 font-mono">{section.contacts.length}</span>
-                </h4>
-                <div className="grid gap-3">
-                  {section.contacts.map((contact, cIdx) => (
-                    <div 
-                      key={cIdx} 
-                      className="p-5 bg-white/5 border border-white/10 shadow-2xl rounded-2xl flex items-center justify-between group hover:border-emerald-300 transition-all"
-                    >
-                      <div>
-                        <div className="text-sm font-bold text-white tracking-tight">{contact.name}</div>
-                        <div className="text-[9px] uppercase tracking-widest text-slate-500 font-black mt-1">{contact.title}</div>
-                      </div>
-                      <a 
-                        href={`tel:${contact.phone}`} 
-                        className="p-3 glass-effect rounded-xl text-slate-400 group-hover:text-brand-emerald group-hover:border-brand-emerald/30 transition-all flex items-center gap-3"
-                      >
-                        <span className="text-xs font-mono hidden sm:inline font-bold">{contact.phone}</span>
-                        <Phone className="w-5 h-5" />
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="p-8 border-t border-white/5 glass-effect bg-white/5">
-            <p className="text-[10px] text-slate-400 text-center uppercase tracking-widest font-black">
-              Internal Ops Only • Medshore Ambulance
-            </p>
-          </div>
-        </aside>
-      </div>
-
       {/* Preview / Archive Drawer */}
       <div className={`fixed inset-0 z-[120] transition-opacity duration-300 ${showPreviewDrawer ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <div onClick={() => {
@@ -1025,7 +957,7 @@ function Field({ label, children }: { label: string; children: React.ReactElemen
       </label>
       <div className="relative group">
         {React.cloneElement(children, {
-          className: `${(children.props as any).className || ''} w-full ${isSelect ? 'bg-white/10 appearance-none [&>option]:bg-white/5 [&>option]:text-white' : 'glass-effect bg-white/5'} border border-white/10 group-hover:border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl px-5 py-4 text-sm text-white transition-all outline-none font-sans`
+          className: `${(children.props as any).className || ''} w-full ${isSelect ? 'bg-slate-800 appearance-none [&>option]:bg-slate-900 [&>option]:text-white' : 'glass-effect bg-white/5'} border border-white/10 group-hover:border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl px-5 py-4 text-sm text-white transition-all outline-none font-sans`
         } as any)}
         {isSelect && (
           <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none">

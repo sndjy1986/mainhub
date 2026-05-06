@@ -17,8 +17,8 @@ import {
   Save,
   Maximize2
 } from 'lucide-react';
-import { doc, onSnapshot, db, auth, updateGlobalSettings, signIn } from '../lib/firebase';
-import { TEAM_MEMBERS, MEDSUP_MAP } from '../lib/shiftConstants';
+import { doc, onSnapshot, db, auth, updateGlobalSettings, signIn, PersonnelMember } from '../lib/firebase';
+import { MEDSUP_MAP } from '../lib/shiftConstants';
 
 const DIRECTORY_DATA = [
   {
@@ -60,7 +60,7 @@ const DIRECTORY_DATA = [
 
 export default function Directory() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [employees, setEmployees] = useState<string[]>(TEAM_MEMBERS);
+  const [personnel, setPersonnel] = useState<PersonnelMember[]>([]);
   const [supervisors, setSupervisors] = useState<Record<string, string>>(MEDSUP_MAP);
   const [user, setUser] = useState(auth.currentUser);
   const [isManagementMode, setIsManagementMode] = useState(false);
@@ -75,7 +75,7 @@ export default function Directory() {
     const unsubscribe = onSnapshot(settingsRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
-        if (data.employees) setEmployees(data.employees);
+        if (data.personnel) setPersonnel(data.personnel);
         if (data.supervisors) setSupervisors(data.supervisors);
       }
     });
@@ -99,9 +99,11 @@ export default function Directory() {
     )
   })).filter(section => section.contacts.length > 0);
 
-  const filteredEmployees = employees.filter(e => 
-    e.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPersonnel = personnel.filter(p => 
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (p.phone && p.phone.includes(searchTerm)) ||
+    p.shift.toLowerCase().includes(searchTerm.toLowerCase())
+  ).sort((a, b) => a.name.localeCompare(b.name));
 
   const filteredSupervisors = Object.entries(supervisors).filter(([name, email]) => 
     name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -264,33 +266,23 @@ export default function Directory() {
                 Active Roster
               </h3>
               {isManagementMode && (
-                <button 
-                  onClick={() => {
-                    const name = window.prompt("New Roster Name:");
-                    if (name?.trim()) {
-                      const newList = [...employees, name.trim()].sort();
-                      setEmployees(newList);
-                      updateGlobalSettings({ employees: newList });
-                    }
-                  }}
-                  className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg hover:bg-indigo-500/20"
-                >
-                  <PlusCircle className="w-4 h-4" />
-                </button>
+                <div className="text-[10px] text-slate-500 font-black uppercase">Edit in Admin Panel</div>
               )}
             </div>
             <div className="flex-1 overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-white/10">
-              {filteredEmployees.length > 0 ? filteredEmployees.map(emp => (
-                <div key={emp} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between group">
-                  <span className="text-xs font-bold text-white">{emp}</span>
-                  {isManagementMode && (
+              {filteredPersonnel.length > 0 ? filteredPersonnel.map(p => (
+                <div key={p.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between group">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-white">{p.name}</span>
+                    <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{p.shift} SHIFT {p.phone ? `• ${p.phone}` : ''}</span>
+                  </div>
+                  {p.phone && (
                     <button onClick={() => {
-                      if (confirm(`Delete ${emp}?`)) {
-                        const newList = employees.filter(e => e !== emp);
-                        setEmployees(newList);
-                        updateGlobalSettings({ employees: newList });
-                      }
-                    }} className="p-2 text-slate-500 hover:text-red-400"><Trash2 className="w-3.5 h-3.5" /></button>
+                        navigator.clipboard.writeText(p.phone!);
+                        setShowToast(`Copied: ${p.phone}`);
+                      }} className="p-2 text-slate-500 hover:text-indigo-400 transition-all">
+                      <Clipboard className="w-4 h-4" />
+                    </button>
                   )}
                 </div>
               )) : (

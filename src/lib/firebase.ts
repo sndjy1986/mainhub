@@ -83,11 +83,21 @@ async function testConnection() {
 }
 testConnection();
 
+export type PersonnelMember = {
+  id: string;
+  name: string;
+  shift: 'A' | 'B' | 'C' | 'D' | 'Other';
+  phone?: string;
+  email?: string;
+};
+
 export type GlobalSettings = {
   backgroundStyle: 'glow' | 'emergency';
   lightIntensity: number;
   employees?: string[];
+  personnel?: PersonnelMember[];
   supervisors?: Record<string, string>;
+  defaultCameraIds?: string[];
   updatedAt?: any;
   updatedBy?: string | null;
 };
