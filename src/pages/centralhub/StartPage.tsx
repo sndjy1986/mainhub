@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Calendar as CalendarIcon, Clock, Shield, Activity, AlertCircle, Plus, Trash2, Info, MessageSquare, PlusCircle, X, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Shield, Activity, AlertCircle, Plus, Trash2, Info, MessageSquare, PlusCircle, X, ChevronLeft, ChevronRight, User, Phone, BookOpen } from 'lucide-react';
 import { WeatherDashboard } from '../../components/centralhub/WeatherDashboard';
 import { useTerminal } from '../../context/TerminalContext';
 import { onSnapshot, collection, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
@@ -21,7 +21,10 @@ import {
   parseISO
 } from 'date-fns';
 
+import { useNavigate } from 'react-router-dom';
+
 export function StartPage() {
+  const navigate = useNavigate();
   const [shift, setShift] = useState(() => localStorage.getItem('selectedShift') || 'A');
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
 
@@ -91,7 +94,7 @@ export function StartPage() {
           </div>
         </section>
 
-        {/* Environmental Monitoring in old Calendar slot */}
+        {/* Environmental Monitoring */}
         <section className="lg:col-span-8">
           <WeatherDashboard />
         </section>

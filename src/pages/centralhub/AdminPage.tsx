@@ -170,7 +170,10 @@ export function AdminPage() {
                 </button>
              </div>
           </section>
+        </div>
 
+        {/* Right Column */}
+        <div className="space-y-12">
           {/* Visual Settings */}
           <section className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6">
             <h3 className="text-lg font-bold text-white flex items-center gap-3">
@@ -217,123 +220,6 @@ export function AdminPage() {
                   className="w-full accent-indigo-500 h-1 bg-white/10 rounded-full appearance-none cursor-pointer"
                 />
               </div>
-            </div>
-          </section>
-        </div>
-
-        {/* Right Column */}
-        <div className="space-y-12">
-          {/* Team Roster Management */}
-          <section className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6 flex flex-col h-[500px]">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white flex items-center gap-3">
-                <User className="w-5 h-5 text-indigo-400" />
-                Operations Roster
-              </h3>
-              <button 
-                onClick={() => {
-                  const name = window.prompt("Enter new employee name:");
-                  if (name && name.trim()) {
-                    const newList = [...employees, name.trim()].sort();
-                    setEmployees(newList);
-                    if (user) updateGlobalSettings({ employees: newList });
-                  }
-                }}
-                className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg hover:bg-indigo-500/20 transition-all active:scale-95"
-              >
-                <PlusCircle className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-white/10">
-              <AnimatePresence>
-                {employees.map(emp => (
-                  <motion.div 
-                    key={emp}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 group hover:border-indigo-500/50 transition-all"
-                  >
-                    <span className="text-xs font-bold text-white">{emp}</span>
-                    <button 
-                      onClick={() => {
-                        if (window.confirm(`Delete ${emp}?`)) {
-                          const newList = employees.filter(e => e !== emp);
-                          setEmployees(newList);
-                          if (user) updateGlobalSettings({ employees: newList });
-                        }
-                      }}
-                      className="p-2 text-slate-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </section>
-
-          {/* Supervisor Management */}
-          <section className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white flex items-center gap-3">
-                <Truck className="w-5 h-5 text-emerald-400" />
-                Supervisors
-              </h3>
-              <button 
-                onClick={() => {
-                  const name = window.prompt("Enter new supervisor name:");
-                  if (name && name.trim()) {
-                    const email = window.prompt(`Enter email for ${name}:`);
-                    const newSups = { ...supervisors, [name.trim()]: (email || "").trim() };
-                    setSupervisors(newSups);
-                    if (user) updateGlobalSettings({ supervisors: newSups });
-                  }
-                }}
-                className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg hover:bg-emerald-500/20 transition-all active:scale-95"
-              >
-                <PlusCircle className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              {Object.entries(supervisors).map(([name, email]) => (
-                <div key={name} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 group">
-                  <div>
-                    <div className="text-xs font-bold text-white">{name}</div>
-                    <div className="text-[9px] text-slate-500 font-mono uppercase tracking-widest mt-0.5">{email || 'No Email'}</div>
-                  </div>
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                    <button 
-                      onClick={() => {
-                        const newEmail = window.prompt(`Update email for ${name}:`, supervisors[name]);
-                        if (newEmail !== null) {
-                          const newSups = { ...supervisors, [name]: newEmail.trim() };
-                          setSupervisors(newSups);
-                          if (user) updateGlobalSettings({ supervisors: newSups });
-                        }
-                      }}
-                      className="p-2 text-slate-500 hover:text-indigo-400"
-                    >
-                      <Maximize2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button 
-                      onClick={() => {
-                        if (window.confirm(`Delete supervisor ${name}?`)) {
-                          const newSups = { ...supervisors };
-                          delete newSups[name];
-                          setSupervisors(newSups);
-                          if (user) updateGlobalSettings({ supervisors: newSups });
-                        }
-                      }}
-                      className="p-2 text-slate-500 hover:text-red-400"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
             </div>
           </section>
         </div>

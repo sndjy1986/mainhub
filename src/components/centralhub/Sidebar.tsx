@@ -14,7 +14,8 @@ import {
   Settings2,
   Lock,
   UserCheck,
-  Clock as ClockIcon
+  Clock as ClockIcon,
+  Phone
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTerminal } from '../../context/TerminalContext';
@@ -27,6 +28,7 @@ const navItems = [
   { icon: Camera, label: 'Cameras', path: '/cameras' },
   { icon: FileText, label: 'Shift Report', path: '/shift-report' },
   { icon: ClockIcon, label: 'Time Clock', path: '/time-clock' },
+  { icon: Phone, label: 'Directory', path: '/directory' },
 ];
 
 export function Sidebar() {
