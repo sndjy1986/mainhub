@@ -750,6 +750,34 @@ export default function ShiftReport() {
                 </button>
                 <button 
                   type="button"
+                  onClick={async () => {
+                    if (!user) {
+                      setShowToast("Login required for cloud backup");
+                      setShowAdminDrawer(true);
+                      return;
+                    }
+                    const plainReport = buildReport();
+                    const htmlReport = buildHtmlReport();
+                    try {
+                      await saveReport({
+                        name: data.name,
+                        date: data.date,
+                        shift: data.shift,
+                        data: data,
+                        htmlReport: htmlReport,
+                        plainReport: plainReport
+                      });
+                      setShowToast("Report backed up to cloud!");
+                    } catch (e) {
+                      setShowToast("Backup failed. Check connection.");
+                    }
+                  }}
+                  className="px-4 py-2 text-sm font-black text-slate-400 hover:text-indigo-400 flex items-center gap-2 transition-colors uppercase tracking-widest"
+                >
+                  <History className="w-4 h-4" /> Manual Backup
+                </button>
+                <button 
+                  type="button"
                   onClick={handleSend}
                   className="bg-emerald-600 hover:bg-emerald-700 px-10 py-4 rounded-2xl text-white font-black text-sm shadow-xl shadow-emerald-500/25 flex items-center gap-3 transition-all active:scale-95 uppercase tracking-widest"
                 >

@@ -1,10 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Map as MapIcon, List, AlertCircle, Loader2, X } from 'lucide-react';
-import { Unit, TRANSPORT_UNITS, QRV_UNITS, API_LIMIT } from '../lib/distanceConstants';
+import { Search, Map as MapIcon, List, AlertCircle, Loader2, X, Shield } from 'lucide-react';
+import { Unit, API_LIMIT } from '../lib/distanceConstants';
 import { geocode, getMatrix, fetchCurrentUsage, incrementUsage } from '../services/mapboxService';
+import { POST_DATA, INITIAL_UNITS, TRANSPORT_ADDRS, QRV_UNITS as DISPATCH_QRV } from '../lib/dispatchConstants';
 import Map from '../components/distancechecker/Map';
 import UnitTable from '../components/distancechecker/UnitTable';
+import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { collection, onSnapshot, query } from 'firebase/firestore';
+import { ToneTestRecord } from '../types';
+
+interface UnitAssignment {
+  unitId: string;
+  postName: string;
+}
 
 export default function DistanceMap() {
   const [address, setAddress] = useState('');
@@ -16,28 +25,75 @@ export default function DistanceMap() {
   
   const [transportResults, setTransportResults] = useState<Unit[]>([]);
   const [qrvResults, setQrvResults] = useState<Unit[]>([]);
-  const [unitCoordsCache, setUnitCoordsCache] = useState<Record<string, [number, number]>>({});
+  
+  const [toneRecords, setToneRecords] = useState<ToneTestRecord[]>([]);
+  const [assignments, setAssignments] = useState<UnitAssignment[]>([]);
 
   useEffect(() => {
     fetchCurrentUsage().then(setUsageCount);
-    
-    // Pre-cache unit coordinates (optional, but saves time later)
-    const cacheUnits = async () => {
-      const allUnits = [...TRANSPORT_UNITS, ...QRV_UNITS];
-      const cache: Record<string, [number, number]> = {};
+
+    const unsubTone = onSnapshot(query(collection(db, 'toneTests')), (snapshot) => {
+      setToneRecords(snapshot.docs.map(doc => doc.data() as ToneTestRecord));
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'toneTests'));
+
+    const unsubAssign = onSnapshot(query(collection(db, 'unitAssignments')), (snapshot) => {
+      setAssignments(snapshot.docs.map(doc => doc.data() as UnitAssignment));
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'unitAssignments'));
+
+    return () => {
+      unsubTone();
+      unsubAssign();
+    };
+  }, []);
+
+  // Compute active units and their effective coordinates
+  const activeTransportUnits = useMemo(() => {
+    // Only MED- units that are UP
+    const upUnits = toneRecords.filter(r => 
+      r.unit.toUpperCase().startsWith('MED') && 
+      r.time && 
+      !r.tenFortyTwo
+    );
+
+    return upUnits.map(tr => {
+      const unitId = tr.unit;
+      const assignment = assignments.find(a => a.unitId.toLowerCase() === unitId.toLowerCase());
       
-      // We process in small chunks to avoid rate limits if any
-      for (const unit of allUnits) {
-        try {
-          cache[unit.name] = await geocode(unit.addr);
-        } catch (e) {
-          console.error(`Failed to geocode ${unit.name}`, e);
+      let coords: [number, number] | null = null;
+      let addr = TRANSPORT_ADDRS[unitId] || "Unknown Address";
+
+      if (assignment) {
+        const post = POST_DATA.find(p => p.name === assignment.postName);
+        if (post) {
+          coords = [post.lon, post.lat];
+          addr = `Posted @ ${post.name}`;
+        }
+      } else {
+        const unitInfo = INITIAL_UNITS.find(iu => iu.id.toLowerCase() === unitId.toLowerCase());
+        if (unitInfo) {
+          const post = POST_DATA.find(p => p.name === unitInfo.home);
+          if (post) {
+            coords = [post.lon, post.lat];
+            addr = `Home @ ${post.name}`;
+          }
         }
       }
-      setUnitCoordsCache(cache);
-    };
-    
-    cacheUnits();
+
+      return {
+        name: unitId,
+        addr: addr,
+        coords: coords // We'll use these to avoid geocoding
+      };
+    });
+  }, [toneRecords, assignments]);
+
+  // QRVs are always active for now, or we could filter them too if needed
+  const activeQrvUnits = useMemo(() => {
+    return DISPATCH_QRV.map(q => ({
+      name: q.name,
+      addr: q.addr,
+      coords: null as [number, number] | null // We'll geocode these as they are static home based in this app's logic
+    }));
   }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -52,34 +108,31 @@ export default function DistanceMap() {
       setDestCoords(coords);
       setStatus("Calculating routes...");
 
-      const processGroup = async (units: Unit[]) => {
-        // Use cached coordinates if available, otherwise geocode
+      const processGroup = async (units: { name: string, addr: string, coords: [number, number] | null }[]) => {
         const unitCoords = await Promise.all(units.map(async u => {
-          if (unitCoordsCache[u.name]) return unitCoordsCache[u.name];
-          const c = await geocode(u.addr);
-          // Update cache on the fly (though we pre-cached mostly)
-          setUnitCoordsCache(prev => ({ ...prev, [u.name]: c }));
-          return c;
+          if (u.coords) return u.coords;
+          return await geocode(u.addr);
         }));
 
         const matrix = await getMatrix(coords, unitCoords);
         
         return units.map((u, i) => ({
-          ...u,
+          name: u.name,
+          addr: u.addr,
           distance: matrix.distances[0][i+1] * 0.000621371, // meters to miles
           duration: Math.round(matrix.durations[0][i+1] / 60) // seconds to minutes
         })).sort((a, b) => (a.distance || 0) - (b.distance || 0));
       };
 
       const [trans, qrv] = await Promise.all([
-        processGroup(TRANSPORT_UNITS),
-        processGroup(QRV_UNITS)
+        processGroup(activeTransportUnits),
+        processGroup(activeQrvUnits)
       ]);
 
-      setTransportResults(trans);
-      setQrvResults(qrv);
+      setTransportResults(trans as Unit[]);
+      setQrvResults(qrv as Unit[]);
 
-      const totalCost = 1 + TRANSPORT_UNITS.length + QRV_UNITS.length;
+      const totalCost = 1 + activeTransportUnits.length + activeQrvUnits.length;
       const newCount = await incrementUsage(totalCost);
       setUsageCount(newCount);
 
@@ -111,7 +164,7 @@ export default function DistanceMap() {
             <span className="block text-[10px] uppercase tracking-wider text-slate-500 font-bold">System Status</span> 
             <span className="text-emerald-400 font-medium text-sm flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-slow"></span> 
-              Live - All Units Syncing
+              Live - {activeTransportUnits.length} Units Active
             </span>
           </div>
         </div>
@@ -170,11 +223,11 @@ export default function DistanceMap() {
             <div className="p-6 space-y-6 flex-1"> 
               <div className="flex justify-between items-center"> 
                 <span className="text-slate-400 text-sm">Transport Units</span> 
-                <span className="text-white font-mono bg-slate-800 px-2 py-0.5 rounded text-xs">20 Active</span> 
+                <span className="text-white font-mono bg-slate-800 px-2 py-0.5 rounded text-xs">{activeTransportUnits.length} Up</span> 
               </div> 
               <div className="flex justify-between items-center"> 
                 <span className="text-slate-400 text-sm">QRV Paramedics</span> 
-                <span className="text-white font-mono bg-slate-800 px-2 py-0.5 rounded text-xs">15 Active</span> 
+                <span className="text-white font-mono bg-slate-800 px-2 py-0.5 rounded text-xs">{activeQrvUnits.length} Active</span> 
               </div> 
               <div className="pt-4 border-t border-slate-700/50"> 
                 <div className="text-center bg-slate-900/50 rounded-xl p-4 border border-white/5"> 

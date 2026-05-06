@@ -5,12 +5,41 @@ import { CameraPlayer } from './CameraPlayer';
 import { RefreshCw, Activity } from 'lucide-react';
 
 export const CameraGrid: React.FC = React.memo(() => {
-  const [gridSize, setGridSize] = useState<4 | 6>(4);
+  const [gridSize, setGridSize] = useState<4 | 6>(() => {
+    const saved = localStorage.getItem('cameraGridSize');
+    return saved === '6' ? 6 : 4;
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('cameraGridSize', String(gridSize));
+  }, [gridSize]);
   const defaultCamIds = ['cam2', 'cam3', 'cam4', 'cam8']; // MM 19, 21, 23, 34
   const [activeCameras, setActiveCameras] = useState<Camera[]>(() => {
+    const saved = localStorage.getItem('activeCameras');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error('Failed to parse saved cameras', e);
+      }
+    }
     return defaultCamIds.map(id => ALL_CAMERAS.find(c => c.id === id) || ALL_CAMERAS[0]);
   });
-  const [globalAiEnabled, setGlobalAiEnabled] = useState(false);
+
+  React.useEffect(() => {
+    localStorage.setItem('activeCameras', JSON.stringify(activeCameras));
+  }, [activeCameras]);
+
+  const [globalAiEnabled, setGlobalAiEnabled] = useState(() => {
+    return localStorage.getItem('globalAiEnabled') === 'true';
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('globalAiEnabled', String(globalAiEnabled));
+  }, [globalAiEnabled]);
   const REFRESH_RATE = 900000; // Hardcoded 15 min (900,000ms)
 
   const handleSwitchCamera = (index: number, newCam: Camera) => {

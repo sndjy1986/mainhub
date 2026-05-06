@@ -21,6 +21,41 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       }
     },
+    "UnitAssignment": {
+      "title": "Unit Assignment",
+      "description": "Links a unit to its temporary posting location",
+      "type": "object",
+      "properties": {
+        "unitId": { "type": "string" },
+        "postName": { "type": "string" },
+        "assignedAt": { "type": "string", "format": "date-time" },
+        "assignedBy": { "type": "string" }
+      },
+      "required": ["unitId", "postName"]
+    },
+    "ShiftReport": {
+      "title": "Shift Report",
+      "description": "Persisted daily shift report data",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "report": { "type": "object" },
+        "savedAt": { "type": "string", "format": "date-time" },
+        "savedBy": { "type": "string" }
+      },
+      "required": ["date", "report"]
+    },
+    "ToneTest": {
+      "title": "Tone Test Record",
+      "description": "Unit readiness status from tone test",
+      "type": "object",
+      "properties": {
+        "unit": { "type": "string" },
+        "time": { "type": "string" },
+        "tenFortyTwo": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      }
+    },
     "CalendarEvent": {
       "title": "Calendar Event",
       "description": "Operational event or advisory",
@@ -48,6 +83,18 @@
     "/units/{unitId}": {
       "schema": "Unit",
       "description": "Real-time unit tracking"
+    },
+    "/unitAssignments/{assignmentId}": {
+      "schema": "UnitAssignment",
+      "description": "Temporary unit posting assignments"
+    },
+    "/shiftReports/{reportId}": {
+      "schema": "ShiftReport",
+      "description": "Archived shift reports"
+    },
+    "/toneTests/{testId}": {
+      "schema": "ToneTest",
+      "description": "Unit readiness status"
     },
     "/calendar_events/{eventId}": {
       "schema": "CalendarEvent",
