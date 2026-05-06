@@ -558,7 +558,7 @@ export default function ShiftReport() {
           <div className="flex flex-col gap-8">
             {/* Row 1: Info, Radio, Supervisors */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="bg-slate-50 rounded-3xl p-8 space-y-8 shadow-2xl scale-[1.02] border border-slate-200">
+              <div className="glass-effect bg-white/5 rounded-3xl p-8 space-y-8 shadow-2xl scale-[1.02] border border-white/10">
                 <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
                   <User className="w-4 h-4" /> Info
                 </div>
@@ -580,7 +580,7 @@ export default function ShiftReport() {
                 </div>
               </div>
 
-              <div className="bg-slate-50 border border-slate-200 shadow-2xl rounded-2xl p-6 space-y-6">
+              <div className="glass-effect bg-white/5 border border-white/10 shadow-2xl rounded-2xl p-6 space-y-6">
                 <div className="flex items-center gap-2 text-indigo-500 font-bold text-sm tracking-widest uppercase">
                   <Phone className="w-4 h-4" /> Radio Assignment
                 </div>
@@ -606,7 +606,7 @@ export default function ShiftReport() {
                 </div>
               </div>
 
-              <div className="bg-slate-50 border border-slate-200 shadow-2xl rounded-2xl p-6 space-y-6">
+              <div className="glass-effect bg-white/5 border border-white/10 shadow-2xl rounded-2xl p-6 space-y-6">
                 <div className="flex items-center gap-2 text-indigo-500 font-bold text-sm tracking-widest uppercase">
                   <User className="w-4 h-4" /> Supervisors
                 </div>
@@ -629,7 +629,7 @@ export default function ShiftReport() {
 
             {/* Row 2: Zulu, Avail Trucks */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-slate-50 rounded-3xl p-8 space-y-8 shadow-2xl border border-slate-200">
+              <div className="glass-effect bg-white/5 rounded-3xl p-8 space-y-8 shadow-2xl border border-white/10">
                 <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
                   <Truck className="w-4 h-4" /> Zulu On Call (After 1700)
                 </div>
@@ -643,7 +643,7 @@ export default function ShiftReport() {
                 </div>
               </div>
 
-              <div className="bg-slate-50 rounded-3xl p-8 space-y-8 shadow-2xl border border-slate-200">
+              <div className="glass-effect bg-white/5 rounded-3xl p-8 space-y-8 shadow-2xl border border-white/10">
                 <div className="flex items-center gap-3 text-emerald-600 font-bold text-[10px] uppercase tracking-widest">
                   <Truck className="w-4 h-4" /> Avail Trucks
                 </div>
@@ -665,7 +665,7 @@ export default function ShiftReport() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-slate-50 rounded-3xl p-8 space-y-6 shadow-2xl border border-slate-200">
+              <div className="glass-effect bg-white/5 rounded-3xl p-8 space-y-6 shadow-2xl border border-white/10">
                 <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
                   <Clock className="w-4 h-4" /> Late Trucks
                 </div>
@@ -674,12 +674,12 @@ export default function ShiftReport() {
                   value={data.lateTrucks} 
                   onChange={handleChange} 
                   rows={4} 
-                  className="w-full bg-slate-50 text-slate-900 p-4 rounded-2xl border border-slate-200 font-mono text-sm resize-none focus:ring-2 focus:ring-indigo-500/30 transition-all outline-none"
+                  className="w-full glass-effect bg-white/5 text-white p-4 rounded-2xl border border-white/10 font-mono text-sm resize-none focus:ring-2 focus:ring-indigo-500/30 transition-all outline-none"
                   placeholder="Unit numbers and times..." 
                 />
               </div>
 
-              <div className="bg-slate-50 rounded-3xl p-8 space-y-6 shadow-2xl border border-slate-200">
+              <div className="glass-effect bg-white/5 rounded-3xl p-8 space-y-6 shadow-2xl border border-white/10">
                 <div className="flex items-center gap-3 text-emerald-600 font-bold text-[10px] uppercase tracking-widest">
                   <Clock className="w-4 h-4" /> Out of Chute
                 </div>
@@ -688,14 +688,14 @@ export default function ShiftReport() {
                   value={data.outOfChute} 
                   onChange={handleChange} 
                   rows={4} 
-                  className="w-full bg-slate-50 text-slate-900 p-4 rounded-2xl border border-slate-200 font-mono text-sm resize-none focus:ring-2 focus:ring-emerald-500/30 transition-all outline-none"
+                  className="w-full glass-effect bg-white/5 text-white p-4 rounded-2xl border border-white/10 font-mono text-sm resize-none focus:ring-2 focus:ring-emerald-500/30 transition-all outline-none"
                   placeholder="Notable exceptions..." 
                 />
               </div>
             </div>
 
             {/* Row 4: Other Issues */}
-            <div className="bg-slate-50 rounded-3xl p-8 space-y-6 shadow-2xl border border-slate-200">
+            <div className="glass-effect bg-white/5 rounded-3xl p-8 space-y-6 shadow-2xl border border-white/10">
               <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
                 <FileText className="w-4 h-4" /> Other Issues
               </div>
@@ -704,13 +704,13 @@ export default function ShiftReport() {
                 value={data.issues} 
                 onChange={handleChange} 
                 rows={6} 
-                className="w-full bg-slate-50 text-slate-900 p-4 rounded-2xl border border-slate-200 font-mono text-sm resize-none focus:ring-2 focus:ring-indigo-500/30 transition-all outline-none"
+                className="w-full glass-effect bg-white/5 text-white p-4 rounded-2xl border border-white/10 font-mono text-sm resize-none focus:ring-2 focus:ring-indigo-500/30 transition-all outline-none"
                 placeholder="Detailed account of shift activities..." 
               />
             </div>
 
             {/* Row 5: ROSTER/TIME UP */}
-            <div className="bg-slate-50 rounded-3xl p-8 space-y-6 shadow-2xl border border-slate-200">
+            <div className="glass-effect bg-white/5 rounded-3xl p-8 space-y-6 shadow-2xl border border-white/10">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
                   <Clipboard className="w-4 h-4" /> ROSTER/TIME UP
@@ -728,15 +728,15 @@ export default function ShiftReport() {
                 value={data.pasteNotes} 
                 onChange={handleChange} 
                 rows={6} 
-                className="w-full bg-slate-50 text-slate-900 p-4 rounded-2xl border border-slate-200 font-mono text-sm resize-none focus:ring-2 focus:ring-indigo-500/30 transition-all outline-none"
+                className="w-full glass-effect bg-white/5 text-white p-4 rounded-2xl border border-white/10 font-mono text-sm resize-none focus:ring-2 focus:ring-indigo-500/30 transition-all outline-none"
                 placeholder="Enter roster or time up data here..." 
               />
             </div>
             </div>
 
             {/* Actions Bar */}
-            <div className="mt-8 p-8 bg-slate-50 border border-slate-200 rounded-3xl flex flex-wrap items-center justify-between gap-6 shadow-2xl">
-              <div className="flex items-center gap-3 text-slate-600 text-[10px] font-black uppercase tracking-widest">
+            <div className="mt-8 p-8 glass-effect bg-white/5 border border-white/10 rounded-3xl flex flex-wrap items-center justify-between gap-6 shadow-2xl">
+              <div className="flex items-center gap-3 text-slate-400 text-[10px] font-black uppercase tracking-widest">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 Draft saved {lastSaved ? `at ${lastSaved}` : 'now'}
               </div>
@@ -797,10 +797,10 @@ export default function ShiftReport() {
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-indigo">
                 Operations Login
               </h4>
-              <div className="bg-white rounded-3xl p-8 shadow-2xl border border-slate-200">
+              <div className="bg-white/5 rounded-3xl p-8 shadow-2xl border border-white/10">
                 {!user ? (
                   <div className="space-y-6">
-                    <p className="text-sm text-slate-600">Sign in with Google to enable report archiving and history features.</p>
+                    <p className="text-sm text-slate-400">Sign in with Google to enable report archiving and history features.</p>
                     <button 
                       onClick={async () => {
                         try {
@@ -819,13 +819,13 @@ export default function ShiftReport() {
                           }
                         }
                       }}
-                      className="w-full bg-white text-black px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-slate-200 transition-all active:scale-[0.98] shadow-xl"
+                      className="w-full bg-white/5 text-white px-8 py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-white/20 transition-all active:scale-[0.98] shadow-xl"
                     >
                       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
                       Sign in with Google
                     </button>
                     <div className="pt-2">
-                       <p className="text-[10px] text-slate-600 italic text-center">
+                       <p className="text-[10px] text-slate-400 italic text-center">
                         If the popup closes instantly, try opening the app in a 
                         <a href={window.location.href} target="_blank" rel="noopener noreferrer" className="text-brand-indigo ml-1 underline">new tab</a>.
                       </p>
@@ -840,7 +840,7 @@ export default function ShiftReport() {
                         <div className="w-12 h-12 rounded-full bg-brand-indigo flex items-center justify-center font-black text-white uppercase text-xl shadow-lg">{user.email?.[0]}</div>
                       )}
                       <div>
-                        <div className="text-xl font-bold text-slate-900 truncate max-w-[200px]">{user.displayName || user.email}</div>
+                        <div className="text-xl font-bold text-white truncate max-w-[200px]">{user.displayName || user.email}</div>
                         <div className="text-[10px] text-brand-emerald font-black uppercase tracking-widest">Authenticated User</div>
                       </div>
                     </div>
@@ -861,7 +861,7 @@ export default function ShiftReport() {
                 Interface Settings
               </h4>
               
-              <div className="bg-white rounded-3xl p-8 space-y-6 shadow-2xl border border-slate-200">
+              <div className="bg-white/5 rounded-3xl p-8 space-y-6 shadow-2xl border border-white/10">
                 <div className="space-y-4">
                   <div className="text-white font-bold text-sm tracking-tight uppercase">Visual Theme</div>
                   <div className="grid grid-cols-2 gap-4">
@@ -910,7 +910,7 @@ export default function ShiftReport() {
                     }}
                     className="w-full accent-brand-indigo h-1.5 bg-white/10 rounded-full appearance-none cursor-pointer"
                   />
-                  <p className="text-[10px] text-slate-600 italic text-center">Changes sync instantly across all devices</p>
+                  <p className="text-[10px] text-slate-400 italic text-center">Changes sync instantly across all devices</p>
                 </div>
               </div>
             </section>
@@ -932,20 +932,20 @@ export default function ShiftReport() {
               
               <div className="space-y-3">
                 {!user ? (
-                   <div className="text-center py-12 bg-white rounded-3xl shadow-2xl border border-slate-200">
+                   <div className="text-center py-12 bg-white/5 rounded-3xl shadow-2xl border border-white/10">
                     <History className="w-10 h-10 text-slate-800 mx-auto mb-4" />
                     <p className="text-sm text-slate-400 font-medium tracking-tight">Please <span className="text-brand-indigo">Sign In</span> to view history</p>
-                    <p className="text-[10px] text-slate-600 uppercase tracking-widest mt-2 font-black">Secure ops data archive</p>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-2 font-black">Secure ops data archive</p>
                   </div>
                 ) : archivedReports.length === 0 && !loadingReports ? (
-                  <div className="text-center py-10 bg-white rounded-3xl border border-slate-200 shadow-2xl text-slate-500 text-sm italic font-medium">
+                  <div className="text-center py-10 bg-white/5 rounded-3xl border border-white/10 shadow-2xl text-slate-500 text-sm italic font-medium">
                     No archived reports found.
                   </div>
                 ) : (
                   archivedReports.map(report => (
-                    <div key={report.id} className="flex flex-col sm:flex-row sm:items-center gap-6 p-6 bg-white border border-slate-200 shadow-2xl rounded-3xl group hover:border-indigo-300 transition-all">
+                    <div key={report.id} className="flex flex-col sm:flex-row sm:items-center gap-6 p-6 bg-white/5 border border-white/10 shadow-2xl rounded-3xl group hover:border-indigo-300 transition-all">
                       <div className="flex-1 min-w-0">
-                        <div className="text-slate-900 font-bold truncate flex items-center gap-3">
+                        <div className="text-white font-bold truncate flex items-center gap-3">
                           {report.shift} Shift Report
                           <span className="px-3 py-1 rounded bg-brand-indigo/10 text-brand-indigo text-[10px] font-black uppercase tracking-widest">{report.name}</span>
                         </div>
@@ -988,15 +988,15 @@ export default function ShiftReport() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {employees.map(emp => (
-                  <div key={emp} className="flex items-center justify-between p-4 bg-white border border-slate-200 shadow-2xl rounded-2xl group hover:border-indigo-300 transition-all">
-                    <span className="text-slate-900 font-bold text-sm tracking-tight">{emp}</span>
+                  <div key={emp} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 shadow-2xl rounded-2xl group hover:border-indigo-300 transition-all">
+                    <span className="text-white font-bold text-sm tracking-tight">{emp}</span>
                     <button 
                       onClick={() => {
                         if (window.confirm(`Delete ${emp}?`)) {
                           setEmployees(prev => prev.filter(e => e !== emp));
                         }
                       }}
-                      className="p-2 text-slate-600 hover:text-red-400 hover:bg-red-400/10 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
+                      className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -1026,9 +1026,9 @@ export default function ShiftReport() {
               </div>
               <div className="space-y-4">
                 {Object.entries(supervisors).map(([name, email]) => (
-                  <div key={name} className="flex flex-col sm:flex-row sm:items-center gap-6 p-6 bg-white border border-slate-200 shadow-2xl rounded-3xl group hover:border-indigo-300 transition-all">
+                  <div key={name} className="flex flex-col sm:flex-row sm:items-center gap-6 p-6 bg-white/5 border border-white/10 shadow-2xl rounded-3xl group hover:border-indigo-300 transition-all">
                     <div className="flex-1 min-w-0">
-                      <div className="text-slate-900 font-bold tracking-tight">{name}</div>
+                      <div className="text-white font-bold tracking-tight">{name}</div>
                       <div className="text-[10px] text-slate-500 font-mono mt-1 uppercase tracking-widest truncate">{email || 'No email associated'}</div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -1102,7 +1102,7 @@ export default function ShiftReport() {
             </div>
             <button 
               onClick={() => setShowDirectoryDrawer(false)}
-              className="p-3 hover:bg-slate-100 rounded-2xl transition-colors text-slate-500"
+              className="p-3 hover:bg-white/10 rounded-2xl transition-colors text-slate-500"
             >
               <X className="w-8 h-8" />
             </button>
@@ -1119,7 +1119,7 @@ export default function ShiftReport() {
                   {section.contacts.map((contact, cIdx) => (
                     <div 
                       key={cIdx} 
-                      className="p-5 bg-white border border-slate-200 shadow-2xl rounded-2xl flex items-center justify-between group hover:border-emerald-300 transition-all"
+                      className="p-5 bg-white/5 border border-white/10 shadow-2xl rounded-2xl flex items-center justify-between group hover:border-emerald-300 transition-all"
                     >
                       <div>
                         <div className="text-sm font-bold text-white tracking-tight">{contact.name}</div>
@@ -1139,7 +1139,7 @@ export default function ShiftReport() {
             ))}
           </div>
 
-          <div className="p-8 border-t border-slate-100 bg-slate-50">
+          <div className="p-8 border-t border-white/5 glass-effect bg-white/5">
             <p className="text-[10px] text-slate-400 text-center uppercase tracking-widest font-black">
               Internal Ops Only • Medshore Ambulance
             </p>
@@ -1154,11 +1154,11 @@ export default function ShiftReport() {
           setSelectedArchivedReport(null);
         }} className="absolute inset-0 bg-black/90 backdrop-blur-md" />
         <aside 
-          className={`absolute top-0 right-0 h-full w-full max-w-lg bg-white border-l border-slate-200 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${showPreviewDrawer ? 'translate-x-0' : 'translate-x-full'}`}
+          className={`absolute top-0 right-0 h-full w-full max-w-lg bg-white/5 border-l border-white/10 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${showPreviewDrawer ? 'translate-x-0' : 'translate-x-full'}`}
         >
-          <div className="p-8 border-b border-slate-100 flex items-center justify-between">
+          <div className="p-8 border-b border-white/5 flex items-center justify-between">
             <div>
-              <h3 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-4">
+              <h3 className="text-2xl font-black text-white tracking-tight flex items-center gap-4">
                 {selectedArchivedReport ? <History className="w-7 h-7 text-indigo-600" /> : <Eye className="w-7 h-7 text-indigo-600" />}
                 Report Preview
               </h3>
@@ -1177,10 +1177,10 @@ export default function ShiftReport() {
             </button>
           </div>
           
-          <div className="flex-1 p-8 overflow-y-auto scrollbar-thin bg-black/20">
-            <div className="bg-white rounded-3xl p-10 shadow-inner min-h-full">
+          <div className="flex-1 p-8 overflow-y-auto scrollbar-thin bg-white/5">
+            <div className="bg-white/5 rounded-3xl p-10 shadow-inner min-h-full">
               <div 
-                className="prose prose-slate max-w-none text-black selection:bg-brand-indigo/20"
+                className="prose prose-slate max-w-none text-white selection:bg-brand-indigo/20"
                 style={{ fontFamily: 'Calibri, sans-serif' }}
                 dangerouslySetInnerHTML={{ 
                   __html: selectedArchivedReport ? selectedArchivedReport.htmlReport : buildHtmlReport() 
@@ -1244,29 +1244,29 @@ export default function ShiftReport() {
       {showPasteModal && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-6">
           <div onClick={() => setShowPasteModal(false)} className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" />
-          <div className="relative w-full max-w-5xl bg-white border border-slate-200 rounded-[3rem] shadow-2xl overflow-hidden flex flex-col h-[90vh]">
-            <div className="p-10 border-b border-slate-100 flex items-center justify-between bg-white">
+          <div className="relative w-full max-w-5xl bg-white/5 border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden flex flex-col h-[90vh]">
+            <div className="p-10 border-b border-white/5 flex items-center justify-between bg-white/5">
               <div>
-                <h3 className="text-3xl font-black text-slate-900 tracking-tight uppercase">Roster Processing</h3>
+                <h3 className="text-3xl font-black text-white tracking-tight uppercase">Roster Processing</h3>
                 <p className="text-[10px] text-slate-500 mt-2 uppercase tracking-widest font-black">Paste data grid from source system</p>
               </div>
               <button 
                 onClick={() => setShowPasteModal(false)} 
-                className="p-4 hover:bg-slate-100 rounded-3xl transition-colors text-slate-500"
+                className="p-4 hover:bg-white/10 rounded-3xl transition-colors text-slate-500"
               >
                 <X className="w-10 h-10" />
               </button>
             </div>
-            <div className="p-10 flex-1 relative bg-slate-50">
+            <div className="p-10 flex-1 relative glass-effect bg-white/5">
               <textarea 
-                className="w-full h-full bg-white text-slate-900 p-8 rounded-[2rem] border border-slate-200 font-mono text-base resize-none outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium shadow-inner"
+                className="w-full h-full bg-white/5 text-white p-8 rounded-[2rem] border border-white/10 font-mono text-base resize-none outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium shadow-inner"
                 placeholder="Ctrl+V roster data here..."
                 value={data.pasteNotes}
                 onChange={(e) => setData(prev => ({ ...prev, pasteNotes: e.target.value }))}
                 autoFocus
               />
             </div>
-            <div className="p-10 bg-white flex justify-end gap-6 border-t border-slate-100">
+            <div className="p-10 bg-white/5 flex justify-end gap-6 border-t border-white/5">
               <button 
                 onClick={() => setShowPasteModal(false)}
                 className="bg-emerald-600 hover:bg-emerald-700 px-14 py-5 rounded-3xl text-white font-black uppercase tracking-widest text-sm transition-all shadow-2xl shadow-emerald-500/20 active:scale-95"
@@ -1285,12 +1285,12 @@ function Field({ label, children }: { label: string; children: React.ReactElemen
   const isSelect = children.type === 'select';
   return (
     <div className="flex flex-col gap-3">
-      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 pl-1">
+      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">
         {label}
       </label>
       <div className="relative group">
         {React.cloneElement(children, {
-          className: `${(children.props as any).className || ''} w-full ${isSelect ? 'bg-slate-100 appearance-none [&>option]:bg-white [&>option]:text-slate-900' : 'bg-slate-50'} border border-slate-200 group-hover:border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl px-5 py-4 text-sm text-slate-900 transition-all outline-none font-sans`
+          className: `${(children.props as any).className || ''} w-full ${isSelect ? 'bg-white/10 appearance-none [&>option]:bg-white/5 [&>option]:text-white' : 'glass-effect bg-white/5'} border border-white/10 group-hover:border-slate-300 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl px-5 py-4 text-sm text-white transition-all outline-none font-sans`
         } as any)}
         {isSelect && (
           <div className="absolute inset-y-0 right-5 flex items-center pointer-events-none">
@@ -1308,13 +1308,13 @@ function ExternalLinkItem({ href, label, meta }: { href: string; label: string; 
       href={href} 
       target="_blank" 
       rel="noopener noreferrer"
-      className="flex items-center justify-between p-4 bg-white border border-slate-200 shadow-2xl rounded-2xl hover:border-indigo-400 transition-all group"
+      className="flex items-center justify-between p-4 bg-white/5 border border-white/10 shadow-2xl rounded-2xl hover:border-indigo-400 transition-all group"
     >
       <div className="flex flex-col">
-        <span className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tight">{label}</span>
-        <span className="text-[9px] uppercase tracking-widest text-slate-600 font-black mt-0.5">{meta}</span>
+        <span className="text-sm font-bold text-white group-hover:text-indigo-600 transition-colors tracking-tight">{label}</span>
+        <span className="text-[9px] uppercase tracking-widest text-slate-400 font-black mt-0.5">{meta}</span>
       </div>
-      <ExternalLink className="w-4 h-4 text-slate-600 group-hover:text-brand-indigo" />
+      <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-brand-indigo" />
     </a>
   );
 }

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Shield, Zap, Search, Filter, MoreVertical, CheckCircle, Clock } from 'lucide-react';
+import { Shield, Zap, Search, Filter, MoreVertical, CheckCircle, Clock, Map as MapIcon } from 'lucide-react';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import * as L from 'leaflet';
 
 interface Unit {
   id: string;
@@ -8,19 +10,22 @@ interface Unit {
   status: 'Available' | 'Assigned' | 'Offline';
   sector: string;
   timestamp: string;
+  lat: number;
+  lng: number;
 }
 
 const initialUnits: Unit[] = [
-  { id: '101', name: 'Alpha-7', type: 'Recon', status: 'Available', sector: 'Sector 4', timestamp: '10:04' },
-  { id: '202', name: 'Bravo-3', type: 'Defense', status: 'Assigned', sector: 'Sector 1', timestamp: '10:12' },
-  { id: '304', name: 'Gamma-1', type: 'Transport', status: 'Available', sector: 'Sector 7', timestamp: '09:45' },
-  { id: '401', name: 'Delta-9', type: 'Support', status: 'Offline', sector: 'N/A', timestamp: '08:00' },
-  { id: '505', name: 'Echo-5', type: 'Recon', status: 'Available', sector: 'Sector 2', timestamp: '10:30' },
+  { id: '101', name: 'Alpha-7', type: 'Recon', status: 'Available', sector: 'Sector 4', timestamp: '10:04', lat: 34.523, lng: -82.648 },
+  { id: '202', name: 'Bravo-3', type: 'Defense', status: 'Assigned', sector: 'Sector 1', timestamp: '10:12', lat: 34.530, lng: -82.650 },
+  { id: '304', name: 'Gamma-1', type: 'Transport', status: 'Available', sector: 'Sector 7', timestamp: '09:45', lat: 34.510, lng: -82.630 },
+  { id: '401', name: 'Delta-9', type: 'Support', status: 'Offline', sector: 'N/A', timestamp: '08:00', lat: 34.540, lng: -82.600 },
+  { id: '505', name: 'Echo-5', type: 'Recon', status: 'Available', sector: 'Sector 2', timestamp: '10:30', lat: 34.500, lng: -82.680 },
 ];
 
 export function UnitPosting() {
   const [units, setUnits] = useState<Unit[]>(initialUnits);
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('map');
 
   const toggleStatus = (id: string) => {
     setUnits(prev => prev.map(u => {
@@ -40,8 +45,8 @@ export function UnitPosting() {
   );
 
   return (
-    <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-700">
-       <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-2">
+    <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-700 h-full flex flex-col">
+       <div className="flex flex-col md:flex-row gap-4 items-center justify-between shrink-0 mb-2">
           <div className="relative w-full md:w-96">
              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
              <input 
@@ -53,6 +58,20 @@ export function UnitPosting() {
              />
           </div>
           <div className="flex gap-2 w-full md:w-auto">
+             <div className="flex p-1 bg-white/5 border border-white/10 rounded-2xl mr-2">
+               <button 
+                  onClick={() => setViewMode('list')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${viewMode === 'list' ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-white'}`}
+               >
+                 List
+               </button>
+               <button 
+                  onClick={() => setViewMode('map')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all ${viewMode === 'map' ? 'bg-emerald-500 text-white' : 'text-slate-500 hover:text-white'}`}
+               >
+                 <MapIcon className="w-3 h-3" /> Map
+               </button>
+             </div>
              <button className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold text-slate-400 hover:text-white transition-all uppercase tracking-widest">
                 <Filter className="w-3 h-3" /> Filter
              </button>
@@ -62,8 +81,27 @@ export function UnitPosting() {
           </div>
        </div>
 
-       <div className="backdrop-blur-md bg-white/5 border border-white/10 rounded-3xl overflow-hidden overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+       {viewMode === 'map' ? (
+         <div className="flex-1 min-h-[500px] bg-black/20 border border-white/10 rounded-3xl overflow-hidden relative">
+            <MapContainer center={[34.523, -82.648]} zoom={12} className="w-full h-full" zoomControl={false} attributionControl={false}>
+              <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png" />
+              {filteredUnits.map(u => (
+                <Marker 
+                  key={u.id} 
+                  position={[u.lat, u.lng]} 
+                  icon={L.divIcon({
+                    className: 'custom-unit-marker',
+                    html: `<div class="unit-marker-inner" style="background-color: ${u.status === 'Available' ? '#10b981' : u.status === 'Assigned' ? '#6366f1' : '#f43f5e'}; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 10px; border: 2px solid white;">${u.name}</div>`,
+                    iconSize: [60, 24],
+                    iconAnchor: [30, 12]
+                  })} 
+                />
+              ))}
+            </MapContainer>
+         </div>
+       ) : (
+         <div className="backdrop-blur-md flex-1 bg-white/5 border border-white/10 rounded-3xl overflow-hidden overflow-x-auto min-h-0">
+            <table className="w-full text-left border-collapse">
              <thead>
                 <tr className="border-b border-white/5">
                    <th className="px-8 py-5 text-[10px] uppercase font-bold text-slate-500 tracking-[0.2em]">Designation</th>
@@ -116,10 +154,11 @@ export function UnitPosting() {
                    </tr>
                 ))}
              </tbody>
-          </table>
-       </div>
-
-       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  </table>
+               </div>
+            )}
+            
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
           <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex items-center gap-4">
              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
                 <CheckCircle className="w-5 h-5" />
