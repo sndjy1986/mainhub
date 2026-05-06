@@ -8,7 +8,7 @@ import { PageWrapper } from './components/centralhub/PageWrapper';
 const ToneTest = lazy(() => import('./pages/ToneTest'));
 const ShiftReport = lazy(() => import('./pages/ShiftReport'));
 const DistanceMap = lazy(() => import('./pages/DistanceMap'));
-const CommandConsole = lazy(() => import('./pages/CommandConsole'));
+import { UnitPosting } from './components/tools/UnitPosting';
 const DotCameras = lazy(() => import('./pages/DotCameras'));
 const AdminPage = lazy(() => import('./pages/centralhub/AdminPage'));
 const TimeClock = lazy(() => import('./pages/TimeClock'));
@@ -22,7 +22,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<PageWrapper><StartPage /></PageWrapper>} />
               <Route path="/tone-test" element={<PageWrapper className="overflow-y-auto"><ToneTest /></PageWrapper>} />
-              <Route path="/unit-posting" element={<PageWrapper fullWidth className="overflow-hidden"><CommandConsole /></PageWrapper>} />
+              <Route path="/unit-posting" element={<PageWrapper fullWidth className="overflow-hidden"><UnitPosting /></PageWrapper>} />
               <Route path="/distance-map" element={<PageWrapper fullWidth className="overflow-hidden"><DistanceMap /></PageWrapper>} />
               <Route path="/cameras" element={<PageWrapper fullWidth className="overflow-hidden"><DotCameras /></PageWrapper>} />
               <Route path="/shift-report" element={<PageWrapper className="overflow-y-auto"><ShiftReport /></PageWrapper>} />

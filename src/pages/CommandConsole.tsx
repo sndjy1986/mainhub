@@ -695,6 +695,7 @@ export default function CommandConsolePage() {
               <iframe 
                 src="https://www.google.com/maps/d/u/0/embed?mid=1sVuk-qPshgccqAlOzQvumzq7OdeVII8&ehbc=2E312F" 
                 className="w-full h-full border-none absolute inset-0 z-10"
+                style={{ border: "5px solid #22d3ee" }}
                 title="Google My Maps Tactical"
                 allowFullScreen
               />
