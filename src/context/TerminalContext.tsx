@@ -21,6 +21,8 @@ interface TerminalContextType {
   weatherZip: string | null;
   setWeatherZip: (zip: string | null) => void;
   notifications: Notification[];
+  notificationPermission: NotificationPermission;
+  requestNotificationPermission: () => Promise<NotificationPermission | undefined>;
   addNotification: (message: string, type?: Notification['type']) => void;
   removeNotification: (id: string) => void;
 }
@@ -34,6 +36,16 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const [systemAdvisory, setSystemAdvisory] = useState('Maintain vigilance in Sector 7 and monitor all frequencies for anomalies.');
   const [weatherZip, setWeatherZip] = useState<string | null>(() => localStorage.getItem('weatherZip'));
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
+    typeof Notification !== 'undefined' ? Notification.permission : 'default'
+  );
+
+  const requestNotificationPermission = async () => {
+    if (typeof Notification === 'undefined') return;
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
+    return permission;
+  };
 
   const addNotification = (message: string, type: Notification['type'] = 'info') => {
     const id = Math.random().toString(36).substring(7);
@@ -44,6 +56,16 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       timestamp: new Date().toLocaleTimeString()
     };
     setNotifications(prev => [newNote, ...prev].slice(0, 5));
+
+    // System Level Notification
+    if (notificationPermission === 'granted') {
+      new Notification(`AI Dispatch Alert [${type.toUpperCase()}]`, {
+        body: message,
+        icon: '/favicon.ico', // Adjust icon path if necessary
+        silent: type === 'info'
+      });
+    }
+
     // Auto remove after 8 seconds
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== id));
@@ -75,6 +97,8 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       weatherZip,
       setWeatherZip,
       notifications,
+      notificationPermission,
+      requestNotificationPermission,
       addNotification,
       removeNotification
     }}>

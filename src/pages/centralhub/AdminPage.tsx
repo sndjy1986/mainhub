@@ -24,7 +24,8 @@ import {
   Edit2,
   Phone,
   Camera,
-  Search
+  Search,
+  Bell
 } from 'lucide-react';
 import { useTerminal } from '../../context/TerminalContext';
 import { 
@@ -41,20 +42,16 @@ import {
 import { ALL_CAMERAS } from '../../lib/camsConstants';
 
 export function AdminPage() {
-  const { systemAdvisory, setSystemAdvisory } = useTerminal();
-  const [advisoryInput, setAdvisoryInput] = useState(systemAdvisory);
-  const [isSaved, setIsSaved] = useState(false);
+  const { addNotification, notificationPermission, requestNotificationPermission } = useTerminal();
+  const [showToast, setShowToast] = useState<string | null>(null);
 
   // Shift Report Config States
   const [user, setUser] = useState(auth.currentUser);
-  const [backgroundStyle, setBackgroundStyle] = useState<'glow' | 'emergency'>('glow');
-  const [lightIntensity, setLightIntensity] = useState<number>(0.5);
   const [personnel, setPersonnel] = useState<PersonnelMember[]>([]);
   const [supervisors, setSupervisors] = useState<Record<string, string>>({});
   const [defaultCameraIds, setDefaultCameraIds] = useState<string[]>([]);
   const [archivedReports, setArchivedReports] = useState<ShiftReportType[]>([]);
   const [loadingReports, setLoadingReports] = useState(false);
-  const [showToast, setShowToast] = useState<string | null>(null);
 
   // Personnel Form State
   const [showPersonnelModal, setShowPersonnelModal] = useState(false);
@@ -77,8 +74,6 @@ export function AdminPage() {
     const unsubscribe = onSnapshot(settingsRef, (snapshot) => {
       if (snapshot.exists()) {
         const data = snapshot.data();
-        if (data.backgroundStyle) setBackgroundStyle(data.backgroundStyle);
-        if (typeof data.lightIntensity === 'number') setLightIntensity(data.lightIntensity);
         if (data.personnel) setPersonnel(data.personnel);
         if (data.supervisors) setSupervisors(data.supervisors);
         if (data.defaultCameraIds) setDefaultCameraIds(data.defaultCameraIds);
@@ -87,12 +82,6 @@ export function AdminPage() {
 
     return () => unsubscribe();
   }, []);
-
-  const handleSaveAdvisory = () => {
-    setSystemAdvisory(advisoryInput);
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
-  };
 
   const savePersonnel = async () => {
     if (!personForm.name) return;
@@ -338,60 +327,40 @@ export function AdminPage() {
            </section>
         </div>
 
-        {/* Other System Settings */}
+        {/* System & Notifications */}
         <div className="lg:col-span-4 space-y-12">
-          {/* Visual Settings */}
+          {/* Notification Settings */}
           <section className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6">
             <h3 className="text-lg font-bold text-white flex items-center gap-3">
-              <Activity className="w-5 h-5 text-brand-indigo" />
-              Interface Settings
+              <Bell className="w-5 h-5 text-brand-indigo" />
+              Notifications
             </h3>
-            <div className="space-y-4">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Theme Engine</p>
-              <div className="grid grid-cols-2 gap-4">
-                <button 
-                  onClick={() => user && updateGlobalSettings({ backgroundStyle: 'glow' })}
-                  className={`px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${backgroundStyle === 'glow' ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Desktop Integration</p>
+                  <p className="text-[10px] text-slate-400 mt-1 font-mono uppercase">Status: {notificationPermission.toUpperCase()}</p>
+                </div>
+                {notificationPermission !== 'granted' && (
+                  <button 
+                    onClick={requestNotificationPermission}
+                    className="px-4 py-2 bg-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-500/20"
+                  >
+                    Enable
+                  </button>
+                )}
+              </div>
+
+              <div className="pt-6 border-t border-white/5">
+                <button
+                  onClick={() => addNotification('System integrity check: Operational. Desktop notifications functional.', 'success')}
+                  className="w-full py-3 bg-white/5 border border-white/10 text-slate-400 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2"
                 >
-                  Slate Glow
-                </button>
-                <button 
-                  onClick={() => user && updateGlobalSettings({ backgroundStyle: 'emergency' })}
-                  className={`px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${backgroundStyle === 'emergency' ? 'bg-red-600 text-white shadow-lg shadow-red-500/20' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
-                >
-                  Emergency
+                  <Activity className="w-3.5 h-3.5" />
+                  Test OS Notification
                 </button>
               </div>
             </div>
-          </section>
-
-          {/* System Advisory */}
-          <section className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-4 overflow-hidden relative group">
-             <div className="space-y-2 relative">
-               <h3 className="text-lg font-bold text-white flex items-center gap-3">
-                 <Terminal className="w-5 h-5 text-indigo-400" />
-                 Global Advisory
-               </h3>
-             </div>
-             <textarea
-                value={advisoryInput}
-                onChange={(e) => setAdvisoryInput(e.target.value)}
-                className="w-full h-24 bg-black/40 border border-white/10 rounded-2xl p-4 text-slate-200 text-xs font-medium resize-none focus:ring-2 focus:ring-indigo-500"
-              />
-              <div className="flex gap-3">
-                <button
-                  onClick={handleSaveAdvisory}
-                  className={`flex-1 py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all shadow-lg ${isSaved ? 'bg-emerald-500 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-400 active:scale-95'}`}
-                >
-                  {isSaved ? 'Deployed' : 'Commit Advisory'}
-                </button>
-                <button
-                  onClick={() => addNotification('Manual AI System override detected. All monitoring systems active.', 'warning')}
-                  className="px-4 py-3 bg-white/5 border border-white/10 text-slate-400 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all"
-                >
-                  Test Alert
-                </button>
-              </div>
           </section>
         </div>
       </div>
