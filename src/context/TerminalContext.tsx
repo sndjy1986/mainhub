@@ -16,8 +16,6 @@ interface TerminalContextType {
   setManualEmergencyMode: (val: boolean) => void;
   emergencyOpacity: number;
   setEmergencyOpacity: (val: number) => void;
-  systemAdvisory: string;
-  setSystemAdvisory: (val: string) => void;
   weatherZip: string | null;
   setWeatherZip: (zip: string | null) => void;
   notifications: Notification[];
@@ -33,18 +31,34 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const [emergencyLevel, setEmergencyLevel] = useState<EmergencyLevel>('NORMAL');
   const [manualEmergencyMode, setManualEmergencyMode] = useState(false);
   const [emergencyOpacity, setEmergencyOpacity] = useState(0.2);
-  const [systemAdvisory, setSystemAdvisory] = useState('Maintain vigilance in Sector 7 and monitor all frequencies for anomalies.');
   const [weatherZip, setWeatherZip] = useState<string | null>(() => localStorage.getItem('weatherZip'));
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
 
+  // Sync permission state
+  useEffect(() => {
+    if (typeof Notification === 'undefined') return;
+    const checkPermission = () => {
+      if (Notification.permission !== notificationPermission) {
+        setNotificationPermission(Notification.permission);
+      }
+    };
+    const interval = setInterval(checkPermission, 2000);
+    return () => clearInterval(interval);
+  }, [notificationPermission]);
+
   const requestNotificationPermission = async () => {
     if (typeof Notification === 'undefined') return;
-    const permission = await Notification.requestPermission();
-    setNotificationPermission(permission);
-    return permission;
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      return permission;
+    } catch (error) {
+      console.error("Permission request failed:", error);
+      return 'denied';
+    }
   };
 
   const addNotification = (message: string, type: Notification['type'] = 'info') => {
@@ -57,13 +71,23 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     };
     setNotifications(prev => [newNote, ...prev].slice(0, 5));
 
-    // System Level Notification
-    if (notificationPermission === 'granted') {
-      new Notification(`AI Dispatch Alert [${type.toUpperCase()}]`, {
-        body: message,
-        icon: '/favicon.ico', // Adjust icon path if necessary
-        silent: type === 'info'
-      });
+    // System Level Notification (Desktop)
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      try {
+        const n = new Notification(`AI Dispatch: ${type.toUpperCase()}`, {
+          body: message,
+          icon: '/favicon.ico',
+          tag: 'dispatch-alert', // Prevents alert flooding
+          renotify: true,
+          silent: false // Ensuring it makes a sound/visual pop on Windows
+        });
+        n.onclick = () => {
+          window.focus();
+          n.close();
+        };
+      } catch (e) {
+        console.warn('Desktop notification failed - likely iframe restriction:', e);
+      }
     }
 
     // Auto remove after 8 seconds
@@ -92,8 +116,6 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       setManualEmergencyMode,
       emergencyOpacity,
       setEmergencyOpacity,
-      systemAdvisory,
-      setSystemAdvisory,
       weatherZip,
       setWeatherZip,
       notifications,
