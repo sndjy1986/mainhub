@@ -2,6 +2,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 type EmergencyLevel = 'NORMAL' | 'CAUTION' | 'CRITICAL' | 'LOCKDOWN';
 
+interface Notification {
+  id: string;
+  message: string;
+  type: 'info' | 'warning' | 'error' | 'success';
+  timestamp: string;
+}
+
 interface TerminalContextType {
   emergencyLevel: EmergencyLevel;
   setEmergencyLevel: (level: EmergencyLevel) => void;
@@ -13,6 +20,9 @@ interface TerminalContextType {
   setSystemAdvisory: (val: string) => void;
   weatherZip: string | null;
   setWeatherZip: (zip: string | null) => void;
+  notifications: Notification[];
+  addNotification: (message: string, type?: Notification['type']) => void;
+  removeNotification: (id: string) => void;
 }
 
 const TerminalContext = createContext<TerminalContextType | undefined>(undefined);
@@ -23,6 +33,26 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const [emergencyOpacity, setEmergencyOpacity] = useState(0.2);
   const [systemAdvisory, setSystemAdvisory] = useState('Maintain vigilance in Sector 7 and monitor all frequencies for anomalies.');
   const [weatherZip, setWeatherZip] = useState<string | null>(() => localStorage.getItem('weatherZip'));
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const addNotification = (message: string, type: Notification['type'] = 'info') => {
+    const id = Math.random().toString(36).substring(7);
+    const newNote: Notification = {
+      id,
+      message,
+      type,
+      timestamp: new Date().toLocaleTimeString()
+    };
+    setNotifications(prev => [newNote, ...prev].slice(0, 5));
+    // Auto remove after 8 seconds
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 8000);
+  };
+
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   useEffect(() => {
     if (weatherZip) {
@@ -43,7 +73,10 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       systemAdvisory,
       setSystemAdvisory,
       weatherZip,
-      setWeatherZip
+      setWeatherZip,
+      notifications,
+      addNotification,
+      removeNotification
     }}>
       {children}
     </TerminalContext.Provider>

@@ -15,7 +15,8 @@ import {
   Lock,
   UserCheck,
   Clock as ClockIcon,
-  Phone
+  Phone,
+  Calendar
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTerminal } from '../../context/TerminalContext';
@@ -29,6 +30,7 @@ const navItems = [
   { icon: FileText, label: 'Shift Report', path: '/shift-report' },
   { icon: ClockIcon, label: 'Time Clock', path: '/time-clock' },
   { icon: Phone, label: 'Directory', path: '/directory' },
+  { icon: Calendar, label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/1Lq3m5KIhkwP7zQZu9RTKlXRO18BPhx1A/view?usp=drive_link', external: true },
 ];
 
 export function Sidebar() {
@@ -50,31 +52,44 @@ export function Sidebar() {
       
       <nav className="flex-1 px-6 space-y-2">
         {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) => `
-              flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative
-              ${isActive 
-                ? 'bg-white/10 text-white border border-white/10' 
-                : 'text-slate-400 hover:bg-white/5 hover:text-white border border-transparent'}
-            `}
-          >
-            {({ isActive }) => (
-              <>
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-                <span className="text-sm font-medium">{item.label}</span>
-                {isActive && (
-                  <motion.div 
-                    layoutId="nav-active"
-                    className="absolute inset-0 bg-indigo-500/10 rounded-xl"
-                    initial={false}
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
-                )}
-              </>
-            )}
-          </NavLink>
+          item.external ? (
+            <a
+              key={item.path}
+              href={item.path}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:bg-white/5 hover:text-white border border-transparent group relative"
+            >
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm font-medium">{item.label}</span>
+            </a>
+          ) : (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) => `
+                flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative
+                ${isActive 
+                  ? 'bg-white/10 text-white border border-white/10' 
+                  : 'text-slate-400 hover:bg-white/5 hover:text-white border border-transparent'}
+              `}
+            >
+              {({ isActive }) => (
+                <>
+                  <item.icon className="w-5 h-5 flex-shrink-0" />
+                  <span className="text-sm font-medium">{item.label}</span>
+                  {isActive && (
+                    <motion.div 
+                      layoutId="nav-active"
+                      className="absolute inset-0 bg-indigo-500/10 rounded-xl"
+                      initial={false}
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                </>
+              )}
+            </NavLink>
+          )
         ))}
       </nav>
 

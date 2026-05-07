@@ -378,12 +378,20 @@ export function AdminPage() {
                 onChange={(e) => setAdvisoryInput(e.target.value)}
                 className="w-full h-24 bg-black/40 border border-white/10 rounded-2xl p-4 text-slate-200 text-xs font-medium resize-none focus:ring-2 focus:ring-indigo-500"
               />
-              <button
-                onClick={handleSaveAdvisory}
-                className={`w-full py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all shadow-lg ${isSaved ? 'bg-emerald-500 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-400 active:scale-95'}`}
-              >
-                {isSaved ? 'Deployed' : 'Commit Advisory'}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleSaveAdvisory}
+                  className={`flex-1 py-3 rounded-xl font-bold uppercase tracking-widest text-[10px] transition-all shadow-lg ${isSaved ? 'bg-emerald-500 text-white' : 'bg-indigo-500 text-white hover:bg-indigo-400 active:scale-95'}`}
+                >
+                  {isSaved ? 'Deployed' : 'Commit Advisory'}
+                </button>
+                <button
+                  onClick={() => addNotification('Manual AI System override detected. All monitoring systems active.', 'warning')}
+                  className="px-4 py-3 bg-white/5 border border-white/10 text-slate-400 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all"
+                >
+                  Test Alert
+                </button>
+              </div>
           </section>
         </div>
       </div>

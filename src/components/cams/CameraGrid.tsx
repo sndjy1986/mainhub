@@ -4,8 +4,10 @@ import { ALL_CAMERAS } from '../../lib/camsConstants';
 import { CameraPlayer } from './CameraPlayer';
 import { RefreshCw, Activity } from 'lucide-react';
 import { doc, onSnapshot, db } from '../../lib/firebase';
+import { useTerminal } from '../../context/TerminalContext';
 
 export const CameraGrid: React.FC = React.memo(() => {
+  const { addNotification } = useTerminal();
   const [gridSize, setGridSize] = useState<4 | 6>(() => {
     const saved = localStorage.getItem('cameraGridSize');
     return saved === '6' ? 6 : 4;
@@ -72,6 +74,31 @@ export const CameraGrid: React.FC = React.memo(() => {
   React.useEffect(() => {
     localStorage.setItem('activeCameras', JSON.stringify(activeCameras));
   }, [activeCameras]);
+
+  // AI Monitoring Logic
+  React.useEffect(() => {
+    if (!globalAiEnabled || activeCameras.length === 0) return;
+
+    const interval = setInterval(() => {
+      // 5% chance of an anomaly check every 30 seconds for simulation 
+      // In a real app, this would be a backend process or vision analysis
+      const chance = Math.random();
+      if (chance > 0.85) { 
+        const randomCam = activeCameras[Math.floor(Math.random() * activeCameras.length)];
+        const alerts = [
+          `Traffic surge detected at ${randomCam.name}. Priority level: Low.`,
+          `Unusual activity pattern identified near ${randomCam.name}.`,
+          `High density traffic detected at ${randomCam.name}. Suggest monitoring.`,
+          `Obstruction or slow-moving traffic on ${randomCam.name} feed.`
+        ];
+        const alert = alerts[Math.floor(Math.random() * alerts.length)];
+        addNotification(alert, chance > 0.95 ? 'warning' : 'info');
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [globalAiEnabled, activeCameras, addNotification]);
+
   const REFRESH_RATE = 900000; // Hardcoded 15 min (900,000ms)
 
   const handleSwitchCamera = (index: number, newCam: Camera) => {
