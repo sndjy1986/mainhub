@@ -1,23 +1,127 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-blue: #3b82f6;
-  --color-brand-indigo: #6366f1;
-  --color-brand-emerald: #10b981;
-  --color-brand-panel: #1e293b;
-  --color-brand-border: #334155;
-  --color-brand-bg: #0f172a;
-  --color-brand-field: #1e293b;
-  --color-brand-accent: #60a5fa;
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-indigo: var(--brand-indigo);
+  --color-brand-emerald: var(--brand-emerald);
+  --color-brand-panel: var(--brand-panel);
+  --color-brand-border: var(--brand-border);
+  --color-brand-bg: var(--brand-bg);
+  --color-brand-field: var(--brand-field);
+  --color-brand-accent: var(--brand-accent);
 
-  --color-bg-main: #0a0c10;
-  --color-bg-surface: #1a1d23;
+  --color-bg-main: var(--bg-main);
+  --color-bg-surface: var(--bg-surface);
 
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
+  /* Override standard tailwind colors to follow theme */
+  --color-indigo-400: var(--brand-accent);
+  --color-indigo-500: var(--brand-indigo);
+  --color-indigo-600: var(--brand-indigo-dark);
+}
 
-  --color-border-subtle: #1e293b;
+:root {
+  /* Midnight (Default Blue) */
+  --brand-blue: #3b82f6;
+  --brand-indigo: #6366f1;
+  --brand-indigo-dark: #4f46e5;
+  --brand-emerald: #10b981;
+  --brand-panel: #1e293b;
+  --brand-border: #334155;
+  --brand-bg: #0f172a;
+  --brand-field: #1e293b;
+  --brand-accent: #818cf8;
+  --bg-main: #0a0c10;
+  --bg-surface: #1a1d23;
+}
+
+[data-theme='emerald'] {
+  /* Tactical Green */
+  --brand-blue: #10b981;
+  --brand-indigo: #059669;
+  --brand-indigo-dark: #047857;
+  --brand-emerald: #34d399;
+  --brand-panel: #064e3b;
+  --brand-border: #065f46;
+  --brand-bg: #022c22;
+  --brand-field: #064e3b;
+  --brand-accent: #34d399;
+  --bg-main: #011612;
+  --bg-surface: #022c22;
+}
+
+[data-theme='amber'] {
+  /* Retro Terminal / High Vis */
+  --brand-blue: #f59e0b;
+  --brand-indigo: #d97706;
+  --brand-indigo-dark: #b45309;
+  --brand-emerald: #fbbf24;
+  --brand-panel: #451a03;
+  --brand-border: #78350f;
+  --brand-bg: #1c1007;
+  --brand-field: #451a03;
+  --brand-accent: #fcd34d;
+  --bg-main: #0c0a09;
+  --bg-surface: #1c1007;
+}
+
+[data-theme='slate'] {
+  /* Stealth Monochrome */
+  --brand-blue: #64748b;
+  --brand-indigo: #475569;
+  --brand-indigo-dark: #334155;
+  --brand-emerald: #94a3b8;
+  --brand-panel: #1e293b;
+  --brand-border: #334155;
+  --brand-bg: #0f172a;
+  --brand-field: #1e293b;
+  --brand-accent: #94a3b8;
+  --bg-main: #020617;
+  --bg-surface: #0f172a;
+}
+
+[data-theme='crimson'] {
+  /* Emergency / Fire */
+  --brand-blue: #ef4444;
+  --brand-indigo: #dc2626;
+  --brand-indigo-dark: #991b1b;
+  --brand-emerald: #f87171;
+  --brand-panel: #450a0a;
+  --brand-border: #7f1d1d;
+  --brand-bg: #2d0a0a;
+  --brand-field: #450a0a;
+  --brand-accent: #fca5a5;
+  --bg-main: #1c0707;
+  --bg-surface: #2d0a0a;
+}
+
+[data-theme='cyber'] {
+  /* High Contrast Cyber */
+  --brand-blue: #06b6d4;
+  --brand-indigo: #0891b2;
+  --brand-indigo-dark: #155e75;
+  --brand-emerald: #22d3ee;
+  --brand-panel: #083344;
+  --brand-border: #164e63;
+  --brand-bg: #042f2e;
+  --brand-field: #083344;
+  --brand-accent: #67e8f9;
+  --bg-main: #020617;
+  --bg-surface: #042f2e;
+}
+
+[data-theme='royal'] {
+  /* Command Purple */
+  --brand-blue: #8b5cf6;
+  --brand-indigo: #7c3aed;
+  --brand-indigo-dark: #6d28d9;
+  --brand-emerald: #a78bfa;
+  --brand-panel: #2e1065;
+  --brand-border: #4c1d95;
+  --brand-bg: #1e1b4b;
+  --brand-field: #2e1065;
+  --brand-accent: #c084fc;
+  --bg-main: #0f172a;
+  --bg-surface: #1e1b4b;
 }
 
 @layer components {

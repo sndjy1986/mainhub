@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 type EmergencyLevel = 'NORMAL' | 'CAUTION' | 'CRITICAL' | 'LOCKDOWN';
+export type AppTheme = 'midnight' | 'emerald' | 'amber' | 'slate' | 'royal' | 'crimson' | 'cyber';
 
 interface Notification {
   id: string;
@@ -18,6 +19,8 @@ interface TerminalContextType {
   setEmergencyOpacity: (val: number) => void;
   weatherZip: string | null;
   setWeatherZip: (zip: string | null) => void;
+  appTheme: AppTheme;
+  setAppTheme: (theme: AppTheme) => void;
   notifications: Notification[];
   notificationPermission: NotificationPermission;
   requestNotificationPermission: () => Promise<NotificationPermission | undefined>;
@@ -32,6 +35,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const [manualEmergencyMode, setManualEmergencyMode] = useState(false);
   const [emergencyOpacity, setEmergencyOpacity] = useState(0.2);
   const [weatherZip, setWeatherZip] = useState<string | null>(() => localStorage.getItem('weatherZip'));
+  const [appTheme, setAppTheme] = useState<AppTheme>(() => (localStorage.getItem('appTheme') as AppTheme) || 'midnight');
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
@@ -88,7 +92,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
             renotify: true,
             silent: false,
             requireInteraction: true // Forcing Windows to keep it visible
-          });
+          } as any);
           
           n.onclick = (e) => {
             e.preventDefault();
@@ -119,6 +123,10 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     }
   }, [weatherZip]);
 
+  useEffect(() => {
+    localStorage.setItem('appTheme', appTheme);
+  }, [appTheme]);
+
   return (
     <TerminalContext.Provider value={{ 
       emergencyLevel, 
@@ -129,6 +137,8 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       setEmergencyOpacity,
       weatherZip,
       setWeatherZip,
+      appTheme,
+      setAppTheme,
       notifications,
       notificationPermission,
       requestNotificationPermission,

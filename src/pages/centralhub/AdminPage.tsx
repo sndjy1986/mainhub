@@ -27,7 +27,7 @@ import {
   Search,
   Bell
 } from 'lucide-react';
-import { useTerminal } from '../../context/TerminalContext';
+import { useTerminal, AppTheme } from '../../context/TerminalContext';
 import { 
   auth, 
   signIn, 
@@ -42,8 +42,18 @@ import {
 import { ALL_CAMERAS } from '../../lib/camsConstants';
 
 export function AdminPage() {
-  const { addNotification, notificationPermission, requestNotificationPermission } = useTerminal();
+  const { addNotification, notificationPermission, requestNotificationPermission, appTheme, setAppTheme } = useTerminal();
   const [showToast, setShowToast] = useState<string | null>(null);
+
+  const THEMES: { id: AppTheme; name: string; color: string }[] = [
+    { id: 'midnight', name: 'Midnight', color: '#3b82f6' },
+    { id: 'emerald', name: 'Emerald', color: '#10b981' },
+    { id: 'amber', name: 'Amber', color: '#f59e0b' },
+    { id: 'slate', name: 'Slate', color: '#64748b' },
+    { id: 'crimson', name: 'Crimson', color: '#ef4444' },
+    { id: 'cyber', name: 'Cyber', color: '#06b6d4' },
+    { id: 'royal', name: 'Royal', color: '#8b5cf6' },
+  ];
 
   // Shift Report Config States
   const [user, setUser] = useState(auth.currentUser);
@@ -329,6 +339,50 @@ export function AdminPage() {
 
         {/* System & Notifications */}
         <div className="lg:col-span-4 space-y-12">
+          {/* App Theme Settings */}
+          <section className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6">
+            <h3 className="text-lg font-bold text-white flex items-center gap-3">
+              <Settings className="w-5 h-5 text-brand-indigo" />
+              Interface Theme
+            </h3>
+            <div className="grid grid-cols-1 gap-3">
+              {THEMES.map((theme) => (
+                <button
+                  key={theme.id}
+                  onClick={() => setAppTheme(theme.id)}
+                  className={`
+                    w-full flex items-center justify-between p-4 rounded-2xl border transition-all relative overflow-hidden group
+                    ${appTheme === theme.id 
+                      ? 'bg-white/10 border-white/20' 
+                      : 'bg-white/5 border-transparent hover:border-white/10'}
+                  `}
+                >
+                  <div className="flex items-center gap-4 relative z-10">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg" style={{ backgroundColor: theme.color }}>
+                      {appTheme === theme.id && <CheckCircle2 className="w-4 h-4 text-white" />}
+                    </div>
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${appTheme === theme.id ? 'text-white' : 'text-slate-400'}`}>
+                      {theme.name}
+                    </span>
+                  </div>
+                  
+                  {appTheme === theme.id && (
+                    <motion.div
+                      layoutId="theme-active"
+                      className="absolute inset-0 bg-brand-indigo/5"
+                    />
+                  )}
+                  
+                  <div className="flex gap-1 relative z-10">
+                    <div className="w-4 h-4 rounded-full border border-white/10" style={{ backgroundColor: theme.color }} />
+                    <div className="w-4 h-4 rounded-full border border-white/10 opacity-60" style={{ backgroundColor: theme.color }} />
+                    <div className="w-4 h-4 rounded-full border border-white/10 opacity-30" style={{ backgroundColor: theme.color }} />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+
           {/* Notification Settings */}
           <section className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6">
             <h3 className="text-lg font-bold text-white flex items-center gap-3">

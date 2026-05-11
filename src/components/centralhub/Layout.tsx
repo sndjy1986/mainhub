@@ -12,7 +12,7 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { emergencyLevel, notifications, removeNotification } = useTerminal();
+  const { emergencyLevel, notifications, removeNotification, appTheme } = useTerminal();
   const [user, setUser] = useState<any>(auth.currentUser);
   const [authError, setAuthError] = useState<string | null>(null);
   const location = useLocation();
@@ -35,10 +35,10 @@ export function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-brand-bg text-slate-200 relative overflow-hidden font-sans transition-colors duration-500" data-theme={appTheme}>
       {/* Decorative Background Elements (Original) */}
-      <div className="fixed top-[-10%] left-[-10%] w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none"></div>
-      <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-emerald-600/05 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="fixed top-[-10%] left-[-10%] w-[400px] h-[400px] bg-brand-indigo/10 rounded-full blur-[100px] pointer-events-none transition-colors duration-500"></div>
+      <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-brand-emerald/05 rounded-full blur-[120px] pointer-events-none transition-colors duration-500"></div>
 
       <EmergencyBackground />
       
