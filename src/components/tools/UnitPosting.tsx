@@ -1,26 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { POST_DATA, INITIAL_UNITS } from '../../lib/dispatchConstants';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { INITIAL_UNITS } from '../../lib/dispatchConstants';
+import { MASTER_POSTS, LEVEL_POSTS } from '../../lib/systemLevels';
 import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
-import { collection, onSnapshot, query, setDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import { ToneTestRecord } from '../../types';
-import { Map as MapIcon, ClipboardList, Shield, AlertCircle, Move, RotateCcw } from 'lucide-react';
+import { Minus, Plus, Navigation } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { motion, AnimatePresence } from 'motion/react';
-
-type Tab = 'tactical' | 'logistics';
-
-interface UnitAssignment {
-  id?: string;
-  unitId: string;
-  postName: string;
-}
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 export function UnitPosting() {
-  const [activeTab, setActiveTab] = useState<Tab>('tactical');
   const [unitRecords, setUnitRecords] = useState<ToneTestRecord[]>([]);
-  const [assignments, setAssignments] = useState<UnitAssignment[]>([]);
+  const [systemLevel, setSystemLevel] = useState(11);
   const [loading, setLoading] = useState(true);
-  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.LayerGroup | null>(null);
 
   useEffect(() => {
     // Listen to Tone Tests
@@ -28,277 +23,137 @@ export function UnitPosting() {
     const unsubTone = onSnapshot(qTone, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ToneTestRecord));
       setUnitRecords(data);
+      setLoading(false);
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'toneTests');
+      setLoading(false);
     });
 
-    // Listen to Unit Assignments
-    const qAssign = query(collection(db, 'unitAssignments'));
-    const unsubAssign = onSnapshot(qAssign, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UnitAssignment));
-      setAssignments(data);
-      setLoading(false);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.GET, 'unitAssignments');
-      setLoading(false);
-    });
+    return () => unsubTone();
+  }, []);
+
+  const currentPosts = useMemo(() => {
+    return (LEVEL_POSTS[systemLevel] || []).map(name => ({
+      ...MASTER_POSTS[name],
+      name
+    }));
+  }, [systemLevel]);
+
+  // Map Initialization
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    if (!mapRef.current) {
+      mapRef.current = L.map(mapContainerRef.current, {
+        zoomControl: false,
+        attributionControl: false,
+      }).setView([34.5, -82.6], 11);
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+      }).addTo(mapRef.current);
+
+      markersRef.current = L.layerGroup().addTo(mapRef.current);
+    }
 
     return () => {
-      unsubTone();
-      unsubAssign();
+      // We keep the map alive across renders unless unmounted
     };
   }, []);
 
-  // Filter for MED- units that are "Up"
-  const upUnits = unitRecords.filter(r => 
-    r.unit.toUpperCase().startsWith('MED') && 
-    r.time && 
-    !r.tenFortyTwo
-  );
+  // Sync Markers and Bounds
+  useEffect(() => {
+    if (!mapRef.current || !markersRef.current) return;
 
-  const handleUnitClick = (unitId: string) => {
-    if (selectedUnit === unitId) {
-      setSelectedUnit(null);
-    } else {
-      setSelectedUnit(unitId);
-    }
-  };
+    markersRef.current.clearLayers();
+    const validPosts = currentPosts.filter(p => p.lat && p.lon);
+    
+    if (validPosts.length > 0) {
+      const bounds = L.latLngBounds([]);
+      
+      validPosts.forEach(p => {
+        const marker = L.circleMarker([p.lat, p.lon], {
+          radius: 6,
+          fillColor: '#6366f1',
+          fillOpacity: 0.8,
+          color: '#818cf8',
+          weight: 2,
+          className: 'tactical-marker'
+        });
 
-  const handlePostClick = async (postName: string) => {
-    if (!selectedUnit) return;
+        marker.bindTooltip(p.name, {
+          direction: 'top',
+          offset: [0, -10],
+          className: 'custom-map-tooltip'
+        });
 
-    try {
-      // Find if this unit already has an assignment record
-      const existing = assignments.find(a => a.unitId === selectedUnit);
-      const assignmentId = existing?.id || selectedUnit;
-
-      await setDoc(doc(db, 'unitAssignments', assignmentId), {
-        unitId: selectedUnit,
-        postName: postName,
-        assignedAt: new Date().toISOString()
+        markersRef.current?.addLayer(marker);
+        bounds.extend([p.lat, p.lon]);
       });
 
-      setSelectedUnit(null);
-    } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, 'unitAssignments');
+      mapRef.current.fitBounds(bounds, { padding: [50, 50], animate: true });
     }
-  };
-
-  const clearAssignment = async (unitId: string) => {
-    try {
-      const existing = assignments.find(a => a.unitId === unitId);
-      if (existing?.id) {
-        await deleteDoc(doc(db, 'unitAssignments', existing.id));
-      }
-    } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `unitAssignments/${unitId}`);
-    }
-  };
+  }, [currentPosts]);
 
   return (
-    <div className="w-full h-[calc(100vh-80px)] flex flex-col relative bg-bg-main rounded-xl overflow-hidden mt-2 border border-white/5 shadow-2xl">
-      {/* Tab Navigation */}
-      <div className="flex items-center gap-1 p-2 bg-bg-surface border-b border-white/5 shrink-0">
-        <button
-          onClick={() => setActiveTab('tactical')}
-          className={cn(
-            "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] transition-all",
-            activeTab === 'tactical' 
-              ? "bg-indigo-500 text-white shadow-lg shadow-brand-indigo/20" 
-              : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
-          )}
-        >
-          <MapIcon size={14} />
-          Tactical Map
-        </button>
-        <button
-          onClick={() => setActiveTab('logistics')}
-          className={cn(
-            "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] transition-all",
-            activeTab === 'logistics' 
-              ? "bg-emerald-500 text-white shadow-lg shadow-brand-emerald/20" 
-              : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
-          )}
-        >
-          <ClipboardList size={14} />
-          Current Units & Posts
-        </button>
-        
-        <div className="ml-auto flex items-center gap-4 px-4">
-          {selectedUnit && (
-            <div className="flex items-center gap-2 px-4 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-full animate-pulse">
-              <Move size={12} className="text-amber-500" />
-              <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Relocating Unit {selectedUnit}</span>
-              <button 
-                onClick={() => setSelectedUnit(null)}
-                className="ml-2 text-amber-500 hover:text-amber-400"
-              >
-                Cancel
-              </button>
+    <div className="w-full h-[calc(100vh-80px)] bg-bg-main p-8 overflow-y-auto custom-scrollbar transition-colors duration-500">
+      <div className="max-w-6xl mx-auto space-y-12">
+        {/* Header - System Status */}
+        <header className="flex items-center justify-between">
+          <h1 className="text-4xl font-light text-white tracking-tight">System Status</h1>
+          
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setSystemLevel(Math.max(1, systemLevel - 1))}
+              className="w-10 h-10 rounded-lg border border-white/20 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+            >
+              <Minus size={20} />
+            </button>
+            <div className="w-16 h-10 rounded-lg border border-white/20 flex items-center justify-center">
+              <span className="text-xl font-medium text-white">{systemLevel}</span>
             </div>
-          )}
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-brand-emerald" />
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">System Online</span>
+            <button 
+              onClick={() => setSystemLevel(Math.min(17, systemLevel + 1))}
+              className="w-10 h-10 rounded-lg border border-white/20 flex items-center justify-center text-white hover:bg-white/10 transition-colors"
+            >
+              <Plus size={20} />
+            </button>
           </div>
-        </div>
-      </div>
+        </header>
 
-      <div className="flex-1 overflow-hidden relative">
-        <AnimatePresence mode="wait">
-          {activeTab === 'tactical' ? (
-            <motion.div
-              key="tactical"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.2 }}
-              className="absolute inset-0"
-            >
-              <iframe 
-                src="https://www.google.com/maps/d/u/0/embed?mid=1sVuk-qPshgccqAlOzQvumzq7OdeVII8&ehbc=2E312F" 
-                className="w-full h-full border-none"
-                style={{ filter: 'grayscale(0.2) contrast(1.1) brightness(0.9)' }}
-                title="Google My Maps Tactical"
-                allowFullScreen 
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="logistics"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="absolute inset-0 overflow-y-auto p-6 bg-bg-main custom-scrollbar"
-            >
-              <div className="max-w-7xl mx-auto space-y-8">
-                <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
-                  <div>
-                    <h2 className="text-2xl font-black text-white uppercase tracking-wider">Fleet Posting Logistics</h2>
-                    <p className="text-slate-400 text-xs font-medium uppercase tracking-widest mt-1">Real-time resource allocation matrix</p>
-                  </div>
-                  <div className="flex items-center gap-6 bg-bg-surface transition-colors duration-500 px-6 py-3 rounded-2xl border border-white/5">
-                    <div className="text-center">
-                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Active Units</p>
-                      <p className="text-xl font-black text-emerald-400">{upUnits.length}</p>
-                    </div>
-                    <div className="w-[1px] h-8 bg-white/10" />
-                    <div className="text-center">
-                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Static Posts</p>
-                      <p className="text-xl font-black text-indigo-400">{POST_DATA.length}</p>
-                    </div>
-                  </div>
-                </header>
+        {/* Level & Post List */}
+        <section className="space-y-8">
+          <div className="space-y-4">
+            <h2 className="text-5xl font-light text-white tracking-tighter">{systemLevel} -</h2>
+            <p className="text-2xl text-white/40 font-light">Post's Should include</p>
+          </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {POST_DATA.map((post) => {
-                    // Find units whose ASSIGNED post is this, or HOME is this if no assignment
-                    const assignedUnits = upUnits.filter(u => {
-                      const assignment = assignments.find(a => a.unitId.toLowerCase() === u.unit.toLowerCase());
-                      if (assignment) {
-                        return assignment.postName === post.name;
-                      }
-                      const unitInfo = INITIAL_UNITS.find(iu => iu.id.toLowerCase() === u.unit.toLowerCase());
-                      return unitInfo?.home === post.name;
-                    });
-
-                    return (
-                      <div 
-                        key={post.name}
-                        onClick={() => selectedUnit && handlePostClick(post.name)}
-                        className={cn(
-                          "group relative bg-bg-surface/50 border rounded-2xl p-5 transition-all duration-300",
-                          selectedUnit ? "cursor-pointer hover:border-amber-500/50 hover:bg-amber-500/5" : "",
-                          assignedUnits.length > 0 
-                            ? "border-white/10 hover:border-emerald-500/30 hover:bg-bg-surface/80 shadow-lg shadow-black/20" 
-                            : "border-white/5 opacity-40 grayscale hover:opacity-100 hover:grayscale-0"
-                        )}
-                      >
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="space-y-0.5">
-                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter">Post Vector</span>
-                            <h3 className="text-xs font-black text-white uppercase tracking-widest">{post.name}</h3>
-                          </div>
-                          {assignedUnits.length > 0 ? (
-                            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
-                              <Shield size={16} />
-                            </div>
-                          ) : (
-                            <div className="w-8 h-8 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-slate-600">
-                              <AlertCircle size={16} />
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="space-y-2">
-                          {assignedUnits.length > 0 ? (
-                            assignedUnits.map(unit => {
-                              const hasAssignment = assignments.some(a => a.unitId.toLowerCase() === unit.unit.toLowerCase());
-                              return (
-                                <div 
-                                  key={unit.id}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleUnitClick(unit.unit);
-                                  }}
-                                  className={cn(
-                                    "flex items-center justify-between p-3 border rounded-xl transition-all cursor-pointer",
-                                    selectedUnit === unit.unit 
-                                      ? "bg-amber-500 text-white border-amber-400 shadow-lg" 
-                                      : hasAssignment
-                                        ? "bg-indigo-500/10 border-indigo-500/30 hover:bg-indigo-500/20"
-                                        : "bg-emerald-500/5 border-emerald-500/20 hover:bg-emerald-500/10"
-                                  )}
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <div className={cn(
-                                      "w-2 h-2 rounded-full animate-pulse",
-                                      selectedUnit === unit.unit ? "bg-white" : "bg-emerald-500"
-                                    )} />
-                                    <span className="text-sm font-black">{unit.unit}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    {hasAssignment && (
-                                      <button 
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          clearAssignment(unit.unit);
-                                        }}
-                                        className="p-1 hover:bg-white/10 rounded-md transition-colors"
-                                        title="Reset to Home Post"
-                                      >
-                                        <RotateCcw size={12} />
-                                      </button>
-                                    )}
-                                    <span className="text-[10px] font-mono opacity-70 font-bold uppercase tracking-tighter">
-                                      {hasAssignment ? "Posted" : "Home"}
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            })
-                          ) : (
-                            <div className="p-3 bg-bg-main border border-dotted border-white/10 rounded-xl text-center">
-                              <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest italic">Awaiting Resource</span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Bottom Info */}
-                        <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span className="text-[8px] font-mono text-slate-500">LAT: {post.lat.toFixed(4)}</span>
-                          <span className="text-[8px] font-mono text-slate-500">LON: {post.lon.toFixed(4)}</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-16">
+            {currentPosts.map((post, i) => (
+              <div key={`${post.name}-${i}`} className="flex items-center gap-4 group">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/40 group-hover:bg-indigo-500 transition-colors" />
+                <span className="text-xl text-white/70 group-hover:text-white transition-colors cursor-default">{post.name}</span>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            ))}
+          </div>
+        </section>
+
+        {/* Tactical Map Visualization */}
+        <section className="space-y-6 pt-12 border-t border-white/5">
+          <div className="relative w-full aspect-[21/9] bg-bg-surface/50 rounded-[2rem] border border-white/5 overflow-hidden shadow-inner">
+            <div ref={mapContainerRef} className="w-full h-full z-0" />
+
+            {/* Map Overlay HUD */}
+            <div className="absolute bottom-6 right-6 flex items-center gap-4 bg-black/60 backdrop-blur-md px-6 py-3 rounded-full border border-white/10 z-[1000] pointer-events-none">
+              <div className="flex items-center gap-3">
+                <Navigation size={14} className="text-indigo-400 rotate-45" />
+                <span className="text-[10px] font-black text-white/80 uppercase tracking-[0.2em] font-mono">TACTICAL DEPLOYMENT V{systemLevel}</span>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );
 }
+
