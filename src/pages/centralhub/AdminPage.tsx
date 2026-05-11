@@ -351,14 +351,35 @@ export function AdminPage() {
                 )}
               </div>
 
-              <div className="pt-6 border-t border-white/5">
+              <div className="pt-6 border-t border-white/5 space-y-4">
                 <button
-                  onClick={() => addNotification('System integrity check: Operational. Desktop notifications functional.', 'success')}
+                  onClick={() => {
+                    addNotification('System integrity check: Operational. Desktop notifications functional.', 'success');
+                  }}
                   className="w-full py-3 bg-white/5 border border-white/10 text-slate-400 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2"
                 >
                   <Activity className="w-3.5 h-3.5" />
                   Test OS Notification
                 </button>
+
+                {window.self !== window.top && (
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                    <div className="flex gap-3">
+                      <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                      <p className="text-[10px] text-amber-200/60 leading-relaxed uppercase font-medium">
+                        Running in Preview Mode. Windows may block notifications inside the browser iframe.
+                        <a 
+                          href={window.location.href} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="block mt-2 text-amber-500 font-bold hover:underline"
+                        >
+                          Open in New Tab →
+                        </a>
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </section>

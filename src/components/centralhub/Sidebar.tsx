@@ -12,11 +12,13 @@ import {
   Radio,
   Siren,
   Settings2,
+  Table,
   Lock,
   UserCheck,
   Clock as ClockIcon,
   Phone,
-  Calendar
+  Calendar,
+  CreditCard
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTerminal } from '../../context/TerminalContext';
@@ -26,11 +28,13 @@ const navItems = [
   { icon: Activity, label: 'Tone Test', path: '/tone-test' },
   { icon: Terminal, label: 'Unit Posting', path: '/unit-posting' },
   { icon: MapIcon, label: 'Distance Map', path: '/distance-map' },
-  { icon: Camera, label: 'Cameras', path: '/cameras' },
   { icon: FileText, label: 'Shift Report', path: '/shift-report' },
+  { icon: Calendar, label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/1Lq3m5KIhkwP7zQZu9RTKlXRO18BPhx1A/view?usp=drive_link', external: true },
+  { icon: Table, label: 'Daily Worksheet', path: 'https://docs.google.com/spreadsheets/d/1-4Uwh00g4orCaOQoOrLIcRkamAhdxrBNhVVOt2IEOoY/edit?gid=534085027#gid=534085027', external: true },
+  { icon: CreditCard, label: 'PayCom Online', path: 'https://www.paycomonline.net/v4/ee/web.php/app/login', external: true },
+  { icon: Camera, label: 'Cameras', path: '/cameras' },
   { icon: ClockIcon, label: 'Time Clock', path: '/time-clock' },
   { icon: Phone, label: 'Directory', path: '/directory' },
-  { icon: Calendar, label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/1Lq3m5KIhkwP7zQZu9RTKlXRO18BPhx1A/view?usp=drive_link', external: true },
 ];
 
 export function Sidebar() {

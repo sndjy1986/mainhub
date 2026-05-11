@@ -72,21 +72,32 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     setNotifications(prev => [newNote, ...prev].slice(0, 5));
 
     // System Level Notification (Desktop)
-    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-      try {
-        const n = new Notification(`AI Dispatch: ${type.toUpperCase()}`, {
-          body: message,
-          icon: '/favicon.ico',
-          tag: 'dispatch-alert', // Prevents alert flooding
-          renotify: true,
-          silent: false // Ensuring it makes a sound/visual pop on Windows
-        });
-        n.onclick = () => {
-          window.focus();
-          n.close();
-        };
-      } catch (e) {
-        console.warn('Desktop notification failed - likely iframe restriction:', e);
+    if (typeof Notification !== 'undefined') {
+      const isIframe = window.self !== window.top;
+      console.log('Attempting Desktop Notification. Permission:', Notification.permission, 'Iframe:', isIframe);
+      
+      if (Notification.permission === 'granted') {
+        try {
+          // Use a data URI for a generic "alert" icon to ensure it loads
+          const iconUrl = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiM2MzY2ZjEiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTggOGE2IDYgMCAwIDAtMTItMGE2IDYgMCAwIDAgMTIgMFoiLz48cGF0aCBkPSJNMTggOGE2IDYgMCAwIDAtMTItMGE2IDYgMCAwIDAgMTIgMFoiLz48cGF0aCBkPSJNOSAxMiA3IDEwIDUgMTIiLz48cGF0aCBkPSJNMTUgMTIgMTcgMTAgMTkgMTIiLz48L3N2Zz4=';
+
+          const n = new Notification(`DISPATCH ALERT`, {
+            body: message,
+            icon: iconUrl,
+            tag: 'alert-' + type,
+            renotify: true,
+            silent: false,
+            requireInteraction: true // Forcing Windows to keep it visible
+          });
+          
+          n.onclick = (e) => {
+            e.preventDefault();
+            window.focus();
+            n.close();
+          };
+        } catch (e) {
+          console.warn('Desktop notification constructor failed:', e);
+        }
       }
     }
 
