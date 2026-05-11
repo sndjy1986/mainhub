@@ -53,6 +53,15 @@ export function AdminPage() {
     { id: 'crimson', name: 'Crimson', color: '#ef4444' },
     { id: 'cyber', name: 'Cyber', color: '#06b6d4' },
     { id: 'royal', name: 'Royal', color: '#8b5cf6' },
+    { id: 'forest', name: 'Forest', color: '#16a34a' },
+    { id: 'arctic', name: 'Arctic', color: '#0ea5e9' },
+    { id: 'desert', name: 'Desert', color: '#d97706' },
+    { id: 'nebula', name: 'Nebula', color: '#a21caf' },
+    { id: 'titanium', name: 'Titanium', color: '#64748b' },
+    { id: 'neon', name: 'Neon', color: '#ff00ff' },
+    { id: 'ghost', name: 'Ghost', color: '#ffffff' },
+    { id: 'ocean', name: 'Ocean', color: '#0ea5e9' },
+    { id: 'blood', name: 'Blood', color: '#991b1b' },
   ];
 
   // Shift Report Config States

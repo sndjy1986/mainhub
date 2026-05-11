@@ -189,6 +189,177 @@
   --bg-surface: #1e1b4b;
 }
 
+[data-theme='forest'] {
+  /* Forest / Deep Green */
+  --brand-blue: #22c55e;
+  --brand-indigo: #16a34a;
+  --brand-indigo-dark: #15803d;
+  --brand-indigo-darker: #14532d;
+  --brand-emerald: #4ade80;
+  --brand-panel: #064e3b;
+  --brand-border: #065f46;
+  --brand-bg: #022c22;
+  --brand-field: #064e3b;
+  --brand-accent: #86efac;
+  --brand-accent-medium: #bbf7d0;
+  --brand-accent-light: #dcfce7;
+  --brand-accent-soft: #f0fdf4;
+  --bg-main: #020617;
+  --bg-surface: #064e3b;
+}
+
+[data-theme='arctic'] {
+  /* Arctic / Ice */
+  --brand-blue: #0ea5e9;
+  --brand-indigo: #0ea5e9;
+  --brand-indigo-dark: #0284c7;
+  --brand-indigo-darker: #0369a1;
+  --brand-emerald: #38bdf8;
+  --brand-panel: #0c4a6e;
+  --brand-border: #075985;
+  --brand-bg: #f0f9ff;
+  --brand-field: #0c4a6e;
+  --brand-accent: #7dd3fc;
+  --brand-accent-medium: #bae6fd;
+  --brand-accent-light: #e0f2fe;
+  --brand-accent-soft: #f0f9ff;
+  --bg-main: #f8fafc;
+  --bg-surface: #e2e8f0;
+}
+
+[data-theme='desert'] {
+  /* Desert / Mirage */
+  --brand-blue: #f59e0b;
+  --brand-indigo: #d97706;
+  --brand-indigo-dark: #b45309;
+  --brand-indigo-darker: #92400e;
+  --brand-emerald: #fbbf24;
+  --brand-panel: #451a03;
+  --brand-border: #78350f;
+  --brand-bg: #1c1917;
+  --brand-field: #451a03;
+  --brand-accent: #fcd34d;
+  --brand-accent-medium: #fde68a;
+  --brand-accent-light: #fef3c7;
+  --brand-accent-soft: #fffbeb;
+  --bg-main: #0c0a09;
+  --bg-surface: #1c1917;
+}
+
+[data-theme='nebula'] {
+  /* Nebula / Cosmic */
+  --brand-blue: #d946ef;
+  --brand-indigo: #a21caf;
+  --brand-indigo-dark: #86198f;
+  --brand-indigo-darker: #701a75;
+  --brand-emerald: #e879f9;
+  --brand-panel: #4a044e;
+  --brand-border: #701a75;
+  --brand-bg: #1e1b4b;
+  --brand-field: #4a044e;
+  --brand-accent: #f0abfc;
+  --brand-accent-medium: #f5d0fe;
+  --brand-accent-light: #fae8ff;
+  --brand-accent-soft: #fdf4ff;
+  --bg-main: #020617;
+  --bg-surface: #1e1b4b;
+}
+
+[data-theme='titanium'] {
+  /* Titanium / Alloy */
+  --brand-blue: #94a3b8;
+  --brand-indigo: #64748b;
+  --brand-indigo-dark: #475569;
+  --brand-indigo-darker: #334155;
+  --brand-emerald: #cbd5e1;
+  --brand-panel: #1e293b;
+  --brand-border: #334155;
+  --brand-bg: #0f172a;
+  --brand-field: #1e293b;
+  --brand-accent: #cbd5e1;
+  --brand-accent-medium: #e2e8f0;
+  --brand-accent-light: #f1f5f9;
+  --brand-accent-soft: #f8fafc;
+  --bg-main: #020617;
+  --bg-surface: #1e293b;
+}
+
+[data-theme='neon'] {
+  /* Neon / Night */
+  --brand-blue: #ff00ff;
+  --brand-indigo: #ff00ff;
+  --brand-indigo-dark: #d900d9;
+  --brand-indigo-darker: #b300b3;
+  --brand-emerald: #00ffff;
+  --brand-panel: #2d005d;
+  --brand-border: #5a00b3;
+  --brand-bg: #000000;
+  --brand-field: #2d005d;
+  --brand-accent: #ff77ff;
+  --brand-accent-medium: #ff99ff;
+  --brand-accent-light: #ffbbff;
+  --brand-accent-soft: #ffddff;
+  --bg-main: #000000;
+  --bg-surface: #111111;
+}
+
+[data-theme='ghost'] {
+  /* Ghost / Mono */
+  --brand-blue: #ffffff;
+  --brand-indigo: #ffffff;
+  --brand-indigo-dark: #e5e5e5;
+  --brand-indigo-darker: #d4d4d4;
+  --brand-emerald: #ffffff;
+  --brand-panel: #000000;
+  --brand-border: #262626;
+  --brand-bg: #000000;
+  --brand-field: #171717;
+  --brand-accent: #ffffff;
+  --brand-accent-medium: #f5f5f5;
+  --brand-accent-light: #e5e5e5;
+  --brand-accent-soft: #d4d4d4;
+  --bg-main: #000000;
+  --bg-surface: #0a0a0a;
+}
+
+[data-theme='ocean'] {
+  /* Ocean / Deep Sea */
+  --brand-blue: #0ea5e9;
+  --brand-indigo: #0ea5e9;
+  --brand-indigo-dark: #0284c7;
+  --brand-indigo-darker: #0369a1;
+  --brand-emerald: #14b8a6;
+  --brand-panel: #083344;
+  --brand-border: #155e75;
+  --brand-bg: #042f2e;
+  --brand-field: #083344;
+  --brand-accent: #67e8f9;
+  --brand-accent-medium: #a5f3fc;
+  --brand-accent-light: #cffafe;
+  --brand-accent-soft: #ecfeff;
+  --bg-main: #020617;
+  --bg-surface: #083344;
+}
+
+[data-theme='blood'] {
+  /* Blood / Deep Red */
+  --brand-blue: #ef4444;
+  --brand-indigo: #991b1b;
+  --brand-indigo-dark: #7f1d1d;
+  --brand-indigo-darker: #450a0a;
+  --brand-emerald: #dc2626;
+  --brand-panel: #450a0a;
+  --brand-border: #7f1d1d;
+  --brand-bg: #1c0707;
+  --brand-field: #450a0a;
+  --brand-accent: #f87171;
+  --brand-accent-medium: #fca5a5;
+  --brand-accent-light: #fecaca;
+  --brand-accent-soft: #fee2e2;
+  --bg-main: #0c0202;
+  --bg-surface: #1c0707;
+}
+
 @layer components {
   .glass-effect {
     @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];

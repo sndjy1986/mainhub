@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 type EmergencyLevel = 'NORMAL' | 'CAUTION' | 'CRITICAL' | 'LOCKDOWN';
-export type AppTheme = 'midnight' | 'emerald' | 'amber' | 'slate' | 'royal' | 'crimson' | 'cyber';
+export type AppTheme = 'midnight' | 'emerald' | 'amber' | 'slate' | 'royal' | 'crimson' | 'cyber' | 'forest' | 'arctic' | 'desert' | 'nebula' | 'titanium' | 'neon' | 'ghost' | 'ocean' | 'blood';
 
 interface Notification {
   id: string;
