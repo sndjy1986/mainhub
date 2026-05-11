@@ -15,6 +15,8 @@ import {
   ChevronRight, 
   User, 
   GripVertical,
+  Wind,
+  Settings,
   FileText
 } from 'lucide-react';
 import { WeatherDashboard } from '../../components/centralhub/WeatherDashboard';
@@ -68,6 +70,14 @@ interface ClockSettings {
   color: string;
 }
 
+interface WeatherSettings {
+  forecastDays: number;
+  fontFamily: string;
+  fontWeight: string;
+  animatedIcons: boolean;
+  hideAlertsIfEmpty: boolean;
+}
+
 interface WidgetItem {
   id: string;
   type: 'time' | 'weather' | 'personnel' | 'calendar' | 'shift_report' | 'custom_new';
@@ -75,6 +85,7 @@ interface WidgetItem {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   isVisible: boolean;
   clockSettings?: ClockSettings;
+  weatherSettings?: WeatherSettings;
 }
 
 const DEFAULT_CLOCK_SETTINGS: ClockSettings = {
@@ -86,9 +97,17 @@ const DEFAULT_CLOCK_SETTINGS: ClockSettings = {
   color: 'text-white',
 };
 
+const DEFAULT_WEATHER_SETTINGS: WeatherSettings = {
+  forecastDays: 5,
+  fontFamily: 'font-sans',
+  fontWeight: 'font-black',
+  animatedIcons: true,
+  hideAlertsIfEmpty: false,
+};
+
 const DEFAULT_WIDGETS: WidgetItem[] = [
   { id: 'widget-time', type: 'time', title: 'Operational Clock', size: 'sm', isVisible: true, clockSettings: DEFAULT_CLOCK_SETTINGS },
-  { id: 'widget-weather', type: 'weather', title: 'Environment Monitor', size: 'md', isVisible: true },
+  { id: 'widget-weather', type: 'weather', title: 'Environment Monitor', size: 'md', isVisible: true, weatherSettings: DEFAULT_WEATHER_SETTINGS },
   { id: 'widget-personnel', type: 'personnel', title: 'Personnel Deployment', size: 'xl', isVisible: true },
   { id: 'widget-calendar', type: 'calendar', title: 'Operations Calendar', size: 'xl', isVisible: true },
   { id: 'widget-shift-report', type: 'shift_report', title: 'Shift Report Entry', size: 'md', isVisible: true },
@@ -97,12 +116,13 @@ const DEFAULT_WIDGETS: WidgetItem[] = [
 export function StartPage() {
   const [now, setNow] = useState(new Date());
   const [widgets, setWidgets] = useState<WidgetItem[]>(() => {
-    const saved = localStorage.getItem('start-page-widgets-v6');
+    const saved = localStorage.getItem('start-page-widgets-v7');
     return saved ? JSON.parse(saved) : DEFAULT_WIDGETS;
   });
 
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [editingClock, setEditingClock] = useState<WidgetItem | null>(null);
+  const [editingWeather, setEditingWeather] = useState<WidgetItem | null>(null);
 
   const updateWidgetSize = (id: string, size: 'sm' | 'md' | 'lg' | 'xl') => {
     setWidgets(prev => prev.map(w => w.id === id ? { ...w, size } : w));
@@ -111,6 +131,11 @@ export function StartPage() {
   const updateClockSettings = (id: string, settings: ClockSettings) => {
     setWidgets(prev => prev.map(w => w.id === id ? { ...w, clockSettings: settings } : w));
     setEditingClock(null);
+  };
+
+  const updateWeatherSettings = (id: string, settings: WeatherSettings) => {
+    setWidgets(prev => prev.map(w => w.id === id ? { ...w, weatherSettings: settings } : w));
+    setEditingWeather(null);
   };
 
   const sensors = useSensors(
@@ -125,7 +150,7 @@ export function StartPage() {
   );
 
   useEffect(() => {
-    localStorage.setItem('start-page-widgets-v6', JSON.stringify(widgets));
+    localStorage.setItem('start-page-widgets-v7', JSON.stringify(widgets));
   }, [widgets]);
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -206,11 +231,84 @@ export function StartPage() {
                 onRemove={() => removeWidget(widget.id)}
                 onResize={(size) => updateWidgetSize(widget.id, size)}
                 onEditClock={() => setEditingClock(widget)}
+                onEditWeather={() => setEditingWeather(widget)}
               />
             ))}
           </div>
         </SortableContext>
       </DndContext>
+
+      <Modal
+        isOpen={!!editingWeather}
+        onClose={() => setEditingWeather(null)}
+        title="Weather Configuration"
+        icon={<Wind className="w-6 h-6" />}
+      >
+        {editingWeather && (
+          <div className="space-y-8 p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Future Cast Days</label>
+                <select 
+                  value={editingWeather.weatherSettings?.forecastDays}
+                  onChange={(e) => updateWeatherSettings(editingWeather.id, { ...editingWeather.weatherSettings!, forecastDays: parseInt(e.target.value) })}
+                  className="w-full tactical-input px-4 h-12 text-white text-xs font-black uppercase"
+                >
+                  <option value="1">1 Day</option>
+                  <option value="3">3 Days</option>
+                  <option value="5">5 Days</option>
+                  <option value="7">7 Days</option>
+                  <option value="10">10 Days</option>
+                  <option value="14">14 Days</option>
+                </select>
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Typography</label>
+                <select 
+                  value={editingWeather.weatherSettings?.fontFamily}
+                  onChange={(e) => updateWeatherSettings(editingWeather.id, { ...editingWeather.weatherSettings!, fontFamily: e.target.value })}
+                  className="w-full tactical-input px-4 h-12 text-white text-xs font-black uppercase"
+                >
+                  <option value="font-sans">Inter Sans</option>
+                  <option value="font-mono">JetBrains Mono</option>
+                  <option value="font-serif">Editorial Serif</option>
+                </select>
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Font Weight</label>
+                <select 
+                  value={editingWeather.weatherSettings?.fontWeight}
+                  onChange={(e) => updateWeatherSettings(editingWeather.id, { ...editingWeather.weatherSettings!, fontWeight: e.target.value })}
+                  className="w-full tactical-input px-4 h-12 text-white text-xs font-black uppercase"
+                >
+                  <option value="font-normal">Normal</option>
+                  <option value="font-bold">Bold</option>
+                  <option value="font-black">Black/Heavy</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => updateWeatherSettings(editingWeather.id, { ...editingWeather.weatherSettings!, animatedIcons: !editingWeather.weatherSettings?.animatedIcons })}
+                className={`p-4 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                  editingWeather.weatherSettings?.animatedIcons ? 'bg-indigo-500 text-white border-indigo-400 shadow-lg shadow-indigo-500/20' : 'bg-black/40 border-white/5 text-slate-500'
+                }`}
+              >
+                Animated Icons: {editingWeather.weatherSettings?.animatedIcons ? 'ENABLED' : 'DISABLED'}
+              </button>
+              <button
+                onClick={() => updateWeatherSettings(editingWeather.id, { ...editingWeather.weatherSettings!, hideAlertsIfEmpty: !editingWeather.weatherSettings?.hideAlertsIfEmpty })}
+                className={`p-4 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                  editingWeather.weatherSettings?.hideAlertsIfEmpty ? 'bg-indigo-500 text-white border-indigo-400 shadow-lg shadow-indigo-500/20' : 'bg-black/40 border-white/5 text-slate-500'
+                }`}
+              >
+                Hide NOAA Box if Empty: {editingWeather.weatherSettings?.hideAlertsIfEmpty ? 'YES' : 'NO'}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal 
         isOpen={!!editingClock} 
@@ -335,12 +433,14 @@ function SortableWidget({
   widget, 
   onRemove, 
   onResize,
-  onEditClock 
+  onEditClock,
+  onEditWeather
 }: { 
   widget: WidgetItem; 
   onRemove: () => void; 
   onResize: (size: 'sm' | 'md' | 'lg' | 'xl') => void;
   onEditClock?: () => void;
+  onEditWeather?: () => void;
 }) {
   const {
     attributes,
@@ -372,7 +472,7 @@ function SortableWidget({
       case 'time':
         return <TimeWidgetContent settings={widget.clockSettings} />;
       case 'weather':
-        return <div className="h-full"><WeatherDashboard /></div>;
+        return <div className="h-full"><WeatherDashboard settings={widget.weatherSettings} /></div>;
       case 'personnel':
         return <PersonnelModalContent />;
       case 'calendar':
@@ -407,6 +507,14 @@ function SortableWidget({
               className="p-1.5 text-slate-600 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all mr-1"
             >
               <Info className="w-4 h-4" />
+            </button>
+          )}
+          {widget.type === 'weather' && (
+            <button 
+              onClick={onEditWeather}
+              className="p-1.5 text-slate-600 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all mr-1"
+            >
+              <Settings className="w-4 h-4" />
             </button>
           )}
           <div className="flex bg-black/40 rounded-lg p-0.5 border border-white/5 mr-2">

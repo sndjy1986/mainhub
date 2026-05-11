@@ -3,6 +3,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Wind, AlertCircle, Thermometer, MapPin, RefreshCw, Navigation, Shield, Settings, X, Bell, BellOff } from 'lucide-react';
 import { useTerminal } from '../../context/TerminalContext';
 
+interface WeatherSettings {
+  forecastDays: number;
+  fontFamily: string;
+  fontWeight: string;
+  animatedIcons: boolean;
+  hideAlertsIfEmpty: boolean;
+}
+
 interface WeatherData {
   temperature: number;
   condition: string;
@@ -12,7 +20,7 @@ interface WeatherData {
   location: string;
 }
 
-export function WeatherDashboard() {
+export function WeatherDashboard({ settings }: { settings?: WeatherSettings }) {
   const { 
     setEmergencyLevel, 
     weatherZip, 
@@ -27,9 +35,12 @@ export function WeatherDashboard() {
   const [retryCount, setRetryCount] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [zipInput, setZipInput] = useState('');
+  const [selectedAlert, setSelectedAlert] = useState<any>(null);
   
   // Track which alerts have been notified to avoid duplicates
   const notifiedAlerts = useRef<Set<string>>(new Set());
+
+  const forecastDays = settings?.forecastDays || 5;
 
   useEffect(() => {
     if (weather) {
@@ -110,7 +121,7 @@ export function WeatherDashboard() {
           temperature: currentPeriod.temperature,
           condition: currentPeriod.shortForecast,
           unit: currentPeriod.temperatureUnit,
-          forecast: forecastData.properties.periods.slice(0, 5),
+          forecast: forecastData.properties.periods.slice(0, forecastDays),
           alerts: alertsData.features || [],
           location: `${city}, ${state}`
         });
@@ -126,18 +137,19 @@ export function WeatherDashboard() {
     // Refresh every 15 minutes
     const interval = setInterval(getWeatherData, 15 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [retryCount, weatherZip]);
+  }, [retryCount, weatherZip, forecastDays]);
 
   const hasAlerts = weather && weather.alerts.length > 0;
 
   const getWeatherIcon = (condition: string, isMain: boolean = false) => {
     const c = condition.toLowerCase();
     const sizeClass = isMain ? "large" : "small";
+    const animationClass = settings?.animatedIcons === false ? 'no-animation' : '';
 
     // CSS Animated Weather Icons
     if (c.includes('thunder') || c.includes('storm')) {
       return (
-        <div className={`weather-icon thunder-storm ${sizeClass}`}>
+        <div className={`weather-icon thunder-storm ${sizeClass} ${animationClass}`}>
           <div className="cloud"></div>
           <div className="lightning">
             <div className="bolt"></div>
@@ -148,7 +160,7 @@ export function WeatherDashboard() {
     }
     if (c.includes('rain') || c.includes('shower')) {
       return (
-        <div className={`weather-icon sun-shower ${sizeClass}`}>
+        <div className={`weather-icon sun-shower ${sizeClass} ${animationClass}`}>
           <div className="cloud"></div>
           <div className="sun">
             <div className="rays"></div>
@@ -164,7 +176,7 @@ export function WeatherDashboard() {
     }
     if (c.includes('snow') || c.includes('ice')) {
        return (
-        <div className={`weather-icon flurries ${sizeClass}`}>
+        <div className={`weather-icon flurries ${sizeClass} ${animationClass}`}>
           <div className="cloud"></div>
           <div className="snow">
             <div className="flake"></div>
@@ -176,14 +188,14 @@ export function WeatherDashboard() {
     }
     if (c.includes('cloud')) {
       return (
-        <div className={`weather-icon cloudy ${sizeClass}`}>
+        <div className={`weather-icon cloudy ${sizeClass} ${animationClass}`}>
           <div className="cloud"></div>
           <div className="cloud" style={{ left: '60%', top: '40%', transform: 'scale(0.8)', opacity: 0.8 }}></div>
         </div>
       );
     }
     return (
-      <div className={`weather-icon sunny ${sizeClass}`}>
+      <div className={`weather-icon sunny ${sizeClass} ${animationClass}`}>
         <div className="sun">
           <div className="rays"></div>
         </div>
@@ -227,7 +239,7 @@ export function WeatherDashboard() {
   }
 
   return (
-    <div className="w-full aspect-auto lg:aspect-[2.5/1] relative group overflow-hidden">
+    <div className={`w-full aspect-auto lg:aspect-[2.5/1] relative group overflow-hidden ${settings?.fontFamily || 'font-sans'}`}>
       {/* SEVERE ALERT BLINK EFFECT */}
       <AnimatePresence>
         {hasAlerts && (
@@ -340,6 +352,83 @@ export function WeatherDashboard() {
           )}
         </AnimatePresence>
 
+        {/* Alert Detail Modal */}
+        <AnimatePresence>
+          {selectedAlert && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[200] flex items-center justify-center p-6"
+            >
+              <div 
+                className="absolute inset-0 bg-black/80 backdrop-blur-md" 
+                onClick={() => setSelectedAlert(null)}
+              />
+              <motion.div 
+                initial={{ scale: 0.9, y: 20 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.9, y: 20 }}
+                className="relative bg-rose-950 border border-rose-500/50 rounded-[3rem] p-12 w-full max-w-2xl shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar"
+              >
+                <div className="flex justify-between items-start mb-10">
+                  <div className="flex items-center gap-5">
+                    <div className="w-16 h-16 rounded-2xl bg-rose-500 flex items-center justify-center shadow-[0_0_30px_rgba(244,63,94,0.4)]">
+                      <AlertCircle className="w-10 h-10 text-white animate-pulse" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-tight">
+                        {selectedAlert.properties.event}
+                      </h3>
+                      <p className="text-rose-400 text-[10px] font-black uppercase tracking-[0.3em] mt-1">
+                        National Weather Service Urgent Warning
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={() => setSelectedAlert(null)} className="p-3 bg-white/5 rounded-full text-slate-400 hover:text-white transition-all">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-8">
+                  <div className="p-8 bg-black/40 border border-rose-500/20 rounded-3xl">
+                    <p className="text-xl font-bold text-white mb-6 uppercase tracking-tight italic">
+                      {selectedAlert.properties.headline}
+                    </p>
+                    <div className="w-full h-px bg-rose-500/20 mb-6" />
+                    <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap font-mono uppercase">
+                      {selectedAlert.properties.description}
+                    </p>
+                  </div>
+
+                  {selectedAlert.properties.instruction && (
+                    <div className="p-8 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl">
+                      <h4 className="text-emerald-400 text-[10px] font-black uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Tactical Instructions
+                      </h4>
+                      <p className="text-emerald-100 text-sm leading-relaxed font-bold uppercase">
+                        {selectedAlert.properties.instruction}
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex flex-col gap-1">
+                       <span className="text-[8px] text-slate-500 font-black uppercase tracking-widest leading-none">Severity</span>
+                       <span className="text-xs font-black text-white uppercase">{selectedAlert.properties.severity}</span>
+                    </div>
+                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex flex-col gap-1">
+                       <span className="text-[8px] text-slate-500 font-black uppercase tracking-widest leading-none">Urgency</span>
+                       <span className="text-xs font-black text-white uppercase">{selectedAlert.properties.urgency}</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Left Side: Current Status */}
         <div className="flex-shrink-0 flex flex-col justify-between lg:w-1/3">
            <div>
@@ -349,66 +438,68 @@ export function WeatherDashboard() {
               </div>
               
               <div className="flex items-center gap-6">
-                <div className="text-7xl font-bold text-white tracking-tighter flex items-start">
+                <div className={`text-7xl ${settings?.fontWeight || 'font-bold'} text-white tracking-tighter flex items-start`}>
                    {weather?.temperature}
                    <span className="text-2xl mt-2 text-slate-500 ml-1">°{weather?.unit}</span>
                 </div>
                 {weather && getWeatherIcon(weather.condition, true)}
               </div>
               
-              <p className="text-xl font-medium text-slate-300 mt-2 uppercase tracking-wide">
+              <p className={`text-xl ${settings?.fontWeight || 'font-medium'} text-slate-300 mt-2 uppercase tracking-wide`}>
                 {weather?.condition}
               </p>
            </div>
-
-           {/* Removed cut-off status boxes */}
         </div>
 
         {/* Right Side: Alerts & Forecast */}
         <div className="flex-1 flex flex-col gap-6">
             {/* Severe Weather Alerts Section */}
-            <div className={`
-                flex-1 rounded-3xl p-6 relative overflow-hidden backdrop-blur-md
-                ${hasAlerts 
-                  ? 'bg-rose-500/20 border border-rose-500/30' 
-                  : 'bg-black/20 border border-white/5'}
-            `}>
-                <div className="flex items-center justify-between mb-4">
-                    <span className={`text-[10px] uppercase font-bold tracking-widest flex items-center gap-2 ${hasAlerts ? 'text-rose-400' : 'text-slate-500'}`}>
-                        <AlertCircle className={`w-3 h-3 ${hasAlerts ? 'animate-pulse' : ''}`} />
-                        NOAA Emergency Alerts
-                    </span>
-                    {hasAlerts && (
-                        <span className="px-2 py-0.5 bg-rose-500 text-white text-[8px] font-black rounded-full animate-bounce">
-                           ACTIVE WARNING
-                        </span>
-                    )}
-                </div>
+            {(!settings?.hideAlertsIfEmpty || hasAlerts) && (
+              <div className={`
+                  flex-1 rounded-3xl p-6 relative overflow-hidden backdrop-blur-md
+                  ${hasAlerts 
+                    ? 'bg-rose-500/20 border border-rose-500/30 cursor-pointer hover:bg-rose-500/30 transition-all' 
+                    : 'bg-black/20 border border-white/5'}
+              `}
+              onClick={hasAlerts ? () => setSelectedAlert(weather?.alerts[0]) : undefined}
+              >
+                  <div className="flex items-center justify-between mb-4">
+                      <span className={`text-[10px] uppercase font-bold tracking-widest flex items-center gap-2 ${hasAlerts ? 'text-rose-400' : 'text-slate-500'}`}>
+                          <AlertCircle className={`w-3 h-3 ${hasAlerts ? 'animate-pulse' : ''}`} />
+                          NOAA Emergency Alerts
+                      </span>
+                      {hasAlerts && (
+                          <span className="px-2 py-0.5 bg-rose-500 text-white text-[8px] font-black rounded-full animate-bounce">
+                             ACTIVE WARNING
+                          </span>
+                      )}
+                  </div>
 
-                {hasAlerts ? (
-                    <div className="space-y-4">
-                        {weather?.alerts.map((alert, idx) => (
-                            <div key={idx} className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl">
-                                <h4 className="text-white font-bold text-sm mb-1">{alert.properties.event}</h4>
-                                <p className="text-[10px] text-rose-300/80 leading-relaxed uppercase font-mono">
-                                    {alert.properties.headline}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="h-full flex flex-col items-center justify-center py-4">
-                        <Shield className="w-8 h-8 text-emerald-500/30 mb-2" />
-                        <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">No Active Warnings in Local Grid</p>
-                    </div>
-                )}
-            </div>
+                  {hasAlerts ? (
+                      <div className="space-y-4">
+                          {weather?.alerts.map((alert, idx) => (
+                              <div key={idx} className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl">
+                                  <h4 className="text-white font-bold text-sm mb-1">{alert.properties.event}</h4>
+                                  <p className="text-[10px] text-rose-300/80 leading-relaxed uppercase font-mono line-clamp-2">
+                                      {alert.properties.headline}
+                                  </p>
+                              </div>
+                          ))}
+                      </div>
+                  ) : (
+                      <div className="h-full flex flex-col items-center justify-center py-4">
+                          <Shield className="w-8 h-8 text-emerald-500/30 mb-2" />
+                          <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">No Active Warnings in Local Grid</p>
+                      </div>
+                  )}
+              </div>
+            )}
 
             {/* Daily Layout (Forecast Bar) */}
-            <div className="bg-black/20 border border-white/5 rounded-3xl p-4 flex justify-between items-center px-8">
+            <div className="bg-black/20 border border-white/5 rounded-3xl p-4 flex justify-between items-center px-8 overflow-x-auto custom-scrollbar gap-8">
                 {weather?.forecast.map((period, idx) => (
-                    <div key={idx} className="flex flex-col items-center gap-2">
-                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{period.name.slice(0, 3)}</span>
+                    <div key={idx} className="flex flex-col items-center gap-2 flex-shrink-0">
+                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate max-w-[80px]">{period.name}</span>
                         {getWeatherIcon(period.shortForecast)}
                         <span className="text-sm font-bold text-white">{period.temperature}°</span>
                     </div>
