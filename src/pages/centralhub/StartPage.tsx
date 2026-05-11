@@ -69,30 +69,25 @@ interface WidgetItem {
   type: 'time' | 'weather' | 'personnel' | 'calendar' | 'shift_report' | 'custom_new';
   title: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  isVisible: boolean;
 }
 
 const DEFAULT_WIDGETS: WidgetItem[] = [
-  { id: 'widget-time', type: 'time', title: 'Operational Clock', size: 'sm' },
-  { id: 'widget-weather', type: 'weather', title: 'Environment Monitor', size: 'xl' },
-  { id: 'widget-personnel', type: 'personnel', title: 'Personnel Deployment', size: 'md' },
-  { id: 'widget-calendar', type: 'calendar', title: 'Operations Calendar', size: 'md' },
-  { id: 'widget-shift-report', type: 'shift_report', title: 'Shift Report Link', size: 'sm' },
+  { id: 'widget-time', type: 'time', title: 'Operational Clock', size: 'sm', isVisible: true },
+  { id: 'widget-weather', type: 'weather', title: 'Environment Monitor', size: 'md', isVisible: true },
+  { id: 'widget-personnel', type: 'personnel', title: 'Personnel Deployment', size: 'xl', isVisible: true },
+  { id: 'widget-calendar', type: 'calendar', title: 'Operations Calendar', size: 'xl', isVisible: true },
+  { id: 'widget-shift-report', type: 'shift_report', title: 'Shift Report Entry', size: 'md', isVisible: true },
 ];
 
 export function StartPage() {
   const navigate = useNavigate();
   const [widgets, setWidgets] = useState<WidgetItem[]>(() => {
-    const saved = localStorage.getItem('start-page-widgets');
+    const saved = localStorage.getItem('start-page-widgets-v4');
     return saved ? JSON.parse(saved) : DEFAULT_WIDGETS;
   });
 
-  const [modals, setModals] = useState({
-    time: false,
-    personnel: false,
-    calendar: false,
-    shiftReport: false,
-    newModal: false,
-  });
+  const [showAddMenu, setShowAddMenu] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -106,7 +101,7 @@ export function StartPage() {
   );
 
   useEffect(() => {
-    localStorage.setItem('start-page-widgets', JSON.stringify(widgets));
+    localStorage.setItem('start-page-widgets-v4', JSON.stringify(widgets));
   }, [widgets]);
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -119,6 +114,18 @@ export function StartPage() {
       });
     }
   };
+
+  const removeWidget = (id: string) => {
+    setWidgets(prev => prev.map(w => w.id === id ? { ...w, isVisible: false } : w));
+  };
+
+  const addWidget = (type: string) => {
+    setWidgets(prev => prev.map(w => w.type === type ? { ...w, isVisible: true } : w));
+    setShowAddMenu(false);
+  };
+
+  const visibleWidgets = widgets.filter(w => w.isVisible);
+  const hiddenWidgets = widgets.filter(w => !w.isVisible);
 
   return (
     <div className="space-y-12 pb-20">
@@ -134,17 +141,17 @@ export function StartPage() {
           </div>
           <p className="text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3">
              <Activity className="w-3 h-3 text-emerald-500 animate-pulse" />
-             Command Center Dashboard Subsystem v4.0
+             Dynamic Operations Dashboard Subsystem
           </p>
         </div>
         
         <div className="flex items-center gap-4">
           <button 
-            onClick={() => setModals(m => ({ ...m, newModal: true }))}
+            onClick={() => setShowAddMenu(true)}
             className="px-6 py-3 glass-effect border-indigo-500/30 text-indigo-400 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all hover:bg-indigo-500/10"
           >
             <Plus className="w-4 h-4" />
-            New Module
+            Add Module
           </button>
         </div>
       </header>
@@ -155,78 +162,56 @@ export function StartPage() {
         onDragEnd={handleDragEnd}
       >
         <SortableContext 
-          items={widgets.map(w => w.id)}
+          items={visibleWidgets.map(w => w.id)}
           strategy={rectSortingStrategy}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 relative z-10 auto-rows-auto">
-            {widgets.map((widget) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10 auto-rows-auto">
+            {visibleWidgets.map((widget) => (
               <SortableWidget 
                 key={widget.id} 
                 widget={widget} 
-                onOpenModal={(type) => setModals(m => ({ ...m, [type]: true }))}
+                onRemove={() => removeWidget(widget.id)}
               />
             ))}
           </div>
         </SortableContext>
       </DndContext>
 
-      {/* Modals */}
       <Modal 
-        isOpen={modals.time} 
-        onClose={() => setModals(m => ({ ...m, time: false }))} 
-        title="Temporal Configuration"
-        icon={<Clock className="w-6 h-6" />}
-      >
-        <TimeModalContent />
-      </Modal>
-
-      <Modal 
-        isOpen={modals.personnel} 
-        onClose={() => setModals(m => ({ ...m, personnel: false }))} 
-        title="Personnel Deployment Matrix"
-        icon={<User className="w-6 h-6" />}
-        maxWidth="max-w-6xl"
-      >
-        <PersonnelModalContent />
-      </Modal>
-
-      <Modal 
-        isOpen={modals.calendar} 
-        onClose={() => setModals(m => ({ ...m, calendar: false }))} 
-        title="Tactical Schedule"
-        icon={<CalendarIcon className="w-6 h-6" />}
-        maxWidth="max-w-7xl"
-      >
-        <OpsCalendar />
-      </Modal>
-
-      <Modal 
-        isOpen={modals.showShiftReport} 
-        onClose={() => setModals(m => ({ ...m, shiftReport: false }))} 
-        title="Add to Shift Report"
-        icon={<FileText className="w-6 h-6" />}
-      >
-        <ShiftReportAddContent onClose={() => setModals(m => ({ ...m, shiftReport: false }))} />
-      </Modal>
-
-      <Modal 
-        isOpen={modals.newModal} 
-        onClose={() => setModals(m => ({ ...m, newModal: false }))} 
-        title="Custom Operations Module"
+        isOpen={showAddMenu} 
+        onClose={() => setShowAddMenu(false)}
+        title="Module Repository"
         icon={<PlusCircle className="w-6 h-6" />}
       >
-        <div className="p-8 text-center space-y-4">
-          <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Configure your custom operations module here.</p>
-          <div className="h-40 bg-white/5 border border-dashed border-white/10 rounded-3xl flex items-center justify-center text-slate-600">
-            <Settings2 className="w-12 h-12" />
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {hiddenWidgets.length === 0 ? (
+            <div className="col-span-full py-12 text-center text-slate-500 uppercase font-black text-xs tracking-widest bg-white/5 rounded-3xl border border-dashed border-white/10">
+              All tactical modules are currently deployed
+            </div>
+          ) : (
+            hiddenWidgets.map(widget => (
+              <button
+                key={widget.id}
+                onClick={() => addWidget(widget.type)}
+                className="p-8 tactical-card hover:border-indigo-500 transition-all text-left flex items-center justify-between group"
+              >
+                <div>
+                  <h4 className="text-lg font-black text-white uppercase italic mb-1">{widget.title}</h4>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Size: {widget.size?.toUpperCase()}</p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                  <Plus className="w-5 h-5" />
+                </div>
+              </button>
+            ))
+          )}
         </div>
       </Modal>
     </div>
   );
 }
 
-function SortableWidget({ widget, onOpenModal }: { widget: WidgetItem; onOpenModal: (type: string) => void }) {
+function SortableWidget({ widget, onRemove }: { widget: WidgetItem; onRemove: () => void }) {
   const {
     attributes,
     listeners,
@@ -245,9 +230,9 @@ function SortableWidget({ widget, onOpenModal }: { widget: WidgetItem; onOpenMod
 
   const getColSpan = () => {
     switch (widget.size) {
-      case 'xl': return 'md:col-span-2 lg:col-span-3 xl:col-span-4';
-      case 'lg': return 'md:col-span-2 lg:col-span-3';
-      case 'md': return 'md:col-span-2';
+      case 'xl': return 'col-span-1 md:col-span-2 lg:col-span-4';
+      case 'lg': return 'col-span-1 md:col-span-2 lg:col-span-3';
+      case 'md': return 'col-span-1 md:col-span-2';
       default: return 'col-span-1';
     }
   };
@@ -255,41 +240,15 @@ function SortableWidget({ widget, onOpenModal }: { widget: WidgetItem; onOpenMod
   const renderContent = () => {
     switch (widget.type) {
       case 'time':
-        return (
-          <div onClick={() => onOpenModal('time')} className="cursor-pointer py-10 flex flex-col justify-center items-center gap-4">
-            <p className="text-5xl font-black text-white glow-number">{format(new Date(), 'HH:mm:ss')}</p>
-            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Operational Time</p>
-          </div>
-        );
+        return <TimeWidgetContent />;
       case 'weather':
-        return <WeatherDashboard />;
+        return <div className="h-full"><WeatherDashboard /></div>;
       case 'personnel':
-        return (
-          <div onClick={() => onOpenModal('personnel')} className="cursor-pointer py-12 flex flex-col justify-center items-center gap-6">
-            <div className="w-16 h-16 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-              <User className="w-8 h-8 text-indigo-400" />
-            </div>
-            <p className="text-lg font-black text-white uppercase italic">Deployment Matrix</p>
-          </div>
-        );
+        return <PersonnelModalContent />;
       case 'calendar':
-        return (
-          <div onClick={() => onOpenModal('calendar')} className="cursor-pointer py-12 flex flex-col justify-center items-center gap-6">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <CalendarIcon className="w-8 h-8 text-emerald-400" />
-            </div>
-            <p className="text-lg font-black text-white uppercase italic">Operations Calendar</p>
-          </div>
-        );
+        return <OpsCalendar />;
       case 'shift_report':
-        return (
-          <div onClick={() => onOpenModal('shiftReport')} className="cursor-pointer py-12 flex flex-col justify-center items-center gap-6">
-            <div className="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
-              <FileText className="w-8 h-8 text-rose-400" />
-            </div>
-            <p className="text-lg font-black text-white uppercase italic">Add Report Item</p>
-          </div>
-        );
+        return <ShiftReportAddContent onClose={() => {}} />;
       default:
         return <div className="p-12 text-slate-500 uppercase font-black text-[10px] tracking-widest text-center">Module Offline</div>;
     }
@@ -299,18 +258,23 @@ function SortableWidget({ widget, onOpenModal }: { widget: WidgetItem; onOpenMod
     <div 
       ref={setNodeRef} 
       style={style} 
-      className={`tactical-card p-0 flex flex-col relative group ${getColSpan()}`}
+      className={`tactical-card p-0 flex flex-col relative group overflow-hidden ${getColSpan()}`}
     >
-      <div 
-        {...attributes} 
-        {...listeners} 
-        className="absolute top-4 right-4 p-2 cursor-grab active:cursor-grabbing text-slate-600 hover:text-indigo-400 transition-colors z-20"
-      >
-        <GripVertical className="w-5 h-5" />
-      </div>
-      
       <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
-        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic px-2">{widget.title}</h4>
+        <div 
+          {...attributes} 
+          {...listeners} 
+          className="flex items-center gap-3 cursor-grab active:cursor-grabbing text-slate-500 hover:text-white transition-colors"
+        >
+          <GripVertical className="w-4 h-4" />
+          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic pr-2">{widget.title}</h4>
+        </div>
+        <button 
+          onClick={onRemove}
+          className="p-1.5 text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
 
       <div className="flex-1 p-6 relative">
@@ -320,113 +284,22 @@ function SortableWidget({ widget, onOpenModal }: { widget: WidgetItem; onOpenMod
   );
 }
 
-function TimeModalContent() {
-  return (
-    <div className="space-y-8 p-4">
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Display Format</label>
-          <select className="tactical-input w-full p-4 text-white">
-            <option>24-HOUR MILITARY</option>
-            <option>12-HOUR STANDARD</option>
-          </select>
-        </div>
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Primary Timezone</label>
-          <select className="tactical-input w-full p-4 text-white">
-            <option>UTC (EST -05:00)</option>
-            <option>UTC (GMT +00:00)</option>
-          </select>
-        </div>
-      </div>
-      <div className="p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl text-center">
-        <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.3em]">Temporal sync active with master terminal</p>
-      </div>
-    </div>
-  );
-}
-
-function PersonnelModalContent() {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4">
-      {Object.entries(SHIFT_TEAMS).map(([name, team]) => (
-        <div key={name} className="tactical-card p-6 group hover:border-indigo-500/30">
-          <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
-            <h3 className="text-xs font-black text-indigo-400 uppercase tracking-[0.2em] italic">
-              {name} <span className="text-slate-500 not-italic">Shift</span>
-            </h3>
-            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
-          </div>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                <Shield className="w-4 h-4 text-emerald-400" />
-              </div>
-              <div>
-                <p className="text-[11px] font-black text-white leading-tight uppercase tracking-tight">{team.lead}</p>
-                <p className="text-[8px] text-emerald-500 font-black uppercase tracking-[0.2em] mt-0.5 italic">Protocol Lead</p>
-              </div>
-            </div>
-            <div className="space-y-2 pt-2 border-t border-white/5">
-              {team.members.map(member => (
-                <div key={member} className="flex items-center gap-3 pl-2 group/member">
-                  <div className="w-1 h-1 rounded-full bg-slate-700 group-hover/member:bg-indigo-500 transition-colors" />
-                  <p className="text-[10px] font-bold text-slate-400 group-hover/member:text-white transition-colors uppercase tracking-tight">{member}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ShiftReportAddContent({ onClose }: { onClose: () => void }) {
-  const [content, setContent] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  const handleAdd = async () => {
-    if (!content.trim()) return;
-    setSaving(true);
-    try {
-      // Find today's shift report document or queue it
-      // For now, we'll add to a dedicated shift_updates collection that the ShiftReport page can pull from
-      await addDoc(collection(db, 'shift_updates'), {
-        content: content,
-        timestamp: serverTimestamp(),
-        author: auth.currentUser?.email || 'Anonymous',
-        status: 'pending'
-      });
-      setContent('');
-      onClose();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSaving(false);
-    }
-  };
+function TimeWidgetContent() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
-    <div className="space-y-6 p-4">
-      <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Event Description</label>
-        <textarea 
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={5}
-          className="tactical-input w-full p-6 text-white font-mono text-sm leading-relaxed"
-          placeholder="ENTER OPERATIONAL UPDATE TO BE INCLUDED IN SHIFT REPORT..."
-        />
+    <div className="flex flex-col items-center justify-center h-full gap-4 py-8">
+      <div className="text-6xl font-black text-white glow-number tracking-tighter">
+        {format(now, 'HH:mm:ss')}
       </div>
-      <button 
-        onClick={handleAdd}
-        disabled={saving}
-        className="w-full h-16 bg-indigo-500 hover:bg-indigo-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-500/20 transition-all flex items-center justify-center gap-4"
-      >
-        {saving ? <Activity className="w-5 h-5 animate-spin" /> : <PlusCircle className="w-5 h-5" />}
-        Inject into Operation Log
-      </button>
+      <div className="flex flex-col items-center gap-1">
+        <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.3em]">Operational Phase</p>
+        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{format(now, 'EEEE, LLLL do')}</p>
+      </div>
     </div>
   );
 }
@@ -751,6 +624,89 @@ function OpsCalendar() {
           </div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function PersonnelModalContent() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 p-4 h-full overflow-y-auto custom-scrollbar pr-2">
+      {Object.entries(SHIFT_TEAMS).map(([name, team]) => (
+        <div key={name} className="tactical-card p-6 group hover:border-indigo-500/30">
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
+            <h3 className="text-xs font-black text-indigo-400 uppercase tracking-[0.2em] italic">
+              {name} <span className="text-slate-500 not-italic">Shift</span>
+            </h3>
+            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                <Shield className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-black text-white leading-tight uppercase tracking-tight">{team.lead}</p>
+                <p className="text-[8px] text-emerald-500 font-black uppercase tracking-[0.2em] mt-0.5 italic">Protocol Lead</p>
+              </div>
+            </div>
+            <div className="space-y-2 pt-2 border-t border-white/5">
+              {team.members.map(member => (
+                <div key={member} className="flex items-center gap-3 pl-2 group/member">
+                  <div className="w-1 h-1 rounded-full bg-slate-700 group-hover/member:bg-indigo-500 transition-colors" />
+                  <p className="text-[10px] font-bold text-slate-400 group-hover/member:text-white transition-colors uppercase tracking-tight">{member}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ShiftReportAddContent({ onClose }: { onClose: () => void }) {
+  const [content, setContent] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleAdd = async () => {
+    if (!content.trim()) return;
+    setSaving(true);
+    try {
+      await addDoc(collection(db, 'shift_updates'), {
+        content: content,
+        timestamp: serverTimestamp(),
+        author: auth.currentUser?.email || 'Anonymous',
+        status: 'pending'
+      });
+      setContent('');
+      onClose();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 p-4">
+      <div className="space-y-2">
+        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Event Description</label>
+        <textarea 
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows={4}
+          className="tactical-input w-full p-6 text-white font-mono text-sm leading-relaxed"
+          placeholder="ENTER OPERATIONAL UPDATE TO BE INCLUDED IN SHIFT REPORT..."
+        />
+      </div>
+      <button 
+        onClick={handleAdd}
+        disabled={saving}
+        className="w-full h-16 bg-indigo-500 hover:bg-indigo-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-500/20 transition-all flex items-center justify-center gap-4"
+      >
+        {saving ? <Activity className="w-5 h-5 animate-spin" /> : <PlusCircle className="w-5 h-5" />}
+        Inject into Operation Log
+      </button>
     </div>
   );
 }
