@@ -349,7 +349,10 @@ export function AdminPage() {
               {THEMES.map((theme) => (
                 <button
                   key={theme.id}
-                  onClick={() => setAppTheme(theme.id)}
+                  onClick={() => {
+                    setAppTheme(theme.id);
+                    setShowToast(`${theme.name} Theme Applied`);
+                  }}
                   className={`
                     w-full flex items-center justify-between p-4 rounded-2xl border transition-all relative overflow-hidden group duration-500
                     ${appTheme === theme.id 

@@ -6,7 +6,7 @@ export default function TimeClockPage() {
   const [iframeError, setIframeError] = useState(false);
 
   return (
-    <div className="w-full h-full bg-[#0a0c10] flex flex-col">
+    <div className="w-full h-full bg-bg-main flex flex-col transition-colors duration-500">
       <div className="p-4 bg-white/5 border-b border-white/10 flex justify-between items-center shrink-0">
         <h2 className="text-white font-black uppercase tracking-widest text-xs">ESO Time Clock</h2>
       </div>

@@ -125,6 +125,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem('appTheme', appTheme);
+    document.documentElement.setAttribute('data-theme', appTheme);
   }, [appTheme]);
 
   return (

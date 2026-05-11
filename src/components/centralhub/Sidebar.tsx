@@ -46,10 +46,10 @@ export function Sidebar() {
   } = useTerminal();
 
   return (
-    <div className="w-64 h-screen backdrop-blur-xl bg-white/5 border-r border-white/10 flex flex-col fixed left-0 top-0 z-50 overflow-y-auto overflow-x-hidden">
+    <div className="w-64 h-screen backdrop-blur-xl bg-bg-surface border-r border-white/10 flex flex-col fixed left-0 top-0 z-50 overflow-y-auto overflow-x-hidden transition-colors duration-500">
       <div className="p-8">
         <div className="flex items-center gap-3 mb-10">
-          <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">D</div>
+          <div className="w-8 h-8 bg-brand-indigo rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-brand-indigo/30 transition-all duration-500">D</div>
           <span className="text-xl font-bold tracking-tight text-white uppercase">Dispatch Ops <span className="text-indigo-400">Central</span></span>
         </div>
       </div>
@@ -73,9 +73,7 @@ export function Sidebar() {
               to={item.path}
               className={({ isActive }) => `
                 flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative
-                ${isActive 
-                  ? 'bg-white/10 text-white border border-white/10' 
-                  : 'text-slate-400 hover:bg-white/5 hover:text-white border border-transparent'}
+                  ${isActive ? 'bg-white/10 text-white border border-white/10' : 'text-slate-400 hover:bg-bg-main/40 hover:text-white border border-transparent'}
               `}
             >
               {({ isActive }) => (

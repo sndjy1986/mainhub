@@ -650,7 +650,7 @@ export default function CommandConsolePage() {
 
   return (
     <>
-      <header className="h-14 flex items-center justify-between px-6 bg-slate-900 border-b border-white/5 shrink-0 z-[2000]">
+      <header className="h-14 flex items-center justify-between px-6 bg-bg-surface border-b border-white/5 shrink-0 z-[2000] transition-colors duration-500">
         <div className="flex items-center gap-8">
           <div className="flex items-center gap-3">
              <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
@@ -685,7 +685,7 @@ export default function CommandConsolePage() {
       <main className="flex-1 flex flex-col min-w-0 relative">
         <div className="flex-1 overflow-hidden">
           <div className="relative w-full h-full overflow-hidden group">
-            <div className={`absolute inset-0 z-0 bg-[#0f172a] ${theme === 'dark' ? 'border-zinc-800' : 'border-slate-200'}`}>
+            <div className={`absolute inset-0 z-0 bg-bg-main ${theme === 'dark' ? 'border-zinc-800' : 'border-slate-200'} transition-colors duration-500`}>
               <div className="absolute top-4 left-4 flex gap-2 z-[1000] pointer-events-none">
                 <div className="px-3 py-1 bg-black/60 backdrop-blur border border-zinc-800 rounded-full text-[9px] font-mono whitespace-nowrap text-logistics-blue shadow-lg">
                   TACTICAL SECTOR FEED // RC-35

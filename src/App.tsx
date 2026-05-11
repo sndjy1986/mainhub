@@ -19,7 +19,7 @@ export default function App() {
     <TerminalProvider>
       <Router>
         <Layout>
-          <Suspense fallback={<div className="w-full h-full bg-[#0f172a]" />}>
+          <Suspense fallback={<div className="w-full h-full bg-bg-main" />}>
             <Routes>
               <Route path="/" element={<PageWrapper><StartPage /></PageWrapper>} />
               <Route path="/tone-test" element={<PageWrapper className="overflow-y-auto"><ToneTest /></PageWrapper>} />
