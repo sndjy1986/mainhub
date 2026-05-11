@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer, collection, addDoc, query, orderBy, limit, getDocs, Timestamp, onSnapshot, setDoc, updateDoc, terminate, clearIndexedDbPersistence } from 'firebase/firestore';
+import { getFirestore, doc, getDocFromServer, collection, addDoc, query, orderBy, limit, getDocs, Timestamp, onSnapshot, setDoc, updateDoc, terminate, clearIndexedDbPersistence, serverTimestamp } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
@@ -156,5 +156,5 @@ export async function getReports(limitCount: number = 50) {
   }
 }
 
-export { signInWithPopup, doc, onSnapshot };
+export { signInWithPopup, doc, onSnapshot, query, orderBy, collection, addDoc, updateDoc, Timestamp, serverTimestamp, setDoc };
 

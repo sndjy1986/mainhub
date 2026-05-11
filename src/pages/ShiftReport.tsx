@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Clipboard, 
@@ -31,7 +32,9 @@ import {
   Globe,
   UserCheck,
   Lock,
-  AlertCircle
+  AlertCircle,
+  Plus,
+  ArrowRight
 } from 'lucide-react';
 
 // Sub-component for the high-intensity emergency background
@@ -77,7 +80,12 @@ import {
   onSnapshot, 
   db, 
   updateGlobalSettings,
-  PersonnelMember
+  PersonnelMember,
+  query,
+  orderBy,
+  collection,
+  updateDoc,
+  serverTimestamp
 } from '../lib/firebase';
 
 const STORAGE_KEY = "shiftReportDraft_v2";
@@ -1133,18 +1141,3 @@ function PendingUpdatesSync({ onAppend }: { onAppend: (text: string) => void }) 
     </button>
   );
 }
-
-const ArrowRight = ({ className }: { className?: string }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className}
-  >
-    <path d="M5 12h14m-7-7 7 7-7 7" />
-  </svg>
-);
