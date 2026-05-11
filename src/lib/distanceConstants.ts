@@ -2,7 +2,7 @@
 export const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1Ijoic25kankxOTg2IiwiYSI6ImNtbnluNTlhajAzdTcyc3BvZnA2dHFlc2IifQ.i12KqohChX4CmRWYY3rrqA';
 
 export const API_LIMIT = 10000;
-export const COUNTER_API = "https://api.sndjy.us/api/increment";
+export const COUNTER_API = "";
 
 export interface Unit {
   name: string;

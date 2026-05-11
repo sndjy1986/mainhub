@@ -60,34 +60,12 @@ export default function DistanceChecker({ isDark }: { isDark?: boolean }) {
   }, [view, destCoords, isDark]);
 
   const fetchUsage = async () => {
-    try {
-      const res = await fetch(COUNTER_API, { method: "GET", mode: "cors" });
-      const data = await res.json();
-      const count = data.count || 0;
-      setUsageCount(count);
-      
-      const isFirstDay = new Date().getDate() === 1;
-      if (count >= API_LIMIT && !isFirstDay) {
-        setIsLimited(true);
-      }
-    } catch (err) {
-      console.error("Counter Read Failed:", err);
-    }
+    // Disabled external tracking
+    setUsageCount(0);
   };
 
   const incrementUsage = async (amount: number) => {
-    try {
-      const res = await fetch(COUNTER_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ incrementBy: amount }),
-        mode: "cors",
-      });
-      const data = await res.json();
-      setUsageCount(data.count);
-    } catch (err) {
-      console.error("Counter Update Failed:", err);
-    }
+    // Disabled external tracking
   };
 
   const geocode = async (addr: string): Promise<[number, number]> => {

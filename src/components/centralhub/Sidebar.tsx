@@ -47,7 +47,7 @@ export function Sidebar() {
   } = useTerminal();
 
   return (
-    <div className="w-64 h-screen bg-bg-main/80 backdrop-blur-2xl border-r border-white/5 flex flex-col fixed left-0 top-0 z-50 overflow-y-auto overflow-x-hidden transition-colors duration-500 shadow-2xl relative">
+    <div className="w-64 h-screen bg-bg-main/80 backdrop-blur-2xl border-r border-white/5 flex flex-col fixed left-0 top-0 z-50 overflow-y-auto overflow-x-hidden transition-colors duration-500 shadow-2xl">
       <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/5 to-transparent pointer-events-none" />
       
       <div className="p-8 relative">

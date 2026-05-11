@@ -42,7 +42,9 @@ export function WeatherDashboard() {
 
         if (weatherZip) {
           // Resolve Zip to Lat/Lon using Zippopotam.us
-          const zipRes = await fetch(`https://api.zippopotam.us/us/${weatherZip}`);
+          const zipRes = await fetch(`https://api.zippopotam.us/us/${weatherZip}`, {
+            headers: { 'User-Agent': 'Dispatch Ops Central (sndjy1986@gmail.com)' }
+          });
           if (!zipRes.ok) throw new Error('Invalid or unrecognized Zip Code.');
           const zipData = await zipRes.json();
           const place = zipData.places[0];
@@ -58,7 +60,9 @@ export function WeatherDashboard() {
         }
 
         // 2. Get NOAA Grid Points
-        const pointsRes = await fetch(`https://api.weather.gov/points/${latitude.toFixed(4)},${longitude.toFixed(4)}`);
+        const pointsRes = await fetch(`https://api.weather.gov/points/${latitude.toFixed(4)},${longitude.toFixed(4)}`, {
+          headers: { 'User-Agent': 'Dispatch Ops Central (sndjy1986@gmail.com)' }
+        });
         if (!pointsRes.ok) throw new Error('Could not find NOAA grid coordinates for this location.');
         const pointsData = await pointsRes.json();
         
@@ -68,8 +72,12 @@ export function WeatherDashboard() {
 
         // 3. Get Forecast & Alerts in Parallel
         const [forecastRes, alertsRes] = await Promise.all([
-          fetch(forecastUrl),
-          fetch(`https://api.weather.gov/alerts/active?point=${latitude.toFixed(4)},${longitude.toFixed(4)}`)
+          fetch(forecastUrl, {
+            headers: { 'User-Agent': 'Dispatch Ops Central (sndjy1986@gmail.com)' }
+          }),
+          fetch(`https://api.weather.gov/alerts/active?point=${latitude.toFixed(4)},${longitude.toFixed(4)}`, {
+            headers: { 'User-Agent': 'Dispatch Ops Central (sndjy1986@gmail.com)' }
+          })
         ]);
 
         if (!forecastRes.ok) throw new Error('Forecast data unavailable.');

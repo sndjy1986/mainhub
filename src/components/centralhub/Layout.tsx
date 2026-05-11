@@ -35,7 +35,7 @@ export function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-brand-bg text-slate-200 relative overflow-hidden font-sans transition-colors duration-500" data-theme={appTheme}>
+    <div className="h-screen bg-brand-bg text-slate-200 relative overflow-hidden font-sans transition-colors duration-500" data-theme={appTheme}>
       {/* Decorative Background Elements (Original) */}
       <div className="fixed top-[-10%] left-[-10%] w-[400px] h-[400px] bg-brand-indigo/10 rounded-full blur-[100px] pointer-events-none transition-colors duration-500"></div>
       <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-brand-emerald/05 rounded-full blur-[120px] pointer-events-none transition-colors duration-500"></div>
@@ -43,7 +43,7 @@ export function Layout({ children }: LayoutProps) {
       <EmergencyBackground />
       
       <Sidebar />
-      <main className="pl-64 min-h-screen relative z-10">
+      <main className="pl-64 h-full overflow-y-auto relative z-10 custom-scrollbar">
         {/* Global Notification Toast Manager */}
         <div className="fixed top-8 right-8 z-[200] flex flex-col gap-3 pointer-events-none">
           <AnimatePresence>

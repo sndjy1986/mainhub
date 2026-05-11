@@ -26,28 +26,9 @@ export async function getMatrix(dest: [number, number], sources: [number, number
 }
 
 export async function fetchCurrentUsage(): Promise<number> {
-  try {
-    const res = await fetch("https://api.sndjy.us/api/increment", { method: "GET", mode: "cors" });
-    const data = await res.json();
-    return data.count || 0;
-  } catch (err) {
-    console.error("Counter Read Failed:", err);
-    return 0;
-  }
+  return 0; // Disabled external tracking
 }
 
 export async function incrementUsage(amount: number): Promise<number> {
-  try {
-    const res = await fetch("https://api.sndjy.us/api/increment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ incrementBy: amount }),
-      mode: "cors",
-    });
-    const data = await res.json();
-    return data.count || 0;
-  } catch (err) {
-    console.error("Counter Update Failed:", err);
-    return 0;
-  }
+  return 0; // Disabled external tracking
 }
