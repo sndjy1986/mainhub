@@ -14,6 +14,7 @@ import {
   ChevronLeft, 
   ChevronRight, 
   User, 
+  GripVertical,
   FileText
 } from 'lucide-react';
 import { WeatherDashboard } from '../../components/centralhub/WeatherDashboard';
@@ -24,6 +25,24 @@ import { useAuthRole } from '../../hooks/useAuthRole';
 import { motion, AnimatePresence } from 'motion/react';
 import { SHIFT_TEAMS } from '../../lib/shiftConstants';
 import { Modal } from '../../components/centralhub/Modal';
+
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  rectSortingStrategy
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 import { 
   format, 
@@ -40,8 +59,72 @@ import {
 
 import { useNavigate } from 'react-router-dom';
 
+interface WidgetItem {
+  id: string;
+  type: 'time' | 'weather' | 'personnel' | 'calendar' | 'shift_report' | 'custom_new';
+  title: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  isVisible: boolean;
+}
+
+const DEFAULT_WIDGETS: WidgetItem[] = [
+  { id: 'widget-time', type: 'time', title: 'Operational Clock', size: 'sm', isVisible: true },
+  { id: 'widget-weather', type: 'weather', title: 'Environment Monitor', size: 'md', isVisible: true },
+  { id: 'widget-personnel', type: 'personnel', title: 'Personnel Deployment', size: 'xl', isVisible: true },
+  { id: 'widget-calendar', type: 'calendar', title: 'Operations Calendar', size: 'xl', isVisible: true },
+  { id: 'widget-shift-report', type: 'shift_report', title: 'Shift Report Entry', size: 'md', isVisible: true },
+];
+
 export function StartPage() {
   const [now, setNow] = useState(new Date());
+  const [widgets, setWidgets] = useState<WidgetItem[]>(() => {
+    const saved = localStorage.getItem('start-page-widgets-v5');
+    return saved ? JSON.parse(saved) : DEFAULT_WIDGETS;
+  });
+
+  const [showAddMenu, setShowAddMenu] = useState(false);
+
+  const updateWidgetSize = (id: string, size: 'sm' | 'md' | 'lg' | 'xl') => {
+    setWidgets(prev => prev.map(w => w.id === id ? { ...w, size } : w));
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  useEffect(() => {
+    localStorage.setItem('start-page-widgets-v5', JSON.stringify(widgets));
+  }, [widgets]);
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      setWidgets((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over?.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const removeWidget = (id: string) => {
+    setWidgets(prev => prev.map(w => w.id === id ? { ...w, isVisible: false } : w));
+  };
+
+  const addWidget = (type: string) => {
+    setWidgets(prev => prev.map(w => w.type === type ? { ...w, isVisible: true } : w));
+    setShowAddMenu(false);
+  };
+
+  const visibleWidgets = widgets.filter(w => w.isVisible);
+  const hiddenWidgets = widgets.filter(w => !w.isVisible);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -71,61 +154,159 @@ export function StartPage() {
             <p className="text-4xl font-black text-white glow-number tracking-tighter leading-none">{format(now, 'HH:mm:ss')}</p>
             <p className="text-[9px] text-indigo-400 font-black uppercase tracking-[0.3em] mt-2">{format(now, 'EEEE, LLLL do')}</p>
           </div>
+          <button 
+            onClick={() => setShowAddMenu(true)}
+            className="px-6 py-3 glass-effect border-indigo-500/30 text-indigo-400 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all hover:bg-indigo-500/10"
+          >
+            <Plus className="w-4 h-4" />
+            Add Module
+          </button>
         </div>
       </header>
 
-      {/* Primary Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <DndContext 
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext 
+          items={visibleWidgets.map(w => w.id)}
+          strategy={rectSortingStrategy}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10 auto-rows-auto">
+            {visibleWidgets.map((widget) => (
+              <SortableWidget 
+                key={widget.id} 
+                widget={widget} 
+                onRemove={() => removeWidget(widget.id)}
+                onResize={(size) => updateWidgetSize(widget.id, size)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+
+      <Modal 
+        isOpen={showAddMenu} 
+        onClose={() => setShowAddMenu(false)}
+        title="Module Repository"
+        icon={<PlusCircle className="w-6 h-6" />}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {hiddenWidgets.length === 0 ? (
+            <div className="col-span-full py-12 text-center text-slate-500 uppercase font-black text-xs tracking-widest bg-white/5 rounded-3xl border border-dashed border-white/10">
+              All tactical modules are currently deployed
+            </div>
+          ) : (
+            hiddenWidgets.map(widget => (
+              <button
+                key={widget.id}
+                onClick={() => addWidget(widget.type)}
+                className="p-8 tactical-card hover:border-indigo-500 transition-all text-left flex items-center justify-between group"
+              >
+                <div>
+                  <h4 className="text-lg font-black text-white uppercase italic mb-1">{widget.title}</h4>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Size: {widget.size?.toUpperCase()}</p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                  <Plus className="w-5 h-5" />
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+function SortableWidget({ widget, onRemove, onResize }: { widget: WidgetItem; onRemove: () => void; onResize: (size: 'sm' | 'md' | 'lg' | 'xl') => void }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: widget.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 'auto',
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const getColSpan = () => {
+    switch (widget.size) {
+      case 'xl': return 'col-span-1 md:col-span-2 lg:col-span-4';
+      case 'lg': return 'col-span-1 md:col-span-2 lg:col-span-3';
+      case 'md': return 'col-span-1 md:col-span-2';
+      default: return 'col-span-1';
+    }
+  };
+
+  const renderContent = () => {
+    switch (widget.type) {
+      case 'time':
+        return <TimeWidgetContent />;
+      case 'weather':
+        return <div className="h-full"><WeatherDashboard /></div>;
+      case 'personnel':
+        return <PersonnelModalContent />;
+      case 'calendar':
+        return <OpsCalendar />;
+      case 'shift_report':
+        return <ShiftReportAddContent onClose={() => {}} />;
+      default:
+        return <div className="p-12 text-slate-500 uppercase font-black text-[10px] tracking-widest text-center">Module Offline</div>;
+    }
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`tactical-card p-0 flex flex-col relative group overflow-hidden ${getColSpan()}`}
+    >
+      <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
+        <div 
+          {...attributes} 
+          {...listeners} 
+          className="flex items-center gap-3 cursor-grab active:cursor-grabbing text-slate-500 hover:text-white transition-colors"
+        >
+          <GripVertical className="w-4 h-4" />
+          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic pr-2">{widget.title}</h4>
+        </div>
         
-        {/* Environment & Quick Actions */}
-        <div className="lg:col-span-4 space-y-8">
-          <section className="tactical-card p-0 overflow-hidden">
-            <div className="p-4 border-b border-white/5 bg-white/5 flex items-center gap-3">
-              <Shield className="w-4 h-4 text-slate-500" />
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">Environment Monitor</h4>
-            </div>
-            <div className="p-6">
-              <WeatherDashboard />
-            </div>
-          </section>
-
-          <section className="tactical-card p-0 overflow-hidden">
-            <div className="p-4 border-b border-white/5 bg-white/5 flex items-center gap-3">
-              <PlusCircle className="w-4 h-4 text-slate-500" />
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">Operational Log Injection</h4>
-            </div>
-            <div className="p-6">
-              <ShiftReportAddContent onClose={() => {}} />
-            </div>
-          </section>
+        <div className="flex items-center gap-1">
+          <div className="flex bg-black/40 rounded-lg p-0.5 border border-white/5 mr-2">
+            {(['sm', 'md', 'lg', 'xl'] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => onResize(s)}
+                className={`
+                  w-6 h-5 text-[8px] font-black uppercase flex items-center justify-center rounded-md transition-all
+                  ${widget.size === s 
+                    ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
+                    : 'text-slate-600 hover:text-slate-400 hover:bg-white/5'}
+                `}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          <button 
+            onClick={onRemove}
+            className="p-1.5 text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
+      </div>
 
-        {/* Personnel Deployment */}
-        <div className="lg:col-span-8">
-          <section className="tactical-card p-0 overflow-hidden h-full">
-            <div className="p-4 border-b border-white/5 bg-white/5 flex items-center gap-3">
-              <User className="w-4 h-4 text-slate-500" />
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">Strategic Personnel Deployment</h4>
-            </div>
-            <div className="p-6">
-              <PersonnelModalContent />
-            </div>
-          </section>
-        </div>
-
-        {/* Tactical Calendar - Full Width Below */}
-        <div className="lg:col-span-12">
-          <section className="tactical-card p-0 overflow-hidden">
-            <div className="p-4 border-b border-white/5 bg-white/5 flex items-center gap-3">
-              <CalendarIcon className="w-4 h-4 text-slate-500" />
-              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic">Tactical Operations Calendar</h4>
-            </div>
-            <div className="p-0">
-              <OpsCalendar />
-            </div>
-          </section>
-        </div>
-
+      <div className="flex-1 p-6 relative">
+        {renderContent()}
       </div>
     </div>
   );
