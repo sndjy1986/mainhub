@@ -109,19 +109,29 @@ export default function DistanceMap() {
       setStatus("Calculating routes...");
 
       const processGroup = async (units: { name: string, addr: string, coords: [number, number] | null }[]) => {
-        const unitCoords = await Promise.all(units.map(async u => {
-          if (u.coords) return u.coords;
-          return await geocode(u.addr);
+        if (units.length === 0) return [];
+
+        const unitCoordsWithMeta = await Promise.all(units.map(async u => {
+          try {
+            const coords = u.coords || await geocode(u.addr);
+            return { coords, unit: u };
+          } catch (e) {
+            console.warn(`Geocoding failed for ${u.name}:`, e);
+            return null;
+          }
         }));
 
-        const matrix = await getMatrix(coords, unitCoords);
+        const validEntries = unitCoordsWithMeta.filter((v): v is { coords: [number, number], unit: typeof units[0] } => v !== null);
+        if (validEntries.length === 0) return [];
+
+        const matrix = await getMatrix(coords, validEntries.map(v => v.coords));
         
-        return units.map((u, i) => ({
-          name: u.name,
-          addr: u.addr,
-          distance: matrix.distances[0][i+1] * 0.000621371, // meters to miles
-          duration: Math.round(matrix.durations[0][i+1] / 60) // seconds to minutes
-        })).sort((a, b) => (a.distance || 0) - (b.distance || 0));
+        return validEntries.map((v, i) => ({
+          name: v.unit.name,
+          addr: v.unit.addr,
+          distance: matrix.distances?.[0]?.[i+1] !== undefined ? matrix.distances[0][i+1] * 0.000621371 : undefined,
+          duration: matrix.durations?.[0]?.[i+1] !== undefined ? Math.round(matrix.durations[0][i+1] / 60) : undefined
+        })).sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
       };
 
       const [trans, qrv] = await Promise.all([

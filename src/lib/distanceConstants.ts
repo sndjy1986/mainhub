@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-export const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1Ijoic25kankxOTg2IiwiYSI6ImNtbnluNTlhajAzdTcyc3BvZnA2dHFlc2IifQ.i12KqohChX4CmRWYY3rrqA';
+export const MAPBOX_TOKEN = (process.env.VITE_MAPBOX_TOKEN as string) || (import.meta.env.VITE_MAPBOX_TOKEN as string) || 'pk.eyJ1Ijoic25kankxOTg2IiwiYSI6ImNtbnluNTlhajAzdTcyc3BvZnA2dHFlc2IifQ.i12KqohChX4CmRWYY3rrqA';
 
 export const API_LIMIT = 10000;
 export const COUNTER_API = "";

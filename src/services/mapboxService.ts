@@ -15,6 +15,7 @@ export interface MatrixResult {
 }
 
 export async function getMatrix(dest: [number, number], sources: [number, number][]): Promise<MatrixResult> {
+  if (sources.length === 0) return { distances: [[]], durations: [[]] };
   const coordString = [dest.join(','), ...sources.map(c => c.join(','))].join(';');
   const url = `https://api.mapbox.com/directions-matrix/v1/mapbox/driving/${coordString}?sources=0&annotations=distance,duration&access_token=${MAPBOX_TOKEN}`;
   
