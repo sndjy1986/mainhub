@@ -89,6 +89,10 @@ export function StartPage() {
 
   const [showAddMenu, setShowAddMenu] = useState(false);
 
+  const updateWidgetSize = (id: string, size: 'sm' | 'md' | 'lg' | 'xl') => {
+    setWidgets(prev => prev.map(w => w.id === id ? { ...w, size } : w));
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -171,6 +175,7 @@ export function StartPage() {
                 key={widget.id} 
                 widget={widget} 
                 onRemove={() => removeWidget(widget.id)}
+                onResize={(size) => updateWidgetSize(widget.id, size)}
               />
             ))}
           </div>
@@ -211,7 +216,7 @@ export function StartPage() {
   );
 }
 
-function SortableWidget({ widget, onRemove }: { widget: WidgetItem; onRemove: () => void }) {
+function SortableWidget({ widget, onRemove, onResize }: { widget: WidgetItem; onRemove: () => void; onResize: (size: 'sm' | 'md' | 'lg' | 'xl') => void }) {
   const {
     attributes,
     listeners,
@@ -269,12 +274,31 @@ function SortableWidget({ widget, onRemove }: { widget: WidgetItem; onRemove: ()
           <GripVertical className="w-4 h-4" />
           <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic pr-2">{widget.title}</h4>
         </div>
-        <button 
-          onClick={onRemove}
-          className="p-1.5 text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"
-        >
-          <X className="w-4 h-4" />
-        </button>
+        
+        <div className="flex items-center gap-1">
+          <div className="flex bg-black/40 rounded-lg p-0.5 border border-white/5 mr-2">
+            {(['sm', 'md', 'lg', 'xl'] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => onResize(s)}
+                className={`
+                  w-6 h-5 text-[8px] font-black uppercase flex items-center justify-center rounded-md transition-all
+                  ${widget.size === s 
+                    ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
+                    : 'text-slate-600 hover:text-slate-400 hover:bg-white/5'}
+                `}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+          <button 
+            onClick={onRemove}
+            className="p-1.5 text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 p-6 relative">
