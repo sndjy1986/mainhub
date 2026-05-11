@@ -104,17 +104,13 @@ export function UnitPosting() {
   }, [currentPosts]);
 
   const cascadingLevels = useMemo(() => {
-    const levels = [];
-    for (let i = systemLevel; i >= 1; i--) {
-      levels.push({
-        level: i,
-        posts: (LEVEL_POSTS[i] || []).map(name => ({
-          ...MASTER_POSTS[name],
-          name
-        }))
-      });
-    }
-    return levels;
+    return [{
+      level: systemLevel,
+      posts: (LEVEL_POSTS[systemLevel] || []).map(name => ({
+        ...MASTER_POSTS[name],
+        name
+      }))
+    }];
   }, [systemLevel]);
 
   return (
@@ -185,7 +181,7 @@ export function UnitPosting() {
               >
                 <div className="flex items-center gap-6">
                   <div className="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
-                    <span className="text-2xl font-black text-indigo-400">0{lvl.level}</span>
+                    <span className="text-2xl font-black text-indigo-400">{lvl.level < 10 ? `0${lvl.level}` : lvl.level}</span>
                   </div>
                   <div className="h-px flex-1 bg-gradient-to-r from-indigo-500/30 via-white/5 to-transparent" />
                   <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em]">Sector_Deployment_Matrix</span>

@@ -75,6 +75,7 @@ export type ShiftReportData = {
   outOfChute: string;
   issues: string;
   pasteNotes: string;
+  otherEvents: string;
 };
 
 export const INITIAL_DATA: ShiftReportData = {
@@ -95,5 +96,6 @@ export const INITIAL_DATA: ShiftReportData = {
   lateTrucks: "",
   outOfChute: "",
   issues: "",
-  pasteNotes: ""
+  pasteNotes: "",
+  otherEvents: ""
 };

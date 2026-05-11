@@ -1,12 +1,53 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Calendar as CalendarIcon, Clock, Shield, Activity, AlertCircle, Plus, Trash2, Info, MessageSquare, PlusCircle, X, ChevronLeft, ChevronRight, User, Phone, BookOpen } from 'lucide-react';
+import { 
+  Calendar as CalendarIcon, 
+  Clock, 
+  Shield, 
+  Activity, 
+  AlertCircle, 
+  Plus, 
+  Trash2, 
+  Info, 
+  MessageSquare, 
+  PlusCircle, 
+  X, 
+  ChevronLeft, 
+  ChevronRight, 
+  User, 
+  Phone, 
+  BookOpen, 
+  GripVertical,
+  MousePointer2,
+  Settings2,
+  FileText
+} from 'lucide-react';
 import { WeatherDashboard } from '../../components/centralhub/WeatherDashboard';
 import { useTerminal } from '../../context/TerminalContext';
-import { onSnapshot, collection, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { onSnapshot, collection, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError } from '../../lib/firebase';
 import { useAuthRole } from '../../hooks/useAuthRole';
 import { motion, AnimatePresence } from 'motion/react';
 import { SHIFT_TEAMS } from '../../lib/shiftConstants';
+import { Modal } from '../../components/centralhub/Modal';
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+  rectSortingStrategy
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 import { 
   format, 
   startOfMonth, 
@@ -23,19 +64,64 @@ import {
 
 import { useNavigate } from 'react-router-dom';
 
+interface WidgetItem {
+  id: string;
+  type: 'time' | 'weather' | 'personnel' | 'calendar' | 'shift_report' | 'custom_new';
+  title: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+}
+
+const DEFAULT_WIDGETS: WidgetItem[] = [
+  { id: 'widget-time', type: 'time', title: 'Operational Clock', size: 'sm' },
+  { id: 'widget-weather', type: 'weather', title: 'Environment Monitor', size: 'xl' },
+  { id: 'widget-personnel', type: 'personnel', title: 'Personnel Deployment', size: 'md' },
+  { id: 'widget-calendar', type: 'calendar', title: 'Operations Calendar', size: 'md' },
+  { id: 'widget-shift-report', type: 'shift_report', title: 'Shift Report Link', size: 'sm' },
+];
+
 export function StartPage() {
   const navigate = useNavigate();
-  const [shift, setShift] = useState(() => localStorage.getItem('selectedShift') || 'A');
-  const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [widgets, setWidgets] = useState<WidgetItem[]>(() => {
+    const saved = localStorage.getItem('start-page-widgets');
+    return saved ? JSON.parse(saved) : DEFAULT_WIDGETS;
+  });
+
+  const [modals, setModals] = useState({
+    time: false,
+    personnel: false,
+    calendar: false,
+    shiftReport: false,
+    newModal: false,
+  });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
-    localStorage.setItem('selectedShift', shift);
-  }, [shift]);
+    localStorage.setItem('start-page-widgets', JSON.stringify(widgets));
+  }, [widgets]);
 
-  const shifts = ['A', 'B', 'C', 'D'];
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      setWidgets((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over?.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
 
   return (
-    <>
+    <div className="space-y-12 pb-20">
       <header className="flex flex-wrap items-center justify-between gap-8 pb-10 border-b border-white/5 relative tactical-header-glow">
         <div className="space-y-4">
           <div className="flex items-center gap-4 group">
@@ -48,120 +134,303 @@ export function StartPage() {
           </div>
           <p className="text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3">
              <Activity className="w-3 h-3 text-emerald-500 animate-pulse" />
-             {new Date(date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+             Command Center Dashboard Subsystem v4.0
           </p>
         </div>
         
-        <div className="flex flex-col items-end gap-3">
-          <span className="text-[10px] uppercase font-black tracking-[0.3em] text-slate-500 italic">Active Shift Matrix</span>
-          <div className="flex p-1.5 glass-effect rounded-2xl border-white/10 gap-1 transition-all">
-            {shifts.map((s) => (
-              <button
-                key={s}
-                onClick={() => setShift(s)}
-                className={`
-                  w-12 h-10 flex items-center justify-center rounded-xl font-black transition-all duration-300 uppercase tracking-widest
-                  ${shift === s 
-                    ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' 
-                    : 'text-slate-500 hover:bg-white/10 hover:text-slate-200'}
-                `}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setModals(m => ({ ...m, newModal: true }))}
+            className="px-6 py-3 glass-effect border-indigo-500/30 text-indigo-400 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all hover:bg-indigo-500/10"
+          >
+            <Plus className="w-4 h-4" />
+            New Module
+          </button>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
-        {/* Date Selection Card */}
-        <section className="lg:col-span-4 tactical-card p-8 flex flex-col justify-between group">
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(79,70,229,0.1)]">
-                <CalendarIcon className="w-6 h-6 text-indigo-400" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-white uppercase tracking-tight">Temporal Node</h2>
-                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black mt-0.5">Active Tracking Window</p>
-              </div>
-            </div>
-            
-            <input 
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full h-16 tactical-input px-6 text-white font-mono text-xl focus:ring-4 focus:ring-indigo-500/10 transition-all uppercase"
-            />
+      <DndContext 
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext 
+          items={widgets.map(w => w.id)}
+          strategy={rectSortingStrategy}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 relative z-10 auto-rows-auto">
+            {widgets.map((widget) => (
+              <SortableWidget 
+                key={widget.id} 
+                widget={widget} 
+                onOpenModal={(type) => setModals(m => ({ ...m, [type]: true }))}
+              />
+            ))}
           </div>
-          
-          <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between text-[10px] font-black tracking-[0.3em] text-slate-600 uppercase">
-             <span>Designated Date</span>
-             <span className="text-indigo-400 font-mono italic">{date}</span>
-          </div>
-        </section>
+        </SortableContext>
+      </DndContext>
 
-        {/* Environmental Monitoring */}
-        <section className="lg:col-span-8 h-full">
-          <WeatherDashboard />
-        </section>
-      </div>
+      {/* Modals */}
+      <Modal 
+        isOpen={modals.time} 
+        onClose={() => setModals(m => ({ ...m, time: false }))} 
+        title="Temporal Configuration"
+        icon={<Clock className="w-6 h-6" />}
+      >
+        <TimeModalContent />
+      </Modal>
 
-      {/* Shift Teams Section */}
-      <div className="space-y-8">
-        <div className="flex items-center gap-4">
-          <h2 className="text-[10px] uppercase font-black text-slate-500 tracking-[0.3em] flex items-center gap-3">
-             <User className="w-4 h-4 text-indigo-500" />
-             Strategic Personnel Deployment
-          </h2>
-          <div className="h-[1px] flex-1 bg-gradient-to-r from-white/5 to-transparent" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {Object.entries(SHIFT_TEAMS).map(([name, team]) => (
-            <div key={name} className="tactical-card p-6 group hover:border-indigo-500/30">
-              <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
-                <h3 className="text-xs font-black text-indigo-400 uppercase tracking-[0.2em] italic">
-                  {name} <span className="text-slate-500 not-italic">Shift</span>
-                </h3>
-                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                    <Shield className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-black text-white leading-tight uppercase tracking-tight">{team.lead}</p>
-                    <p className="text-[8px] text-emerald-500 font-black uppercase tracking-[0.2em] mt-0.5 italic">Protocol Lead</p>
-                  </div>
-                </div>
-                <div className="space-y-2 pt-2 border-t border-white/5">
-                  {team.members.map(member => (
-                    <div key={member} className="flex items-center gap-3 pl-2 group/member">
-                      <div className="w-1 h-1 rounded-full bg-slate-700 group-hover/member:bg-indigo-500 transition-colors" />
-                      <p className="text-[10px] font-bold text-slate-400 group-hover/member:text-white transition-colors uppercase tracking-tight">{member}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <Modal 
+        isOpen={modals.personnel} 
+        onClose={() => setModals(m => ({ ...m, personnel: false }))} 
+        title="Personnel Deployment Matrix"
+        icon={<User className="w-6 h-6" />}
+        maxWidth="max-w-6xl"
+      >
+        <PersonnelModalContent />
+      </Modal>
 
-      <div className="space-y-8 relative z-0">
-        <div className="flex items-center gap-4">
-          <h2 className="text-[10px] uppercase font-black text-slate-500 tracking-[0.3em] flex items-center gap-3">
-             <CalendarIcon className="w-4 h-4 text-indigo-500" />
-             Tactical Operations Calendar
-          </h2>
-          <div className="h-[1px] flex-1 bg-gradient-to-r from-white/5 to-transparent" />
-        </div>
+      <Modal 
+        isOpen={modals.calendar} 
+        onClose={() => setModals(m => ({ ...m, calendar: false }))} 
+        title="Tactical Schedule"
+        icon={<CalendarIcon className="w-6 h-6" />}
+        maxWidth="max-w-7xl"
+      >
         <OpsCalendar />
-      </div>
-    </>
+      </Modal>
+
+      <Modal 
+        isOpen={modals.showShiftReport} 
+        onClose={() => setModals(m => ({ ...m, shiftReport: false }))} 
+        title="Add to Shift Report"
+        icon={<FileText className="w-6 h-6" />}
+      >
+        <ShiftReportAddContent onClose={() => setModals(m => ({ ...m, shiftReport: false }))} />
+      </Modal>
+
+      <Modal 
+        isOpen={modals.newModal} 
+        onClose={() => setModals(m => ({ ...m, newModal: false }))} 
+        title="Custom Operations Module"
+        icon={<PlusCircle className="w-6 h-6" />}
+      >
+        <div className="p-8 text-center space-y-4">
+          <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Configure your custom operations module here.</p>
+          <div className="h-40 bg-white/5 border border-dashed border-white/10 rounded-3xl flex items-center justify-center text-slate-600">
+            <Settings2 className="w-12 h-12" />
+          </div>
+        </div>
+      </Modal>
+    </div>
   );
 }
+
+function SortableWidget({ widget, onOpenModal }: { widget: WidgetItem; onOpenModal: (type: string) => void }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: widget.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 'auto',
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const getColSpan = () => {
+    switch (widget.size) {
+      case 'xl': return 'md:col-span-2 lg:col-span-3 xl:col-span-4';
+      case 'lg': return 'md:col-span-2 lg:col-span-3';
+      case 'md': return 'md:col-span-2';
+      default: return 'col-span-1';
+    }
+  };
+
+  const renderContent = () => {
+    switch (widget.type) {
+      case 'time':
+        return (
+          <div onClick={() => onOpenModal('time')} className="cursor-pointer py-10 flex flex-col justify-center items-center gap-4">
+            <p className="text-5xl font-black text-white glow-number">{format(new Date(), 'HH:mm:ss')}</p>
+            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Operational Time</p>
+          </div>
+        );
+      case 'weather':
+        return <WeatherDashboard />;
+      case 'personnel':
+        return (
+          <div onClick={() => onOpenModal('personnel')} className="cursor-pointer py-12 flex flex-col justify-center items-center gap-6">
+            <div className="w-16 h-16 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+              <User className="w-8 h-8 text-indigo-400" />
+            </div>
+            <p className="text-lg font-black text-white uppercase italic">Deployment Matrix</p>
+          </div>
+        );
+      case 'calendar':
+        return (
+          <div onClick={() => onOpenModal('calendar')} className="cursor-pointer py-12 flex flex-col justify-center items-center gap-6">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+              <CalendarIcon className="w-8 h-8 text-emerald-400" />
+            </div>
+            <p className="text-lg font-black text-white uppercase italic">Operations Calendar</p>
+          </div>
+        );
+      case 'shift_report':
+        return (
+          <div onClick={() => onOpenModal('shiftReport')} className="cursor-pointer py-12 flex flex-col justify-center items-center gap-6">
+            <div className="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
+              <FileText className="w-8 h-8 text-rose-400" />
+            </div>
+            <p className="text-lg font-black text-white uppercase italic">Add Report Item</p>
+          </div>
+        );
+      default:
+        return <div className="p-12 text-slate-500 uppercase font-black text-[10px] tracking-widest text-center">Module Offline</div>;
+    }
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`tactical-card p-0 flex flex-col relative group ${getColSpan()}`}
+    >
+      <div 
+        {...attributes} 
+        {...listeners} 
+        className="absolute top-4 right-4 p-2 cursor-grab active:cursor-grabbing text-slate-600 hover:text-indigo-400 transition-colors z-20"
+      >
+        <GripVertical className="w-5 h-5" />
+      </div>
+      
+      <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
+        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic px-2">{widget.title}</h4>
+      </div>
+
+      <div className="flex-1 p-6 relative">
+        {renderContent()}
+      </div>
+    </div>
+  );
+}
+
+function TimeModalContent() {
+  return (
+    <div className="space-y-8 p-4">
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Display Format</label>
+          <select className="tactical-input w-full p-4 text-white">
+            <option>24-HOUR MILITARY</option>
+            <option>12-HOUR STANDARD</option>
+          </select>
+        </div>
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Primary Timezone</label>
+          <select className="tactical-input w-full p-4 text-white">
+            <option>UTC (EST -05:00)</option>
+            <option>UTC (GMT +00:00)</option>
+          </select>
+        </div>
+      </div>
+      <div className="p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl text-center">
+        <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.3em]">Temporal sync active with master terminal</p>
+      </div>
+    </div>
+  );
+}
+
+function PersonnelModalContent() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-4">
+      {Object.entries(SHIFT_TEAMS).map(([name, team]) => (
+        <div key={name} className="tactical-card p-6 group hover:border-indigo-500/30">
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
+            <h3 className="text-xs font-black text-indigo-400 uppercase tracking-[0.2em] italic">
+              {name} <span className="text-slate-500 not-italic">Shift</span>
+            </h3>
+            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
+          </div>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                <Shield className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-black text-white leading-tight uppercase tracking-tight">{team.lead}</p>
+                <p className="text-[8px] text-emerald-500 font-black uppercase tracking-[0.2em] mt-0.5 italic">Protocol Lead</p>
+              </div>
+            </div>
+            <div className="space-y-2 pt-2 border-t border-white/5">
+              {team.members.map(member => (
+                <div key={member} className="flex items-center gap-3 pl-2 group/member">
+                  <div className="w-1 h-1 rounded-full bg-slate-700 group-hover/member:bg-indigo-500 transition-colors" />
+                  <p className="text-[10px] font-bold text-slate-400 group-hover/member:text-white transition-colors uppercase tracking-tight">{member}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ShiftReportAddContent({ onClose }: { onClose: () => void }) {
+  const [content, setContent] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleAdd = async () => {
+    if (!content.trim()) return;
+    setSaving(true);
+    try {
+      // Find today's shift report document or queue it
+      // For now, we'll add to a dedicated shift_updates collection that the ShiftReport page can pull from
+      await addDoc(collection(db, 'shift_updates'), {
+        content: content,
+        timestamp: serverTimestamp(),
+        author: auth.currentUser?.email || 'Anonymous',
+        status: 'pending'
+      });
+      setContent('');
+      onClose();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 p-4">
+      <div className="space-y-2">
+        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Event Description</label>
+        <textarea 
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows={5}
+          className="tactical-input w-full p-6 text-white font-mono text-sm leading-relaxed"
+          placeholder="ENTER OPERATIONAL UPDATE TO BE INCLUDED IN SHIFT REPORT..."
+        />
+      </div>
+      <button 
+        onClick={handleAdd}
+        disabled={saving}
+        className="w-full h-16 bg-indigo-500 hover:bg-indigo-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-500/20 transition-all flex items-center justify-center gap-4"
+      >
+        {saving ? <Activity className="w-5 h-5 animate-spin" /> : <PlusCircle className="w-5 h-5" />}
+        Inject into Operation Log
+      </button>
+    </div>
+  );
+}
+
 
 function OpsCalendar() {
   const { isAdmin } = useAuthRole();
@@ -241,9 +510,9 @@ function OpsCalendar() {
   const selectedDayEvents = selectedDate ? getEventsForDay(selectedDate) : [];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 p-4">
       {/* Monthly View */}
-      <div className="lg:col-span-8 bg-bg-surface border border-white/10 rounded-3xl p-8 backdrop-blur-md transition-colors duration-500">
+      <div className="xl:col-span-8 bg-bg-surface border border-white/10 rounded-3xl p-8 backdrop-blur-md transition-colors duration-500">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
              <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
@@ -322,14 +591,14 @@ function OpsCalendar() {
       </div>
 
       {/* Daily Detail View */}
-      <div className="lg:col-span-4 flex flex-col gap-6">
+      <div className="xl:col-span-4 flex flex-col gap-6">
         <div className="bg-bg-surface border border-white/10 rounded-3xl p-8 backdrop-blur-md flex-1 flex flex-col transition-colors duration-500">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h4 className="text-sm font-black text-white uppercase tracking-widest">
+              <h4 className="text-sm font-black text-white uppercase tracking-widest text-left">
                 {selectedDate ? format(selectedDate, 'MMM d, yyyy') : 'Select a date'}
               </h4>
-              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Daily Operations</p>
+              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1 text-left">Daily Operations</p>
             </div>
             {isAdmin && selectedDate && (
               <button 
@@ -337,9 +606,9 @@ function OpsCalendar() {
                   setNewEvent({ ...newEvent, eventDate: format(selectedDate, 'yyyy-MM-dd') });
                   setShowAddModal(true);
                 }}
-                className="w-8 h-8 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-white flex items-center justify-center transition-colors shadow-lg shadow-indigo-500/20"
+                className="w-10 h-10 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white flex items-center justify-center transition-colors shadow-lg shadow-indigo-500/20"
               >
-                <Plus size={16} />
+                <Plus size={20} />
               </button>
             )}
           </div>
@@ -352,28 +621,28 @@ function OpsCalendar() {
               </div>
             ) : (
               selectedDayEvents.map(event => (
-                <div key={event.id} className="group p-4 bg-black/40 border border-white/5 rounded-2xl">
-                  <div className="flex justify-between items-start mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-1.5 h-1.5 rounded-full ${
+                <div key={event.id} className="group p-5 bg-black/40 border border-white/5 rounded-2xl hover:border-white/10 transition-colors">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${
                          event.type === 'alert' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 
                          event.type === 'info' ? 'bg-indigo-400' : 'bg-emerald-500'
                        }`} />
-                      <h5 className="text-xs font-bold text-white uppercase tracking-tight">{event.title}</h5>
+                      <h5 className="text-xs font-bold text-white uppercase tracking-tight text-left">{event.title}</h5>
                     </div>
                     {isAdmin && (
                       <button 
                         onClick={() => handleDeleteEvent(event.id)}
-                        className="text-slate-600 hover:text-red-400 transition-colors"
+                        className="p-1.5 text-slate-600 hover:text-red-400 transition-colors bg-white/5 rounded-lg"
                       >
-                        <Trash2 size={12} />
+                        <Trash2 size={14} />
                       </button>
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed mb-3">{event.description}</p>
-                  <div className="flex items-center gap-2">
-                    <Clock size={10} className="text-slate-500" />
-                    <span className="text-[9px] font-mono text-slate-500 uppercase">{event.eventTime || 'All Day'}</span>
+                  <p className="text-[11px] text-slate-400 leading-relaxed mb-4 text-left">{event.description}</p>
+                  <div className="flex items-center gap-2 pt-3 border-t border-white/5">
+                    <Clock size={12} className="text-slate-500" />
+                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">{event.eventTime || 'All Day'}</span>
                   </div>
                 </div>
               ))
@@ -384,34 +653,39 @@ function OpsCalendar() {
 
       <AnimatePresence>
         {showAddModal && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 backdrop-blur-md bg-black/60">
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 backdrop-blur-xl bg-black/80">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-bg-surface border border-white/10 rounded-3xl p-8 w-full max-w-lg shadow-2xl shadow-brand-indigo/10 transition-colors duration-500"
+              className="bg-bg-surface border border-white/10 rounded-[2rem] p-10 w-full max-w-xl shadow-2xl transition-colors duration-500 overflow-hidden relative"
             >
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-xl font-bold text-white uppercase tracking-tight flex items-center gap-3">
-                  <PlusCircle className="w-6 h-6 text-indigo-400" />
-                  Add Calendar Event
-                </h3>
-                <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-white/5 rounded-full text-slate-400"><X className="w-5 h-5" /></button>
+               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
+              
+              <div className="flex justify-between items-center mb-10 relative z-10">
+                <div>
+                  <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4">
+                    <PlusCircle className="w-8 h-8 text-indigo-400" />
+                    Secure Entry Matrix
+                  </h3>
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Calendar_Injection_Vector</p>
+                </div>
+                <button onClick={() => setShowAddModal(false)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all"><X className="w-6 h-6" /></button>
               </div>
 
-              <form onSubmit={handleAddEvent} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Event Type</label>
-                  <div className="grid grid-cols-3 gap-2">
+              <form onSubmit={handleAddEvent} className="space-y-8 relative z-10">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Classification</label>
+                  <div className="grid grid-cols-3 gap-3">
                     {['event', 'info', 'alert'].map(type => (
                       <button
                         key={type}
                         type="button"
                         onClick={() => setNewEvent({ ...newEvent, type })}
-                        className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                        className={`py-4 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
                           newEvent.type === type 
                             ? 'bg-indigo-500 text-white border-indigo-400 shadow-lg shadow-indigo-500/20' 
-                            : 'bg-black/20 border-white/5 text-slate-500 hover:text-slate-300'
+                            : 'bg-black/40 border-white/5 text-slate-500 hover:text-slate-300'
                         }`}
                       >
                         {type}
@@ -420,57 +694,57 @@ function OpsCalendar() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Title</label>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Operation Identifier</label>
                   <input 
                     type="text"
                     required
                     value={newEvent.title}
                     onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                    className="w-full h-14 bg-black/20 border border-white/10 rounded-xl px-6 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-                    placeholder="Enter event title..."
+                    className="w-full h-16 tactical-input px-6 text-white font-mono text-base focus:ring-4 focus:ring-indigo-500/10 transition-all uppercase"
+                    placeholder="ENTER TITLE..."
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Date</label>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Temporal Window</label>
                     <input 
                       type="date"
                       required
                       value={newEvent.eventDate}
                       onChange={(e) => setNewEvent({ ...newEvent, eventDate: e.target.value })}
-                      className="w-full h-14 bg-black/20 border border-white/10 rounded-xl px-6 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                      className="w-full h-16 tactical-input px-6 text-white font-mono"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Time</label>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Precision Time</label>
                     <input 
                       type="time"
                       required
                       value={newEvent.eventTime}
                       onChange={(e) => setNewEvent({ ...newEvent, eventTime: e.target.value })}
-                      className="w-full h-14 bg-black/20 border border-white/10 rounded-xl px-6 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                      className="w-full h-16 tactical-input px-6 text-white font-mono"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Description</label>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Briefing Data</label>
                   <textarea 
                     rows={4}
                     value={newEvent.description}
                     onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                    className="w-full bg-black/20 border border-white/10 rounded-xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none"
-                    placeholder="Provide additional details..."
+                    className="w-full tactical-input p-6 text-white font-mono text-sm leading-relaxed"
+                    placeholder="PROVIDE ADDITIONAL TELEMETRY..."
                   />
                 </div>
 
                 <button 
                   type="submit"
-                  className="w-full h-16 bg-indigo-500 hover:bg-indigo-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-500/20 transition-all mt-4"
+                  className="w-full h-18 bg-indigo-500 hover:bg-indigo-600 text-white font-black uppercase tracking-[0.2em] rounded-2xl shadow-2xl shadow-indigo-500/20 transition-all mt-4 text-xs italic"
                 >
-                  Confirm Event Placement
+                  Commit to Operational Stream
                 </button>
               </form>
             </motion.div>
@@ -480,4 +754,5 @@ function OpsCalendar() {
     </div>
   );
 }
+
 // sync

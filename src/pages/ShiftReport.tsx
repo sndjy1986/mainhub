@@ -327,6 +327,10 @@ export default function ShiftReport() {
       addSection("Roster/Time Up", data.pasteNotes, true);
     }
 
+    if (data.otherEvents) {
+      addSection("Other Events", data.otherEvents);
+    }
+
     return reportParts.join("\n");
   };
 
@@ -425,6 +429,10 @@ export default function ShiftReport() {
 
     if (data.pasteNotes) {
       addHtmlSection("Roster/Time Up", data.pasteNotes, true);
+    }
+
+    if (data.otherEvents) {
+      addHtmlSection("Other Events", data.otherEvents);
     }
 
     return parts.join("\n");
@@ -776,6 +784,20 @@ export default function ShiftReport() {
                   placeholder="LOAD ROSTER DATA / TIME UP LOGS..." 
                 />
               </div>
+              <div className="pt-4 mt-4 border-t border-white/5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600 block">Other Events Matrix</label>
+                  <PendingUpdatesSync onAppend={(text) => setData(prev => ({ ...prev, otherEvents: prev.otherEvents ? `${prev.otherEvents}\n${text}` : text }))} />
+                </div>
+                <textarea 
+                  name="otherEvents" 
+                  value={data.otherEvents} 
+                  onChange={handleChange} 
+                  rows={6} 
+                  className="w-full tactical-input p-4 text-xs font-mono"
+                  placeholder="MISCELLANEOUS EVENTS, NOTIFICATIONS, AND EXTERNAL UPDATES..." 
+                />
+              </div>
             </section>
 
             {/* Actions */}
@@ -1071,6 +1093,44 @@ function ExternalLinkItem({ href, label, meta }: { href: string; label: string; 
       </div>
       <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest mt-1 block">{meta}</span>
     </a>
+  );
+}
+
+function PendingUpdatesSync({ onAppend }: { onAppend: (text: string) => void }) {
+  const [pending, setPending] = useState<any[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'shift_updates'), orderBy('timestamp', 'asc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter((d: any) => d.status === 'pending');
+      setPending(docs);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleSync = async () => {
+    if (pending.length === 0) return;
+    const combinedText = pending.map(p => `[${format(p.timestamp?.toDate() || new Date(), 'HH:mm')}] ${p.content}`).join('\n');
+    onAppend(combinedText);
+    
+    // Mark as processed
+    for (const p of pending) {
+      await updateDoc(doc(db, 'shift_updates', p.id), { status: 'processed' });
+    }
+  };
+
+  if (pending.length === 0) return null;
+
+  return (
+    <button 
+      onClick={handleSync}
+      className="flex items-center gap-2 px-3 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-lg text-[9px] font-black text-indigo-400 uppercase tracking-widest animate-pulse hover:bg-indigo-500/20 transition-all"
+    >
+      <Plus className="w-3 h-3" />
+      {pending.length} New Updates Available
+    </button>
   );
 }
 
