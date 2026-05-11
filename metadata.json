@@ -2,7 +2,8 @@
   "name": "Dispatch Ops Central",
   "description": "Enterprise Dispatch & Operations Console for Priority Ambulance Service featuring real-time unit tracking, distance mapping, and shift reporting.",
   "requestFramePermissions": [
-    "geolocation"
+    "geolocation",
+    "notifications"
   ],
   "majorCapabilities": []
 }

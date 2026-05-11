@@ -59,16 +59,35 @@ import {
 
 import { useNavigate } from 'react-router-dom';
 
+interface ClockSettings {
+  fontFamily: string;
+  fontSize: string;
+  fontWeight: string;
+  showDate: boolean;
+  is24Hour: boolean;
+  color: string;
+}
+
 interface WidgetItem {
   id: string;
   type: 'time' | 'weather' | 'personnel' | 'calendar' | 'shift_report' | 'custom_new';
   title: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   isVisible: boolean;
+  clockSettings?: ClockSettings;
 }
 
+const DEFAULT_CLOCK_SETTINGS: ClockSettings = {
+  fontFamily: 'font-mono',
+  fontSize: 'text-6xl',
+  fontWeight: 'font-black',
+  showDate: true,
+  is24Hour: true,
+  color: 'text-white',
+};
+
 const DEFAULT_WIDGETS: WidgetItem[] = [
-  { id: 'widget-time', type: 'time', title: 'Operational Clock', size: 'sm', isVisible: true },
+  { id: 'widget-time', type: 'time', title: 'Operational Clock', size: 'sm', isVisible: true, clockSettings: DEFAULT_CLOCK_SETTINGS },
   { id: 'widget-weather', type: 'weather', title: 'Environment Monitor', size: 'md', isVisible: true },
   { id: 'widget-personnel', type: 'personnel', title: 'Personnel Deployment', size: 'xl', isVisible: true },
   { id: 'widget-calendar', type: 'calendar', title: 'Operations Calendar', size: 'xl', isVisible: true },
@@ -78,14 +97,20 @@ const DEFAULT_WIDGETS: WidgetItem[] = [
 export function StartPage() {
   const [now, setNow] = useState(new Date());
   const [widgets, setWidgets] = useState<WidgetItem[]>(() => {
-    const saved = localStorage.getItem('start-page-widgets-v5');
+    const saved = localStorage.getItem('start-page-widgets-v6');
     return saved ? JSON.parse(saved) : DEFAULT_WIDGETS;
   });
 
   const [showAddMenu, setShowAddMenu] = useState(false);
+  const [editingClock, setEditingClock] = useState<WidgetItem | null>(null);
 
   const updateWidgetSize = (id: string, size: 'sm' | 'md' | 'lg' | 'xl') => {
     setWidgets(prev => prev.map(w => w.id === id ? { ...w, size } : w));
+  };
+
+  const updateClockSettings = (id: string, settings: ClockSettings) => {
+    setWidgets(prev => prev.map(w => w.id === id ? { ...w, clockSettings: settings } : w));
+    setEditingClock(null);
   };
 
   const sensors = useSensors(
@@ -100,7 +125,7 @@ export function StartPage() {
   );
 
   useEffect(() => {
-    localStorage.setItem('start-page-widgets-v5', JSON.stringify(widgets));
+    localStorage.setItem('start-page-widgets-v6', JSON.stringify(widgets));
   }, [widgets]);
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -180,11 +205,97 @@ export function StartPage() {
                 widget={widget} 
                 onRemove={() => removeWidget(widget.id)}
                 onResize={(size) => updateWidgetSize(widget.id, size)}
+                onEditClock={() => setEditingClock(widget)}
               />
             ))}
           </div>
         </SortableContext>
       </DndContext>
+
+      <Modal 
+        isOpen={!!editingClock} 
+        onClose={() => setEditingClock(null)}
+        title="Clock Configuration"
+        icon={<Clock className="w-6 h-6" />}
+      >
+        {editingClock && (
+          <div className="space-y-8 p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Typography</label>
+                <select 
+                  value={editingClock.clockSettings?.fontFamily}
+                  onChange={(e) => updateClockSettings(editingClock.id, { ...editingClock.clockSettings!, fontFamily: e.target.value })}
+                  className="w-full tactical-input px-4 h-12 text-white text-xs font-black uppercase"
+                >
+                  <option value="font-sans">Inter Sans</option>
+                  <option value="font-mono">JetBrains Mono</option>
+                  <option value="font-serif">Editorial Serif</option>
+                </select>
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Font Weight</label>
+                <select 
+                  value={editingClock.clockSettings?.fontWeight}
+                  onChange={(e) => updateClockSettings(editingClock.id, { ...editingClock.clockSettings!, fontWeight: e.target.value })}
+                  className="w-full tactical-input px-4 h-12 text-white text-xs font-black uppercase"
+                >
+                  <option value="font-normal">Normal</option>
+                  <option value="font-bold">Bold</option>
+                  <option value="font-black">Black/Heavy</option>
+                </select>
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Font Size</label>
+                <select 
+                  value={editingClock.clockSettings?.fontSize}
+                  onChange={(e) => updateClockSettings(editingClock.id, { ...editingClock.clockSettings!, fontSize: e.target.value })}
+                  className="w-full tactical-input px-4 h-12 text-white text-xs font-black uppercase"
+                >
+                  <option value="text-3xl">Small</option>
+                  <option value="text-5xl">Medium</option>
+                  <option value="text-6xl">Large</option>
+                  <option value="text-7xl">X-Large</option>
+                  <option value="text-8xl">XX-Large</option>
+                </select>
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Color Profile</label>
+                <select 
+                  value={editingClock.clockSettings?.color}
+                  onChange={(e) => updateClockSettings(editingClock.id, { ...editingClock.clockSettings!, color: e.target.value })}
+                  className="w-full tactical-input px-4 h-12 text-white text-xs font-black uppercase"
+                >
+                  <option value="text-white">White Ghost</option>
+                  <option value="text-indigo-400">Indigo Tactical</option>
+                  <option value="text-emerald-400">Emerald Active</option>
+                  <option value="text-amber-400">Amber Warning</option>
+                  <option value="text-rose-400">Critical Rose</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => updateClockSettings(editingClock.id, { ...editingClock.clockSettings!, is24Hour: !editingClock.clockSettings?.is24Hour })}
+                className={`p-4 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                  editingClock.clockSettings?.is24Hour ? 'bg-indigo-500 text-white border-indigo-400 shadow-lg shadow-indigo-500/20' : 'bg-black/40 border-white/5 text-slate-500'
+                }`}
+              >
+                24-Hour Format: {editingClock.clockSettings?.is24Hour ? 'ON' : 'OFF'}
+              </button>
+              <button
+                onClick={() => updateClockSettings(editingClock.id, { ...editingClock.clockSettings!, showDate: !editingClock.clockSettings?.showDate })}
+                className={`p-4 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                  editingClock.clockSettings?.showDate ? 'bg-indigo-500 text-white border-indigo-400 shadow-lg shadow-indigo-500/20' : 'bg-black/40 border-white/5 text-slate-500'
+                }`}
+              >
+                Display Date: {editingClock.clockSettings?.showDate ? 'ON' : 'OFF'}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal 
         isOpen={showAddMenu} 
@@ -220,7 +331,17 @@ export function StartPage() {
   );
 }
 
-function SortableWidget({ widget, onRemove, onResize }: { widget: WidgetItem; onRemove: () => void; onResize: (size: 'sm' | 'md' | 'lg' | 'xl') => void }) {
+function SortableWidget({ 
+  widget, 
+  onRemove, 
+  onResize,
+  onEditClock 
+}: { 
+  widget: WidgetItem; 
+  onRemove: () => void; 
+  onResize: (size: 'sm' | 'md' | 'lg' | 'xl') => void;
+  onEditClock?: () => void;
+}) {
   const {
     attributes,
     listeners,
@@ -249,7 +370,7 @@ function SortableWidget({ widget, onRemove, onResize }: { widget: WidgetItem; on
   const renderContent = () => {
     switch (widget.type) {
       case 'time':
-        return <TimeWidgetContent />;
+        return <TimeWidgetContent settings={widget.clockSettings} />;
       case 'weather':
         return <div className="h-full"><WeatherDashboard /></div>;
       case 'personnel':
@@ -280,6 +401,14 @@ function SortableWidget({ widget, onRemove, onResize }: { widget: WidgetItem; on
         </div>
         
         <div className="flex items-center gap-1">
+          {widget.type === 'time' && (
+            <button 
+              onClick={onEditClock}
+              className="p-1.5 text-slate-600 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all mr-1"
+            >
+              <Info className="w-4 h-4" />
+            </button>
+          )}
           <div className="flex bg-black/40 rounded-lg p-0.5 border border-white/5 mr-2">
             {(['sm', 'md', 'lg', 'xl'] as const).map((s) => (
               <button
@@ -348,7 +477,7 @@ function PersonnelModalContent() {
   );
 }
 
-function TimeWidgetContent() {
+function TimeWidgetContent({ settings = DEFAULT_CLOCK_SETTINGS }: { settings?: ClockSettings }) {
   const [now, setNow] = useState(new Date());
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -357,13 +486,21 @@ function TimeWidgetContent() {
 
   return (
     <div className="flex flex-col items-center justify-center h-full gap-4 py-8">
-      <div className="text-6xl font-black text-white glow-number tracking-tighter">
-        {format(now, 'HH:mm:ss')}
+      <div className={`
+        ${settings.fontSize} 
+        ${settings.fontWeight} 
+        ${settings.color} 
+        ${settings.fontFamily} 
+        glow-number tracking-tighter
+      `}>
+        {format(now, settings.is24Hour ? 'HH:mm:ss' : 'hh:mm:ss aa')}
       </div>
-      <div className="flex flex-col items-center gap-1">
-        <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.3em]">Operational Phase</p>
-        <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{format(now, 'EEEE, LLLL do')}</p>
-      </div>
+      {settings.showDate && (
+        <div className="flex flex-col items-center gap-1">
+          <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.3em]">Operational Phase</p>
+          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{format(now, 'EEEE, LLLL do')}</p>
+        </div>
+      )}
     </div>
   );
 }

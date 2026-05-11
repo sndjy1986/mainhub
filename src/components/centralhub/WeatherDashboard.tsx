@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Wind, AlertCircle, Thermometer, MapPin, RefreshCw, Navigation, Shield, Settings, X } from 'lucide-react';
+import { Wind, AlertCircle, Thermometer, MapPin, RefreshCw, Navigation, Shield, Settings, X, Bell, BellOff } from 'lucide-react';
 import { useTerminal } from '../../context/TerminalContext';
 
 interface WeatherData {
@@ -13,23 +13,42 @@ interface WeatherData {
 }
 
 export function WeatherDashboard() {
-  const { setEmergencyLevel, weatherZip, setWeatherZip } = useTerminal();
+  const { 
+    setEmergencyLevel, 
+    weatherZip, 
+    setWeatherZip, 
+    addNotification, 
+    requestNotificationPermission, 
+    notificationPermission 
+  } = useTerminal();
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [zipInput, setZipInput] = useState('');
+  
+  // Track which alerts have been notified to avoid duplicates
+  const notifiedAlerts = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (weather) {
       if (weather.alerts.length > 0) {
         setEmergencyLevel('CRITICAL');
+        
+        // Trigger desktop notifications for NEW alerts
+        weather.alerts.forEach((alert: any) => {
+          const id = alert.id || (alert.properties && alert.properties.id);
+          if (id && !notifiedAlerts.current.has(id)) {
+            addNotification(`NWS ALERT: ${alert.properties.event}. ${alert.properties.headline}`, 'error');
+            notifiedAlerts.current.add(id);
+          }
+        });
       } else {
         setEmergencyLevel('NORMAL');
       }
     }
-  }, [weather, setEmergencyLevel]);
+  }, [weather, setEmergencyLevel, addNotification]);
 
   useEffect(() => {
     async function getWeatherData() {
@@ -285,6 +304,17 @@ export function WeatherDashboard() {
                   </div>
 
                   <div className="flex flex-col gap-2">
+                    {notificationPermission !== 'granted' && (
+                      <button 
+                        type="button"
+                        onClick={() => requestNotificationPermission()}
+                        className="w-full py-3 bg-emerald-600/20 border border-emerald-500/30 hover:bg-emerald-600/30 text-emerald-400 font-bold uppercase tracking-widest text-[10px] rounded-xl transition-all flex items-center justify-center gap-2 mb-2"
+                      >
+                        <Bell className="w-4 h-4" />
+                        Enable Desktop Alerts
+                      </button>
+                    )}
+                    
                     <button 
                       type="submit"
                       className="w-full py-3 bg-indigo-500 hover:bg-indigo-400 text-white font-bold uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-lg shadow-indigo-500/20"
