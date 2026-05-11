@@ -221,7 +221,7 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
 
   return (
     <div 
-      className="relative w-full h-full bg-slate-950 group overflow-hidden"
+      className="relative w-full h-full bg-bg-main group overflow-hidden transition-colors duration-500"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
         setIsHovered(false);
@@ -244,12 +244,12 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
 
       {/* Signal Lost Overlay */}
       {hasError && (
-        <div className="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center z-10 border-2 border-red-500/20">
+        <div className="absolute inset-0 bg-bg-main flex flex-col items-center justify-center z-10 border-2 border-red-500/20">
           <div className="w-1/2 h-1 bg-red-950/40 mb-6 overflow-hidden relative rounded-full">
             <motion.div 
               animate={{ x: ['-100%', '100%'] }}
               transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-              className="absolute inset-0 bg-red-500 shadow-[0_0_15px_#ef4444]"
+              className="absolute inset-0 bg-red-500 opacity-50 shadow-[0_0_15px_#ef4444]"
             />
           </div>
           <span className="text-red-500 font-black text-[12px] tracking-[0.4em] uppercase animate-pulse">
@@ -280,21 +280,21 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
       {/* Header Info Overlay */}
       <div className="absolute top-0 left-0 right-0 p-5 flex justify-between items-start z-30 pointer-events-none">
         <div className="flex gap-2">
-          <span className="bg-slate-900/60 backdrop-blur-md px-3 py-1 text-[10px] font-black border border-white/10 text-white uppercase tracking-widest rounded-lg">
+          <span className="bg-bg-surface/60 backdrop-blur-md px-3 py-1 text-[10px] font-black border border-white/10 text-white uppercase tracking-widest rounded-lg transition-colors duration-500">
             {camera.name.split(' ')[0]} {camera.name.split(' ')[1]}
           </span>
           <button 
             onClick={onToggleAi}
             className="group/ai cursor-pointer pointer-events-auto"
           >
-            <span className={`bg-indigo-500/20 backdrop-blur-md px-3 py-1 text-[10px] font-black border border-indigo-500/30 text-indigo-400 flex items-center gap-2 rounded-lg transition-all ${globalAiEnabled ? 'bg-indigo-500/40 border-indigo-400' : 'hover:bg-indigo-500/30'}`}>
-              <div className={`w-1.5 h-1.5 bg-indigo-500 rounded-full shadow-[0_0_8px_#6366f1] ${globalAiEnabled ? 'animate-pulse' : 'opacity-50'}`} />
+            <span className={`bg-indigo-500/20 backdrop-blur-md px-3 py-1 text-[10px] font-black border border-indigo-500/30 text-indigo-400 flex items-center gap-2 rounded-lg transition-all duration-500 ${globalAiEnabled ? 'bg-indigo-500/40 border-indigo-400' : 'hover:bg-indigo-500/30'}`}>
+              <div className={`w-1.5 h-1.5 bg-indigo-500 rounded-full shadow-brand-indigo ${globalAiEnabled ? 'animate-pulse' : 'opacity-50'}`} />
               AI_FEED {globalAiEnabled ? 'ACTIVE' : 'START'}
             </span>
           </button>
         </div>
 
-        <div className="flex flex-col items-end text-[9px] font-mono text-slate-400 bg-slate-900/60 px-3 py-1.5 backdrop-blur-md border border-white/5 rounded-lg">
+        <div className="flex flex-col items-end text-[9px] font-mono text-slate-400 bg-bg-surface/60 px-3 py-1.5 backdrop-blur-md border border-white/5 rounded-lg transition-colors duration-500">
           <div className="tracking-tighter">COORD: {camera.lat.toFixed(4)}N {Math.abs(camera.lng).toFixed(4)}W</div>
           <div className="text-emerald-400 font-bold tracking-widest mt-0.5">FLOW: {analysis ? analysis.flow : (isAnalyzing ? 'SYNCING...' : 'WAITING')}</div>
         </div>
@@ -312,12 +312,12 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
                 {analysis.flow}
               </span>
             </div>
-            <div className="text-white text-[12px] font-black leading-tight drop-shadow-2xl uppercase tracking-widest bg-slate-900/40 backdrop-blur-sm p-3 border border-white/5 rounded-2xl">
+            <div className="text-white text-[12px] font-black leading-tight drop-shadow-2xl uppercase tracking-widest bg-bg-surface/40 backdrop-blur-sm p-3 border border-white/5 rounded-2xl transition-colors duration-500">
               {analysis.summary}
             </div>
           </div>
           
-          <div className="h-12 w-32 bg-slate-900/60 backdrop-blur-md border border-white/10 p-2 flex flex-col justify-between rounded-xl">
+          <div className="h-12 w-32 bg-bg-surface/60 backdrop-blur-md border border-white/10 p-2 flex flex-col justify-between rounded-xl transition-colors duration-500">
             <div className="themed-label leading-none mb-1 opacity-50">Sync Window</div>
             <div className="text-[11px] text-emerald-400 font-mono text-right font-bold">
               {lastAnalysisTime > 0 && getCooldownRemaining() > 0 
@@ -328,7 +328,7 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
               <motion.div 
                 initial={false}
                 animate={{ width: `${(1 - getCooldownRemaining() / refreshInterval) * 100}%` }}
-                className="h-full bg-emerald-500 shadow-[0_0_10px_#10b981]"
+                className="h-full bg-emerald-500 shadow-brand-emerald"
               />
             </div>
           </div>
@@ -347,7 +347,7 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
       <div className={`absolute right-5 top-20 flex flex-col gap-3 transition-opacity duration-300 z-40 ${isHovered ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
         <button 
           onClick={() => setShowOverlay(!showOverlay)}
-          className={`p-3 bg-slate-900/60 border border-white/10 text-slate-400 hover:text-white hover:border-indigo-500/50 transition-all rounded-2xl backdrop-blur-xl shadow-xl ${!showOverlay ? 'text-red-500 border-red-500/30' : ''}`}
+          className={`p-3 bg-bg-surface/60 border border-white/10 text-slate-400 hover:text-white hover:border-indigo-500/50 transition-all rounded-2xl backdrop-blur-xl shadow-xl duration-500 ${!showOverlay ? 'text-red-500 border-red-500/30' : ''}`}
           title="Toggle AI HUD"
         >
           {showOverlay ? <Eye size={16} /> : <EyeOff size={16} />}
@@ -355,7 +355,7 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
 
         <button 
           onClick={toggleFullscreen}
-          className="p-3 bg-slate-900/60 border border-white/10 text-slate-400 hover:text-white hover:border-indigo-500/50 transition-all rounded-2xl backdrop-blur-xl shadow-xl"
+          className="p-3 bg-bg-surface/60 border border-white/10 text-slate-400 hover:text-white hover:border-indigo-500/50 transition-all rounded-2xl backdrop-blur-xl shadow-xl duration-500"
           title="Toggle Fullscreen"
         >
           <Maximize2 size={16} />
@@ -364,7 +364,7 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
         <div className="relative">
           <button 
             onClick={() => setShowMenu(!showMenu)}
-            className="p-3 bg-slate-900/60 border border-white/10 text-slate-400 hover:text-white hover:border-indigo-500/50 transition-all rounded-2xl backdrop-blur-xl shadow-xl"
+            className="p-3 bg-bg-surface/60 border border-white/10 text-slate-400 hover:text-white hover:border-indigo-500/50 transition-all rounded-2xl backdrop-blur-xl shadow-xl duration-500"
             title="Switch Camera"
           >
             <MoreVertical size={16} />
@@ -377,7 +377,7 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="fixed bg-slate-900/90 border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.5)] z-[9999] min-w-[280px] overflow-hidden backdrop-blur-2xl rounded-3xl"
+                className="fixed bg-bg-surface/90 border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.5)] z-[9999] min-w-[280px] overflow-hidden backdrop-blur-2xl rounded-3xl transition-colors duration-500"
                 style={{ 
                   top: Math.min(menuPos.y, window.innerHeight - 400),
                   left: Math.min(menuPos.x, window.innerWidth - 300)

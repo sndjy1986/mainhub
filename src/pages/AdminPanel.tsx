@@ -141,7 +141,7 @@ export default function AdminPanel() {
   return (
     <div className="space-y-8">
       <div className="bg-bg-surface rounded-lg border border-border-subtle shadow-lg overflow-hidden">
-        <div className="px-6 py-4 bg-[#1A1D23] border-b border-border-subtle flex items-center justify-between">
+        <div className="px-6 py-4 bg-bg-surface border-b border-border-subtle flex items-center justify-between transition-colors duration-500">
           <div className="flex items-center gap-3">
             <Shield className="w-5 h-5 text-brand-blue" />
             <h2 className="font-bold text-white text-sm uppercase tracking-widest">Admin Control Module</h2>
@@ -152,10 +152,10 @@ export default function AdminPanel() {
                 onClick={toggleEmergencyMode}
                 title={settings?.emergencyMode ? 'Disable Emergency Lights' : 'Enable Emergency Lights'}
                 className={cn(
-                  "p-1.5 rounded border transition-all",
+                  "p-1.5 rounded border transition-all duration-500",
                   settings?.emergencyMode 
                     ? "bg-red-500/20 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(239,44,44,0.3)]" 
-                    : "bg-[#2A2D35] text-text-muted border-[#3F444E] hover:text-brand-blue"
+                    : "bg-bg-main text-text-muted border-border-subtle hover:text-brand-blue"
                 )}
               >
                 <Siren className={cn("w-3.5 h-3.5", settings?.emergencyMode && "animate-pulse")} />
@@ -163,7 +163,7 @@ export default function AdminPanel() {
               <button
                 onClick={handleSeed}
                 disabled={isSeeding}
-                className="flex items-center gap-2 px-4 py-1.5 bg-[#2A2D35] hover:bg-[#32363F] border border-[#3F444E] text-text-secondary rounded text-[10px] font-bold uppercase tracking-widest transition-all"
+                className="flex items-center gap-2 px-4 py-1.5 bg-bg-surface hover:bg-bg-main border border-border-subtle text-text-secondary rounded text-[10px] font-bold uppercase tracking-widest transition-all duration-500"
               >
                 {isSeeding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <DatabaseZap className="w-3.5 h-3.5" />}
                 {isSeeding ? 'Initializing...' : 'Reset Factory Data'}
@@ -172,7 +172,7 @@ export default function AdminPanel() {
           </div>
 
           <div className="p-6">
-          <form onSubmit={handleAddUser} className="flex flex-wrap gap-4 items-end mb-8 p-5 bg-[#1A1D23] rounded-lg border border-border-subtle">
+          <form onSubmit={handleAddUser} className="flex flex-wrap gap-4 items-end mb-8 p-5 bg-bg-surface rounded-lg border border-border-subtle transition-colors duration-500">
             <div className="flex-1 min-w-[240px]">
               <label className="block text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2">Network Identity (Email)</label>
               <input
@@ -222,7 +222,7 @@ export default function AdminPanel() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="hover:bg-[#1E2228] bg-[#16191E]/30 transition-colors group"
+                      className="hover:bg-white/5 bg-bg-main transition-colors group duration-500"
                     >
                       <td className="px-4 py-4 text-sm font-medium text-text-primary font-mono">{user.email}</td>
                       <td className="px-4 py-4">
@@ -251,7 +251,7 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      <div className="bg-[#1A1D23] border border-brand-blue/20 rounded-lg p-6 flex gap-4 shadow-xl">
+      <div className="bg-bg-surface border border-brand-blue/20 rounded-lg p-6 flex gap-4 shadow-xl transition-colors duration-500">
         <CheckCircle2 className="w-5 h-5 text-brand-blue shrink-0 mt-0.5" />
         <div>
           <h4 className="font-bold text-white text-sm uppercase tracking-widest">Protocol Intelligence</h4>

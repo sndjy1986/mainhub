@@ -190,9 +190,9 @@ export function AdminPage() {
   }, [showToast]);
 
   return (
-    <div className="space-y-12 pb-24 h-full overflow-y-auto pr-4 scrollbar-thin">
+    <div className="space-y-12 pb-24 h-full overflow-y-auto pr-4 scrollbar-thin transition-colors duration-500">
       <header className="flex items-center gap-6">
-        <div className="w-16 h-16 rounded-3xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 shadow-2xl shadow-indigo-500/20">
+        <div className="w-16 h-16 rounded-3xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 shadow-2xl shadow-brand-indigo/20 transition-all duration-500">
            <Lock className="w-8 h-8 text-indigo-400" />
         </div>
         <div>
@@ -229,7 +229,7 @@ export function AdminPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
         {/* Personnel Management - Full Wide */}
         <div className="lg:col-span-12">
-          <section className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-8">
+          <section className="backdrop-blur-md bg-bg-surface border border-white/10 rounded-[2.5rem] p-8 space-y-8 transition-colors duration-500">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-2xl font-bold text-white flex items-center gap-4">
@@ -271,7 +271,7 @@ export function AdminPage() {
                   </div>
                   <div className="space-y-2">
                     {personnel.filter(p => p.shift === shift).map(p => (
-                      <div key={p.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl group hover:border-indigo-500/30 transition-all">
+                      <div key={p.id} className="p-4 bg-bg-main/40 border border-white/5 rounded-2xl group hover:border-indigo-500/30 transition-all duration-500">
                         <div className="flex justify-between items-start">
                           <div>
                             <div className="text-sm font-bold text-white">{p.name}</div>
@@ -312,7 +312,7 @@ export function AdminPage() {
 
         {/* Camera Config */}
         <div className="lg:col-span-8">
-           <section className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6">
+           <section className="backdrop-blur-md bg-bg-surface border border-white/10 rounded-[2.5rem] p-8 space-y-6 transition-colors duration-500">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold text-white flex items-center gap-3">
                   <Camera className="w-5 h-5 text-brand-indigo" />
@@ -327,7 +327,7 @@ export function AdminPage() {
                     key={cam.id}
                     disabled={!user}
                     onClick={() => toggleCamera(cam.id)}
-                    className={`p-4 rounded-2xl border transition-all text-left group ${defaultCameraIds.includes(cam.id) ? 'bg-indigo-500 border-indigo-400 shadow-xl shadow-indigo-500/20' : 'bg-white/5 border-white/5 hover:border-white/20'}`}
+                    className={`p-4 rounded-2xl border transition-all text-left group duration-500 ${defaultCameraIds.includes(cam.id) ? 'bg-indigo-500 border-indigo-400 shadow-xl shadow-brand-indigo/20' : 'bg-bg-main border-white/5 hover:border-white/20'}`}
                   >
                     <div className={`text-[9px] font-black uppercase tracking-widest mb-1 ${defaultCameraIds.includes(cam.id) ? 'text-indigo-200' : 'text-slate-500'}`}>SENSOR_{cam.id.toUpperCase()}</div>
                     <div className={`text-xs font-bold leading-tight ${defaultCameraIds.includes(cam.id) ? 'text-white' : 'text-slate-300'}`}>{cam.name}</div>
@@ -340,7 +340,7 @@ export function AdminPage() {
         {/* System & Notifications */}
         <div className="lg:col-span-4 space-y-12">
           {/* App Theme Settings */}
-          <section className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6">
+          <section className="backdrop-blur-md bg-bg-surface border border-white/10 rounded-[2.5rem] p-8 space-y-6 transition-colors duration-500">
             <h3 className="text-lg font-bold text-white flex items-center gap-3">
               <Settings className="w-5 h-5 text-brand-indigo" />
               Interface Theme
@@ -351,10 +351,10 @@ export function AdminPage() {
                   key={theme.id}
                   onClick={() => setAppTheme(theme.id)}
                   className={`
-                    w-full flex items-center justify-between p-4 rounded-2xl border transition-all relative overflow-hidden group
+                    w-full flex items-center justify-between p-4 rounded-2xl border transition-all relative overflow-hidden group duration-500
                     ${appTheme === theme.id 
                       ? 'bg-white/10 border-white/20' 
-                      : 'bg-white/5 border-transparent hover:border-white/10'}
+                      : 'bg-bg-main border-transparent hover:border-white/10'}
                   `}
                 >
                   <div className="flex items-center gap-4 relative z-10">
@@ -384,7 +384,7 @@ export function AdminPage() {
           </section>
 
           {/* Notification Settings */}
-          <section className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6">
+          <section className="backdrop-blur-md bg-bg-surface border border-white/10 rounded-[2.5rem] p-8 space-y-6 transition-colors duration-500">
             <h3 className="text-lg font-bold text-white flex items-center gap-3">
               <Bell className="w-5 h-5 text-brand-indigo" />
               Notifications
@@ -441,7 +441,7 @@ export function AdminPage() {
       </div>
 
       {/* History Feed */}
-      <section className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2.5rem] p-10 space-y-8">
+      <section className="backdrop-blur-md bg-bg-surface border border-white/10 rounded-[2.5rem] p-10 space-y-8 transition-colors duration-500">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold text-white flex items-center gap-4">
             <History className="w-6 h-6 text-indigo-400" />
@@ -463,7 +463,7 @@ export function AdminPage() {
             </div>
           ) : (
             archivedReports.map(report => (
-              <div key={report.id} className="p-6 bg-white/5 rounded-3xl border border-white/5 hover:border-indigo-500/30 transition-all group relative overflow-hidden">
+              <div key={report.id} className="p-6 bg-bg-main border border-white/5 hover:border-indigo-500/30 transition-all group relative overflow-hidden duration-500">
                 <div className="relative z-10">
                    <div className="flex items-center justify-between mb-4">
                       <span className="px-3 py-1 rounded bg-indigo-500/10 text-indigo-400 text-[9px] font-black uppercase tracking-widest">{report.shift} SHIFT</span>
@@ -491,7 +491,7 @@ export function AdminPage() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }} 
               animate={{ scale: 1, opacity: 1, y: 0 }} 
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-md glass-effect bg-black/80 rounded-[2.5rem] border border-white/10 p-10 space-y-8 shadow-2xl"
+              className="relative w-full max-w-md glass-effect bg-bg-surface/90 rounded-[2.5rem] border border-white/10 p-10 space-y-8 shadow-2xl transition-colors duration-500"
             >
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold text-white flex items-center gap-3">

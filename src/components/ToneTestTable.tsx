@@ -273,10 +273,10 @@ export default function ToneTestTable() {
         </button>
       </div>
 
-      <div className="overflow-hidden bg-bg-surface rounded-lg border border-border-subtle shadow-lg">
+      <div className="overflow-hidden bg-bg-surface rounded-lg border border-border-subtle shadow-lg transition-colors duration-500">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-[#1A1D23] border-b border-border-subtle">
+            <tr className="bg-bg-surface border-b border-border-subtle transition-colors duration-500">
               <th className="w-12 p-4 text-center text-[10px] text-text-muted border-r border-border-subtle uppercase font-bold tracking-widest">ID</th>
               <th className="px-4 py-3 text-[10px] font-bold uppercase text-text-secondary tracking-widest border-r border-border-subtle">Unit Chassis</th>
               <th className="px-4 py-3 text-[10px] font-bold uppercase text-text-secondary tracking-widest border-r border-border-subtle">Log Date</th>
@@ -297,8 +297,8 @@ export default function ToneTestTable() {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   className={cn(
-                    "hover:bg-[#1E2228] transition-colors group",
-                    idx % 2 === 1 ? "bg-bg-surface" : "bg-[#16191E]/40"
+                    "hover:bg-white/5 transition-colors group duration-500",
+                    idx % 2 === 1 ? "bg-bg-surface" : "bg-bg-main/40"
                   )}
                 >
                   <td className="p-4 text-center text-[10px] text-text-muted border-r border-border-subtle font-mono">
@@ -385,7 +385,7 @@ export default function ToneTestTable() {
                 <motion.tr 
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-[#1A1D23]"
+                  className="bg-bg-surface transition-colors duration-500"
                 >
                   <td className="p-4 text-center text-brand-blue">
                     <Plus className="w-3 h-3 mx-auto" />

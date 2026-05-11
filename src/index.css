@@ -3,6 +3,7 @@
 @theme {
   --color-brand-blue: var(--brand-blue);
   --color-brand-indigo: var(--brand-indigo);
+  --color-brand-indigo-dark: var(--brand-indigo-dark);
   --color-brand-emerald: var(--brand-emerald);
   --color-brand-panel: var(--brand-panel);
   --color-brand-border: var(--brand-border);
@@ -10,13 +11,49 @@
   --color-brand-field: var(--brand-field);
   --color-brand-accent: var(--brand-accent);
 
+  --shadow-brand-indigo: 0 0 10px var(--brand-indigo);
+  --shadow-brand-emerald: 0 0 10px var(--brand-emerald);
+  --shadow-brand-blue: 0 0 10px var(--brand-blue);
+
   --color-bg-main: var(--bg-main);
   --color-bg-surface: var(--bg-surface);
 
-  /* Override standard tailwind colors to follow theme */
+  /* COMPREHENSIVE OVERRIDES: Map all primary color scales to the theme variables */
+  --color-indigo-50: var(--brand-accent-soft);
+  --color-indigo-100: var(--brand-accent-light);
+  --color-indigo-200: var(--brand-accent-medium);
+  --color-indigo-300: var(--brand-accent);
   --color-indigo-400: var(--brand-accent);
   --color-indigo-500: var(--brand-indigo);
   --color-indigo-600: var(--brand-indigo-dark);
+  --color-indigo-700: var(--brand-indigo-darker);
+  --color-indigo-800: var(--brand-panel);
+  --color-indigo-900: var(--bg-surface);
+  --color-indigo-950: var(--bg-main);
+
+  --color-blue-50: var(--brand-accent-soft);
+  --color-blue-100: var(--brand-accent-light);
+  --color-blue-200: var(--brand-accent-medium);
+  --color-blue-300: var(--brand-accent);
+  --color-blue-400: var(--brand-accent);
+  --color-blue-500: var(--brand-blue);
+  --color-blue-600: var(--brand-blue);
+  --color-blue-700: var(--brand-indigo-darker);
+  --color-blue-800: var(--brand-panel);
+  --color-blue-900: var(--bg-surface);
+  --color-blue-950: var(--bg-main);
+
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: var(--brand-panel);
+  --color-slate-900: var(--bg-surface);
+  --color-slate-950: var(--bg-main);
 }
 
 :root {
@@ -24,12 +61,16 @@
   --brand-blue: #3b82f6;
   --brand-indigo: #6366f1;
   --brand-indigo-dark: #4f46e5;
+  --brand-indigo-darker: #4338ca;
   --brand-emerald: #10b981;
   --brand-panel: #1e293b;
   --brand-border: #334155;
   --brand-bg: #0f172a;
   --brand-field: #1e293b;
   --brand-accent: #818cf8;
+  --brand-accent-medium: #a5b4fc;
+  --brand-accent-light: #c7d2fe;
+  --brand-accent-soft: #e0e7ff;
   --bg-main: #0a0c10;
   --bg-surface: #1a1d23;
 }
@@ -37,74 +78,94 @@
 [data-theme='emerald'] {
   /* Tactical Green */
   --brand-blue: #10b981;
-  --brand-indigo: #059669;
-  --brand-indigo-dark: #047857;
+  --brand-indigo: #10b981;
+  --brand-indigo-dark: #059669;
+  --brand-indigo-darker: #047857;
   --brand-emerald: #34d399;
   --brand-panel: #064e3b;
   --brand-border: #065f46;
   --brand-bg: #022c22;
   --brand-field: #064e3b;
   --brand-accent: #34d399;
+  --brand-accent-medium: #6ee7b7;
+  --brand-accent-light: #a7f3d0;
+  --brand-accent-soft: #d1fae5;
   --bg-main: #011612;
   --bg-surface: #022c22;
 }
 
 [data-theme='amber'] {
-  /* Retro Terminal / High Vis */
+  /* Amber / Gold */
   --brand-blue: #f59e0b;
-  --brand-indigo: #d97706;
-  --brand-indigo-dark: #b45309;
+  --brand-indigo: #f59e0b;
+  --brand-indigo-dark: #d97706;
+  --brand-indigo-darker: #b45309;
   --brand-emerald: #fbbf24;
   --brand-panel: #451a03;
   --brand-border: #78350f;
   --brand-bg: #1c1007;
   --brand-field: #451a03;
-  --brand-accent: #fcd34d;
+  --brand-accent: #fbbf24;
+  --brand-accent-medium: #fcd34d;
+  --brand-accent-light: #fde68a;
+  --brand-accent-soft: #fef3c7;
   --bg-main: #0c0a09;
   --bg-surface: #1c1007;
 }
 
 [data-theme='slate'] {
-  /* Stealth Monochrome */
+  /* Slate / Charcoal */
   --brand-blue: #64748b;
-  --brand-indigo: #475569;
-  --brand-indigo-dark: #334155;
+  --brand-indigo: #64748b;
+  --brand-indigo-dark: #475569;
+  --brand-indigo-darker: #334155;
   --brand-emerald: #94a3b8;
   --brand-panel: #1e293b;
   --brand-border: #334155;
   --brand-bg: #0f172a;
   --brand-field: #1e293b;
   --brand-accent: #94a3b8;
+  --brand-accent-medium: #cbd5e1;
+  --brand-accent-light: #e2e8f0;
+  --brand-accent-soft: #f1f5f9;
   --bg-main: #020617;
   --bg-surface: #0f172a;
 }
 
 [data-theme='crimson'] {
-  /* Emergency / Fire */
+  /* Crimson / Blood */
   --brand-blue: #ef4444;
-  --brand-indigo: #dc2626;
-  --brand-indigo-dark: #991b1b;
+  --brand-indigo: #ef4444;
+  --brand-indigo-dark: #dc2626;
+  --brand-indigo-darker: #b91c1c;
   --brand-emerald: #f87171;
   --brand-panel: #450a0a;
   --brand-border: #7f1d1d;
-  --brand-bg: #2d0a0a;
+  --brand-bg: #1c0707;
   --brand-field: #450a0a;
   --brand-accent: #fca5a5;
-  --bg-main: #1c0707;
-  --bg-surface: #2d0a0a;
+  --brand-accent-medium: #fecaca;
+  --brand-accent-light: #fee2e2;
+  --brand-accent-soft: #fef2f2;
+  --bg-main: #0c0202;
+  --bg-surface: #1c0707;
 }
 
 [data-theme='cyber'] {
-  /* High Contrast Cyber */
+  /* Cyber / Cyberpunk */
   --brand-blue: #06b6d4;
-  --brand-indigo: #0891b2;
-  --brand-indigo-dark: #155e75;
+  --brand-indigo: #06b6d4;
+  --brand-indigo-dark: #0891b2;
+  --brand-indigo-darker: #0e7490;
   --brand-emerald: #22d3ee;
   --brand-panel: #083344;
-  --brand-border: #164e63;
+  --brand-border: #155e75;
   --brand-bg: #042f2e;
   --brand-field: #083344;
   --brand-accent: #67e8f9;
+  --brand-accent-medium: #a5f3fc;
+  --brand-accent-light: #cffafe;
+  --brand-accent-soft: #ecfeff;
   --bg-main: #020617;
   --bg-surface: #042f2e;
 }
@@ -112,14 +173,18 @@
 [data-theme='royal'] {
   /* Command Purple */
   --brand-blue: #8b5cf6;
-  --brand-indigo: #7c3aed;
-  --brand-indigo-dark: #6d28d9;
+  --brand-indigo: #8b5cf6;
+  --brand-indigo-dark: #7c3aed;
+  --brand-indigo-darker: #6d28d9;
   --brand-emerald: #a78bfa;
   --brand-panel: #2e1065;
   --brand-border: #4c1d95;
   --brand-bg: #1e1b4b;
   --brand-field: #2e1065;
   --brand-accent: #c084fc;
+  --brand-accent-medium: #d8b4fe;
+  --brand-accent-light: #e9d5ff;
+  --brand-accent-soft: #f5f3ff;
   --bg-main: #0f172a;
   --bg-surface: #1e1b4b;
 }

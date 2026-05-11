@@ -101,24 +101,24 @@ export function Layout({ children }: LayoutProps) {
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white/5 border border-white/10 backdrop-blur-xl p-10 rounded-3xl flex flex-col items-center max-w-md w-full"
+              className="bg-bg-surface border border-white/10 backdrop-blur-xl p-10 rounded-3xl flex flex-col items-center max-w-md w-full transition-colors duration-500"
             >
-              <Shield className="w-16 h-16 text-indigo-500 mb-6" />
+              <Shield className="w-16 h-16 text-brand-indigo mb-6" />
               <h1 className="text-2xl font-bold text-white mb-2">Authentication Required</h1>
-              <p className="text-slate-400 mb-8 text-center">
+              <p className="text-slate-400 mb-8 text-center text-sm font-medium leading-relaxed">
                 Secure access is required to view the dispatch console. Please sign in with your authorized account.
               </p>
               
               {authError && (
-                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex gap-3 text-red-500 text-sm">
-                  <AlertTriangle className="w-5 h-5 shrink-0" />
-                  <span>{authError}</span>
+                <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex gap-3 text-brand-indigo text-sm">
+                  <AlertTriangle className="w-5 h-5 shrink-0 text-rose-500" />
+                  <span className="text-slate-200">{authError}</span>
                 </div>
               )}
 
               <button
                 onClick={handleLogin}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20"
+                className="w-full bg-brand-indigo hover:bg-brand-indigo/80 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg shadow-brand-indigo/20 active:scale-[0.98] duration-300"
               >
                 Sign In to Access
               </button>

@@ -96,15 +96,15 @@ export function UnitPosting() {
   };
 
   return (
-    <div className="w-full h-[calc(100vh-80px)] flex flex-col relative bg-[#111827] rounded-xl overflow-hidden mt-2 border border-white/5 shadow-2xl">
+    <div className="w-full h-[calc(100vh-80px)] flex flex-col relative bg-bg-main rounded-xl overflow-hidden mt-2 border border-white/5 shadow-2xl">
       {/* Tab Navigation */}
-      <div className="flex items-center gap-1 p-2 bg-[#0b0f1a] border-b border-white/5 shrink-0">
+      <div className="flex items-center gap-1 p-2 bg-bg-surface border-b border-white/5 shrink-0">
         <button
           onClick={() => setActiveTab('tactical')}
           className={cn(
             "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] transition-all",
             activeTab === 'tactical' 
-              ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
+              ? "bg-indigo-500 text-white shadow-lg shadow-brand-indigo/20" 
               : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
           )}
         >
@@ -116,7 +116,7 @@ export function UnitPosting() {
           className={cn(
             "flex items-center gap-2 px-6 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-[0.2em] transition-all",
             activeTab === 'logistics' 
-              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" 
+              ? "bg-emerald-500 text-white shadow-lg shadow-brand-emerald/20" 
               : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
           )}
         >
@@ -138,7 +138,7 @@ export function UnitPosting() {
             </div>
           )}
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-brand-emerald" />
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">System Online</span>
           </div>
         </div>
@@ -170,7 +170,7 @@ export function UnitPosting() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
-              className="absolute inset-0 overflow-y-auto p-6 bg-[#0f172a] custom-scrollbar"
+              className="absolute inset-0 overflow-y-auto p-6 bg-bg-main custom-scrollbar"
             >
               <div className="max-w-7xl mx-auto space-y-8">
                 <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
@@ -178,7 +178,7 @@ export function UnitPosting() {
                     <h2 className="text-2xl font-black text-white uppercase tracking-wider">Fleet Posting Logistics</h2>
                     <p className="text-slate-400 text-xs font-medium uppercase tracking-widest mt-1">Real-time resource allocation matrix</p>
                   </div>
-                  <div className="flex items-center gap-6 bg-white/5 px-6 py-3 rounded-2xl border border-white/5">
+                  <div className="flex items-center gap-6 bg-bg-surface transition-colors duration-500 px-6 py-3 rounded-2xl border border-white/5">
                     <div className="text-center">
                       <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Active Units</p>
                       <p className="text-xl font-black text-emerald-400">{upUnits.length}</p>
@@ -208,10 +208,10 @@ export function UnitPosting() {
                         key={post.name}
                         onClick={() => selectedUnit && handlePostClick(post.name)}
                         className={cn(
-                          "group relative bg-[#1e293b]/50 border rounded-2xl p-5 transition-all duration-300",
+                          "group relative bg-bg-surface/50 border rounded-2xl p-5 transition-all duration-300",
                           selectedUnit ? "cursor-pointer hover:border-amber-500/50 hover:bg-amber-500/5" : "",
                           assignedUnits.length > 0 
-                            ? "border-white/10 hover:border-emerald-500/30 hover:bg-[#1e293b]/80 shadow-lg shadow-black/20" 
+                            ? "border-white/10 hover:border-emerald-500/30 hover:bg-bg-surface/80 shadow-lg shadow-black/20" 
                             : "border-white/5 opacity-40 grayscale hover:opacity-100 hover:grayscale-0"
                         )}
                       >
@@ -279,7 +279,7 @@ export function UnitPosting() {
                               );
                             })
                           ) : (
-                            <div className="p-3 bg-white/2 border border-dotted border-white/10 rounded-xl text-center">
+                            <div className="p-3 bg-bg-main border border-dotted border-white/10 rounded-xl text-center">
                               <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest italic">Awaiting Resource</span>
                             </div>
                           )}

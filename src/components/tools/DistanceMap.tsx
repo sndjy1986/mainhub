@@ -14,7 +14,7 @@ export function DistanceMap() {
 
   return (
     <div className="flex flex-col h-full space-y-6 animate-in zoom-in duration-700">
-       <div className="flex-1 backdrop-blur-md bg-white/5 border border-white/10 rounded-3xl relative overflow-hidden flex flex-col">
+       <div className="flex-1 backdrop-blur-md bg-bg-surface border border-white/10 rounded-3xl relative overflow-hidden flex flex-col transition-colors duration-500">
           {/* SVG Map Layout */}
           <div className="flex-1 relative cursor-crosshair">
              <svg className="w-full h-full min-h-[500px]" viewBox="0 0 800 500">
@@ -71,12 +71,12 @@ export function DistanceMap() {
 
              {/* UI Overlays */}
              <div className="absolute top-6 left-6 space-y-4">
-                <div className="p-4 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-3">
+                <div className="p-4 bg-bg-main/60 backdrop-blur-md border border-white/10 rounded-2xl flex items-center gap-3 transition-colors duration-500">
                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                    <span className="text-[10px] font-bold text-white uppercase tracking-[0.2em] font-mono">Live Tracking Active</span>
                 </div>
                 
-                <div className="p-4 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl space-y-3">
+                <div className="p-4 bg-bg-main/60 backdrop-blur-md border border-white/10 rounded-2xl space-y-3 transition-colors duration-500">
                    <div className="flex items-center gap-2 group cursor-pointer">
                       <div className="w-2 h-2 rounded-full bg-indigo-500" />
                       <span className="text-[10px] font-bold text-slate-500 uppercase group-hover:text-white transition-colors">Command Center</span>
@@ -93,24 +93,24 @@ export function DistanceMap() {
              </div>
 
              <div className="absolute top-6 right-6 flex flex-col gap-2">
-                <button className="w-12 h-12 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                <button className="w-12 h-12 bg-bg-main/60 backdrop-blur-md border border-white/10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors duration-500">
                    <Layers className="w-5 h-5" />
                 </button>
-                <button className="w-12 h-12 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                <button className="w-12 h-12 bg-bg-main/60 backdrop-blur-md border border-white/10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors duration-500">
                    <ZoomIn className="w-5 h-5" />
                 </button>
-                <button className="w-12 h-12 bg-black/40 backdrop-blur-md border border-white/10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                <button className="w-12 h-12 bg-bg-main/60 backdrop-blur-md border border-white/10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors duration-500">
                    <ZoomOut className="w-5 h-5" />
                 </button>
              </div>
-
-             <div className="absolute bottom-6 left-6 p-4 bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl space-y-1">
+ 
+             <div className="absolute bottom-6 left-6 p-4 bg-bg-main/60 backdrop-blur-md border border-white/10 rounded-2xl space-y-1 transition-colors duration-500">
                 <p className="text-[9px] uppercase font-bold text-slate-500 tracking-widest">Coordinates</p>
                 <p className="text-xs font-mono font-bold text-indigo-400 tracking-tighter">40.7128°N, 74.0060°W</p>
              </div>
           </div>
           
-          <div className="h-20 bg-white/5 border-t border-white/5 px-8 flex items-center justify-between">
+          <div className="h-20 bg-bg-surface/50 border-t border-white/5 px-8 flex items-center justify-between transition-colors duration-500">
              <div className="flex items-center gap-8">
                 <div className="flex items-center gap-3">
                    <Navigation className="w-4 h-4 text-indigo-400" />

@@ -542,8 +542,8 @@ export default function ShiftReport() {
           <div className="flex flex-col gap-8">
             {/* Row 1: Info, Radio, Supervisors */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="glass-effect bg-white/5 rounded-3xl p-8 space-y-8 shadow-2xl scale-[1.02] border border-white/10">
-                <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
+              <div className="glass-effect bg-bg-surface rounded-3xl p-8 space-y-8 shadow-2xl scale-[1.02] border border-white/10 transition-colors duration-500">
+                <div className="flex items-center gap-3 text-brand-indigo font-bold text-[10px] uppercase tracking-widest">
                   <User className="w-4 h-4" /> Info
                 </div>
                 <div className="space-y-4">
@@ -571,8 +571,8 @@ export default function ShiftReport() {
                 </div>
               </div>
 
-              <div className="glass-effect bg-white/5 border border-white/10 shadow-2xl rounded-2xl p-6 space-y-6">
-                <div className="flex items-center gap-2 text-indigo-500 font-bold text-sm tracking-widest uppercase">
+              <div className="glass-effect bg-bg-surface border border-white/10 shadow-2xl rounded-2xl p-6 space-y-6 transition-colors duration-500">
+                <div className="flex items-center gap-2 text-brand-indigo font-bold text-sm tracking-widest uppercase">
                   <Phone className="w-4 h-4" /> Radio Assignment
                 </div>
                 <div className="space-y-4">
@@ -618,8 +618,8 @@ export default function ShiftReport() {
                 </div>
               </div>
 
-              <div className="glass-effect bg-white/5 border border-white/10 shadow-2xl rounded-2xl p-6 space-y-6">
-                <div className="flex items-center gap-2 text-indigo-500 font-bold text-sm tracking-widest uppercase">
+              <div className="glass-effect bg-bg-surface border border-white/10 shadow-2xl rounded-2xl p-6 space-y-6 transition-colors duration-500">
+                <div className="flex items-center gap-2 text-brand-indigo font-bold text-sm tracking-widest uppercase">
                   <User className="w-4 h-4" /> Supervisors
                 </div>
                 <div className="space-y-4">
@@ -641,8 +641,8 @@ export default function ShiftReport() {
 
             {/* Row 2: Zulu, Avail Trucks */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="glass-effect bg-white/5 rounded-3xl p-8 space-y-8 shadow-2xl border border-white/10">
-                <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
+              <div className="glass-effect bg-bg-surface rounded-3xl p-8 space-y-8 shadow-2xl border border-white/10 transition-colors duration-500">
+                <div className="flex items-center gap-3 text-brand-indigo font-bold text-[10px] uppercase tracking-widest">
                   <Truck className="w-4 h-4" /> Zulu On Call (After 1700)
                 </div>
                 <div className="space-y-6">
@@ -655,8 +655,8 @@ export default function ShiftReport() {
                 </div>
               </div>
 
-              <div className="glass-effect bg-white/5 rounded-3xl p-8 space-y-8 shadow-2xl border border-white/10">
-                <div className="flex items-center gap-3 text-emerald-600 font-bold text-[10px] uppercase tracking-widest">
+              <div className="glass-effect bg-bg-surface rounded-3xl p-8 space-y-8 shadow-2xl border border-white/10 transition-colors duration-500">
+                <div className="flex items-center gap-3 text-brand-emerald font-bold text-[10px] uppercase tracking-widest">
                   <Truck className="w-4 h-4" /> Avail Trucks
                 </div>
                 <div className="grid grid-cols-2 gap-6">
@@ -677,8 +677,8 @@ export default function ShiftReport() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="glass-effect bg-white/5 rounded-3xl p-8 space-y-6 shadow-2xl border border-white/10">
-                <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
+              <div className="glass-effect bg-bg-surface rounded-3xl p-8 space-y-6 shadow-2xl border border-white/10 transition-colors duration-500">
+                <div className="flex items-center gap-3 text-brand-indigo font-bold text-[10px] uppercase tracking-widest">
                   <Clock className="w-4 h-4" /> Late Trucks
                 </div>
                 <textarea 
@@ -686,13 +686,13 @@ export default function ShiftReport() {
                   value={data.lateTrucks} 
                   onChange={handleChange} 
                   rows={4} 
-                  className="w-full glass-effect bg-white/5 text-white p-4 rounded-2xl border border-white/10 font-mono text-sm resize-none focus:ring-2 focus:ring-indigo-500/30 transition-all outline-none"
+                  className="w-full glass-effect bg-bg-main text-white p-4 rounded-2xl border border-white/10 font-mono text-sm resize-none focus:ring-2 focus:ring-brand-indigo/30 transition-all outline-none"
                   placeholder="Unit numbers and times..." 
                 />
               </div>
 
-              <div className="glass-effect bg-white/5 rounded-3xl p-8 space-y-6 shadow-2xl border border-white/10">
-                <div className="flex items-center gap-3 text-emerald-600 font-bold text-[10px] uppercase tracking-widest">
+              <div className="glass-effect bg-bg-surface rounded-3xl p-8 space-y-6 shadow-2xl border border-white/10 transition-colors duration-500">
+                <div className="flex items-center gap-3 text-brand-emerald font-bold text-[10px] uppercase tracking-widest">
                   <Clock className="w-4 h-4" /> Out of Chute
                 </div>
                 <textarea 
@@ -700,15 +700,15 @@ export default function ShiftReport() {
                   value={data.outOfChute} 
                   onChange={handleChange} 
                   rows={4} 
-                  className="w-full glass-effect bg-white/5 text-white p-4 rounded-2xl border border-white/10 font-mono text-sm resize-none focus:ring-2 focus:ring-emerald-500/30 transition-all outline-none"
+                  className="w-full glass-effect bg-bg-main text-white p-4 rounded-2xl border border-white/10 font-mono text-sm resize-none focus:ring-2 focus:ring-brand-emerald/30 transition-all outline-none"
                   placeholder="Notable exceptions..." 
                 />
               </div>
             </div>
 
             {/* Row 4: Other Issues */}
-            <div className="glass-effect bg-white/5 rounded-3xl p-8 space-y-6 shadow-2xl border border-white/10">
-              <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
+            <div className="glass-effect bg-bg-surface rounded-3xl p-8 space-y-6 shadow-2xl border border-white/10 transition-colors duration-500">
+              <div className="flex items-center gap-3 text-brand-indigo font-bold text-[10px] uppercase tracking-widest">
                 <FileText className="w-4 h-4" /> Other Issues
               </div>
               <textarea 
@@ -716,21 +716,21 @@ export default function ShiftReport() {
                 value={data.issues} 
                 onChange={handleChange} 
                 rows={6} 
-                className="w-full glass-effect bg-white/5 text-white p-4 rounded-2xl border border-white/10 font-mono text-sm resize-none focus:ring-2 focus:ring-indigo-500/30 transition-all outline-none"
+                className="w-full glass-effect bg-bg-main text-white p-4 rounded-2xl border border-white/10 font-mono text-sm resize-none focus:ring-2 focus:ring-brand-indigo/30 transition-all outline-none"
                 placeholder="Detailed account of shift activities..." 
               />
             </div>
 
             {/* Row 5: ROSTER/TIME UP */}
-            <div className="glass-effect bg-white/5 rounded-3xl p-8 space-y-6 shadow-2xl border border-white/10">
+            <div className="glass-effect bg-bg-surface rounded-3xl p-8 space-y-6 shadow-2xl border border-white/10 transition-colors duration-500">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 text-indigo-600 font-bold text-[10px] uppercase tracking-widest">
+                <div className="flex items-center gap-3 text-brand-indigo font-bold text-[10px] uppercase tracking-widest">
                   <Clipboard className="w-4 h-4" /> ROSTER/TIME UP
                 </div>
                 <button 
                   type="button" 
                   onClick={() => setShowPasteModal(true)}
-                  className="text-[10px] text-indigo-600 hover:underline flex items-center gap-2 uppercase font-black tracking-widest"
+                  className="text-[10px] text-brand-indigo hover:underline flex items-center gap-2 uppercase font-black tracking-widest"
                 >
                   <Maximize2 className="w-3 h-3" /> Full Screen
                 </button>
@@ -740,16 +740,16 @@ export default function ShiftReport() {
                 value={data.pasteNotes} 
                 onChange={handleChange} 
                 rows={6} 
-                className="w-full glass-effect bg-white/5 text-white p-4 rounded-2xl border border-white/10 font-mono text-sm resize-none focus:ring-2 focus:ring-indigo-500/30 transition-all outline-none"
+                className="w-full glass-effect bg-bg-main text-white p-4 rounded-2xl border border-white/10 font-mono text-sm resize-none focus:ring-2 focus:ring-brand-indigo/30 transition-all outline-none"
                 placeholder="Enter roster or time up data here..." 
               />
             </div>
             </div>
 
             {/* Actions Bar */}
-            <div className="mt-8 p-8 glass-effect bg-white/5 border border-white/10 rounded-3xl flex flex-wrap items-center justify-between gap-6 shadow-2xl">
+            <div className="mt-8 p-8 glass-effect bg-bg-surface border border-white/10 rounded-3xl flex flex-wrap items-center justify-between gap-6 shadow-2xl transition-colors duration-500">
               <div className="flex items-center gap-3 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <CheckCircle2 className="w-5 h-5 text-brand-emerald" />
                 Draft saved {lastSaved ? `at ${lastSaved}` : 'now'}
               </div>
               <div className="flex items-center gap-6">

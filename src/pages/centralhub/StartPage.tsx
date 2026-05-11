@@ -47,7 +47,7 @@ export function StartPage() {
         
         <div className="flex flex-col items-end gap-3">
           <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Active Shift Selection</span>
-          <div className="flex p-1.5 bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 gap-1">
+          <div className="flex p-1.5 bg-bg-surface/40 backdrop-blur-md rounded-2xl border border-white/10 gap-1 transition-colors duration-500">
             {shifts.map((s) => (
               <button
                 key={s}
@@ -55,8 +55,8 @@ export function StartPage() {
                 className={`
                   w-12 h-10 flex items-center justify-center rounded-xl font-bold transition-all duration-300
                   ${shift === s 
-                    ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' 
-                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}
+                    ? 'bg-indigo-500 text-white shadow-lg shadow-brand-indigo/30' 
+                    : 'text-slate-400 hover:bg-bg-main/40 hover:text-slate-200'}
                 `}
               >
                 {s}
@@ -68,7 +68,7 @@ export function StartPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-50">
         {/* Date Selection Card */}
-        <section className="lg:col-span-4 backdrop-blur-md bg-white/5 border border-white/10 rounded-3xl p-8 flex flex-col justify-between">
+        <section className="lg:col-span-4 backdrop-blur-md bg-bg-surface border border-white/10 rounded-3xl p-8 flex flex-col justify-between transition-colors duration-500">
           <div className="space-y-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
@@ -84,7 +84,7 @@ export function StartPage() {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full h-16 bg-black/20 border border-white/10 rounded-2xl px-6 text-white font-mono text-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all uppercase"
+              className="w-full h-16 bg-bg-main border border-white/10 rounded-2xl px-6 text-white font-mono text-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all uppercase"
             />
           </div>
           
@@ -108,7 +108,7 @@ export function StartPage() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {Object.entries(SHIFT_TEAMS).map(([name, team]) => (
-            <div key={name} className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-colors">
+            <div key={name} className="bg-bg-surface border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-all duration-500">
               <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-4 flex items-center justify-between">
                 {name} Shift
                 <span className="text-[9px] text-slate-500 font-bold">ACTIVE</span>
@@ -226,7 +226,7 @@ function OpsCalendar() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
       {/* Monthly View */}
-      <div className="lg:col-span-8 bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-md">
+      <div className="lg:col-span-8 bg-bg-surface border border-white/10 rounded-3xl p-8 backdrop-blur-md transition-colors duration-500">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
              <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
@@ -306,7 +306,7 @@ function OpsCalendar() {
 
       {/* Daily Detail View */}
       <div className="lg:col-span-4 flex flex-col gap-6">
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-md flex-1 flex flex-col">
+        <div className="bg-bg-surface border border-white/10 rounded-3xl p-8 backdrop-blur-md flex-1 flex flex-col transition-colors duration-500">
           <div className="flex justify-between items-center mb-8">
             <div>
               <h4 className="text-sm font-black text-white uppercase tracking-widest">
@@ -372,7 +372,7 @@ function OpsCalendar() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-slate-900 border border-white/10 rounded-3xl p-8 w-full max-w-lg shadow-2xl shadow-indigo-500/10"
+              className="bg-bg-surface border border-white/10 rounded-3xl p-8 w-full max-w-lg shadow-2xl shadow-brand-indigo/10 transition-colors duration-500"
             >
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-xl font-bold text-white uppercase tracking-tight flex items-center gap-3">

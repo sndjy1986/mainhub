@@ -129,14 +129,14 @@ export default function Directory() {
               placeholder="Search registry..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium text-sm"
+              className="w-full bg-bg-surface border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-medium text-sm"
             />
           </div>
 
           {!user ? (
             <button 
               onClick={() => signIn().then(() => setShowToast("Access Granted"))}
-              className="p-4 bg-white/5 rounded-2xl text-slate-500 hover:text-white transition-all border border-transparent hover:border-white/10"
+              className="p-4 bg-bg-surface rounded-2xl text-slate-500 hover:text-white transition-all border border-transparent hover:border-white/10"
               title="Management Login"
             >
               <Settings className="w-6 h-6" />
@@ -144,7 +144,7 @@ export default function Directory() {
           ) : (
             <button 
               onClick={() => setIsManagementMode(!isManagementMode)}
-              className={`p-4 rounded-2xl transition-all border shadow-lg ${isManagementMode ? 'bg-indigo-500 text-white border-indigo-400' : 'bg-white/5 text-slate-400 border-white/10 hover:text-white'}`}
+              className={`p-4 rounded-2xl transition-all border shadow-lg duration-500 ${isManagementMode ? 'bg-indigo-500 text-white border-indigo-400' : 'bg-bg-surface text-slate-400 border-white/10 hover:text-white'}`}
               title={isManagementMode ? "Exit Management" : "Access Management"}
             >
               <Settings className={`w-6 h-6 ${isManagementMode ? 'animate-spin-slow' : ''}`} />
@@ -166,7 +166,7 @@ export default function Directory() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {section.contacts.map((contact, cIdx) => (
-                  <div key={cIdx} className="p-6 transition-all bg-white/5 border border-white/5 rounded-3xl hover:bg-white/10 hover:border-white/10 group flex items-center justify-between">
+                  <div key={cIdx} className="p-6 transition-all duration-500 bg-bg-surface border border-white/5 rounded-3xl hover:bg-white/10 hover:border-indigo-500/30 group flex items-center justify-between">
                     <div className="flex-1">
                       <div className="text-sm font-bold text-white tracking-tight">{contact.name}</div>
                       <div className="text-[10px] uppercase font-black tracking-widest text-slate-500 mt-1">{contact.title}</div>
@@ -180,7 +180,7 @@ export default function Directory() {
                         navigator.clipboard.writeText(contact.phone);
                         setShowToast(`Copied: ${contact.phone}`);
                       }}
-                      className="p-3 bg-white/5 text-slate-400 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-lg active:scale-95"
+                      className="p-3 bg-bg-main text-slate-400 rounded-xl hover:bg-indigo-500 hover:text-white transition-all shadow-lg active:scale-95 duration-500"
                       title="Copy Number"
                     >
                       <Clipboard className="w-5 h-5" />
@@ -201,7 +201,7 @@ export default function Directory() {
         {/* Sidebar: Roster & Supervisors */}
         <div className="space-y-12">
           {/* Supervisors Section */}
-          <section className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6">
+          <section className="backdrop-blur-md bg-bg-surface border border-white/10 rounded-[2.5rem] p-8 space-y-6 transition-colors duration-500">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white flex items-center gap-3">
                 <Truck className="w-5 h-5 text-emerald-400" />
@@ -226,7 +226,7 @@ export default function Directory() {
             </div>
             <div className="space-y-3">
               {filteredSupervisors.length > 0 ? filteredSupervisors.map(([name, email]) => (
-                <div key={name} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between group">
+                <div key={name} className="p-4 bg-bg-main rounded-2xl border border-white/5 flex items-center justify-between group transition-colors duration-500">
                   <div>
                     <div className="text-xs font-bold text-white">{name}</div>
                     <div className="text-[10px] text-slate-500 font-mono mt-1 lowercase truncate">{email || 'No email'}</div>
@@ -259,7 +259,7 @@ export default function Directory() {
           </section>
 
           {/* Roster Section */}
-          <section className="backdrop-blur-md bg-white/5 border border-white/10 rounded-[2.5rem] p-8 space-y-6 h-[500px] flex flex-col">
+          <section className="backdrop-blur-md bg-bg-surface border border-white/10 rounded-[2.5rem] p-8 space-y-6 h-[500px] flex flex-col transition-colors duration-500">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white flex items-center gap-3">
                 <User className="w-5 h-5 text-indigo-400" />
@@ -271,7 +271,7 @@ export default function Directory() {
             </div>
             <div className="flex-1 overflow-y-auto pr-2 space-y-2 scrollbar-thin scrollbar-thumb-white/10">
               {filteredPersonnel.length > 0 ? filteredPersonnel.map(p => (
-                <div key={p.id} className="p-4 bg-white/5 rounded-2xl border border-white/5 flex items-center justify-between group">
+                <div key={p.id} className="p-4 bg-bg-main rounded-2xl border border-white/5 flex items-center justify-between group transition-colors duration-500">
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-white">{p.name}</span>
                     <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest">{p.shift} SHIFT {p.phone ? `• ${p.phone}` : ''}</span>

@@ -110,7 +110,7 @@ export const CameraGrid: React.FC = React.memo(() => {
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-slate-900 relative text-slate-100 font-sans overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-bg-main relative text-slate-100 font-sans overflow-hidden transition-colors duration-500">
       {/* Grid Container */}
       <main className={`flex-1 grid gap-4 p-4 z-10 overflow-hidden ${gridSize === 4 ? 'grid-cols-2 grid-rows-2' : 'grid-cols-3 grid-rows-2'}`}>
         {activeCameras.slice(0, gridSize).map((camera, idx) => (
@@ -128,7 +128,7 @@ export const CameraGrid: React.FC = React.memo(() => {
       </main>
 
       {/* Footer Bar */}
-      <footer className="h-12 bg-slate-900/60 backdrop-blur-xl border-t border-white/5 px-8 flex items-center justify-between z-50">
+      <footer className="h-12 bg-bg-surface/60 backdrop-blur-xl border-t border-white/5 px-8 flex items-center justify-between z-50 transition-colors duration-500">
         <div className="flex items-center gap-8">
           <div className="flex flex-col">
             <span className="text-[8px] uppercase tracking-[0.2em] font-black text-slate-500">Deployment Status</span>

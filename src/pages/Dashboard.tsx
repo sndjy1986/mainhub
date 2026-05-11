@@ -33,7 +33,7 @@ export default function Dashboard() {
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-bg-surface p-6 rounded-lg border border-border-subtle shadow-sm flex items-start gap-4 hover:border-brand-blue/50 transition-all group">
-          <div className="bg-[#1E293B] p-2.5 rounded text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-colors">
+          <div className="bg-bg-main p-2.5 rounded text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-colors">
             <Users className="w-5 h-5" />
           </div>
           <div>
@@ -46,7 +46,7 @@ export default function Dashboard() {
         </div>
 
         <div className="bg-bg-surface p-6 rounded-lg border border-border-subtle shadow-sm flex items-start gap-4 hover:border-brand-blue/50 transition-all group">
-          <div className="bg-[#1E293B] p-2.5 rounded text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-colors">
+          <div className="bg-bg-main p-2.5 rounded text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-colors">
             <Truck className="w-5 h-5" />
           </div>
           <div className="flex-1">
@@ -66,7 +66,7 @@ export default function Dashboard() {
         </div>
 
         <div className="bg-bg-surface p-6 rounded-lg border border-border-subtle shadow-sm flex items-start gap-4 hover:border-brand-blue/50 transition-all group">
-          <div className="bg-[#1E293B] p-2.5 rounded text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-colors">
+          <div className="bg-bg-main p-2.5 rounded text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-colors">
             <AlertCircle className="w-5 h-5" />
           </div>
           <div>
@@ -86,7 +86,7 @@ export default function Dashboard() {
         {/* Right Panel: Truck Up Time (From Firestore) */}
         <div className="w-full xl:w-72 space-y-6 shrink-0">
           <div className="bg-bg-surface rounded-lg border border-border-subtle shadow-sm overflow-hidden sticky top-6">
-            <div className="bg-[#1A1D23] px-4 py-3 border-b border-border-subtle">
+            <div className="bg-bg-surface px-4 py-3 border-b border-border-subtle">
               <h3 className="font-bold text-white text-[11px] uppercase tracking-widest flex items-center gap-2">
                 <Truck className="w-3.5 h-3.5 text-brand-blue" />
                 Fleet Ready Status
@@ -103,8 +103,8 @@ export default function Dashboard() {
                 <tbody className="divide-y divide-border-subtle/30">
                   {fleetStatus.map((unit, idx) => (
                     <tr key={unit.id} className={cn(
-                      "hover:bg-[#1E2228] transition-colors group cursor-default",
-                      idx % 2 === 1 && "bg-[#16191E]/50"
+                      "hover:bg-white/5 transition-colors group cursor-default",
+                      idx % 2 === 1 && "bg-bg-main/50"
                     )}>
                       <td className="px-3 py-1.5 text-xs font-bold text-text-primary group-hover:text-brand-blue transition-colors">
                         {unit.unit}
@@ -124,7 +124,7 @@ export default function Dashboard() {
                 </tbody>
               </table>
             </div>
-            <div className="p-3 bg-[#1A1D23] border-t border-border-subtle">
+            <div className="p-3 bg-bg-surface border-t border-border-subtle">
               <div className="flex items-center justify-between text-[9px] font-bold text-text-muted uppercase tracking-widest">
                 <span>Total Assets</span>
                 <span className="text-text-primary">{fleetStatus.length} Active</span>
