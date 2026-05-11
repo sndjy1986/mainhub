@@ -216,24 +216,35 @@ export function AdminPage() {
       </header>
 
       {!user && (
-        <section className="tactical-card p-12 flex flex-col md:flex-row items-center justify-between gap-8 border-rose-500/20 bg-rose-500/[0.02]">
-          <div className="flex-1 text-center md:text-left">
-            <h3 className="text-2xl font-black text-white uppercase tracking-tight italic">Security <span className="text-rose-500 not-italic">Barrier</span></h3>
-            <p className="text-sm text-slate-400 mt-2 font-medium">Authentication required to access persistent orchestration nodes and roster databases.</p>
+        <section className="tactical-card p-12 border-rose-500/20 bg-rose-500/[0.04] relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
+            <div className="flex-1 space-y-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-rose-500/20 flex items-center justify-center border border-rose-500/30">
+                  <Lock className="w-6 h-6 text-rose-500 animate-pulse" />
+                </div>
+                <h3 className="text-3xl font-black text-white uppercase tracking-tight italic">Access <span className="text-rose-500 not-italic">Restricted</span></h3>
+              </div>
+              <p className="text-slate-400 text-lg font-medium max-w-xl leading-relaxed">
+                Persistent orchestration nodes, personnel rosters, and system archives are secured behind mandatory tactical authentication.
+              </p>
+            </div>
+            <button 
+              onClick={async () => {
+                try {
+                  await signIn();
+                  setShowToast("AUTHENTICATED_ACCESS_GRANTED");
+                } catch (e: any) {
+                  setShowToast("AUTH_REJECTED");
+                }
+              }}
+              className="px-12 py-6 bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-[0.2em] rounded-[2rem] shadow-[0_0_40px_rgba(244,63,94,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center gap-4 group"
+            >
+              <Terminal className="w-6 h-6" />
+              Begin Authentication
+            </button>
           </div>
-          <button 
-            onClick={async () => {
-              try {
-                await signIn();
-                setShowToast("AUTHENTICATED_ACCESS_GRANTED");
-              } catch (e: any) {
-                setShowToast("AUTH_REJECTED");
-              }
-            }}
-            className="tactical-btn-indigo px-10 py-5 shadow-indigo-500/30 min-w-[240px]"
-          >
-            Google Tactical Auth
-          </button>
         </section>
       )}
 
@@ -281,39 +292,47 @@ export function AdminPage() {
                     <span className="text-[9px] font-mono text-slate-500 border border-white/10 px-2 py-0.5 rounded bg-black/20">{personnel.filter(p => p.shift === shift).length}</span>
                   </div>
                   <div className="space-y-3">
-                    {personnel.filter(p => p.shift === shift).map(p => (
-                      <div key={p.id} className="p-5 bg-black/20 border border-white/5 rounded-2xl group hover:border-indigo-500/40 transition-all duration-300 shadow-inner">
-                        <div className="flex justify-between items-start gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-black text-white uppercase tracking-tight truncate">{p.name}</div>
-                            {p.phone && (
-                              <div className="flex items-center gap-2 mt-2">
-                                <Phone className="w-3 h-3 text-slate-600" />
-                                <span className="text-[9px] font-mono text-slate-500 font-bold tracking-tight">{p.phone}</span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button 
-                              onClick={() => {
-                                setEditingPerson(p);
-                                setPersonForm({ name: p.name, shift: p.shift, phone: p.phone || '', certifications: p.certifications || [] });
-                                setShowPersonnelModal(true);
-                              }}
-                              className="p-1.5 text-slate-500 hover:text-indigo-400 transition-colors"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button 
-                              onClick={() => deletePerson(p.id)}
-                              className="p-1.5 text-slate-500 hover:text-rose-400 transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                    {personnel.filter(p => p.shift === shift).length === 0 ? (
+                      <div className="py-8 text-center bg-white/[0.02] border border-dashed border-white/5 rounded-2xl">
+                        <span className="text-[8px] font-black text-slate-700 uppercase tracking-widest">No Personnel Deployed</span>
+                      </div>
+                    ) : (
+                      personnel.filter(p => p.shift === shift).map(p => (
+                        <div key={p.id} className="p-5 bg-black/20 border border-white/5 rounded-2xl group hover:border-indigo-500/40 transition-all duration-300 shadow-inner hover:shadow-indigo-500/5">
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-black text-white uppercase tracking-tight truncate group-hover:text-indigo-400 transition-colors uppercase">{p.name}</div>
+                              {p.phone ? (
+                                <div className="flex items-center gap-2 mt-2">
+                                  <Phone className="w-3 h-3 text-slate-600" />
+                                  <span className="text-[9px] font-mono text-slate-500 font-bold tracking-tight">{p.phone}</span>
+                                </div>
+                              ) : (
+                                <div className="text-[8px] text-slate-600 font-bold uppercase tracking-widest mt-1">No contact data</div>
+                              )}
+                            </div>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={() => {
+                                  setEditingPerson(p);
+                                  setPersonForm({ name: p.name, shift: p.shift, phone: p.phone || '', certifications: p.certifications || [] });
+                                  setShowPersonnelModal(true);
+                                }}
+                                className="p-1.5 text-slate-500 hover:text-indigo-400 transition-colors bg-white/5 rounded-lg"
+                              >
+                                <Edit2 className="w-3 h-3" />
+                              </button>
+                              <button 
+                                onClick={() => deletePerson(p.id)}
+                                className="p-1.5 text-slate-500 hover:text-rose-400 transition-colors bg-white/5 rounded-lg"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               ))}
@@ -335,28 +354,28 @@ export function AdminPage() {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {ALL_CAMERAS.map(cam => (
                   <button
                     key={cam.id}
                     disabled={!user}
                     onClick={() => toggleCamera(cam.id)}
                     className={`
-                      p-5 rounded-2xl border transition-all text-left flex flex-col justify-between h-28 group relative overflow-hidden
+                      p-4 rounded-2xl border transition-all text-left flex flex-col justify-between h-24 group relative overflow-hidden active:scale-95
                       ${defaultCameraIds.includes(cam.id) 
-                        ? 'bg-indigo-600 border-indigo-400 shadow-xl shadow-indigo-500/30' 
+                        ? 'bg-indigo-600 border-indigo-400 shadow-xl shadow-indigo-500/20' 
                         : 'bg-black/40 border-white/5 hover:border-white/20 hover:bg-white/5'}
                     `}
                   >
                     <div className="relative z-10">
-                       <div className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 group-hover:text-white transition-colors ${defaultCameraIds.includes(cam.id) ? 'text-white' : 'text-slate-500'}`}>CAM_{cam.id}</div>
-                       <div className={`text-xs font-black uppercase leading-tight group-hover:translate-x-1 transition-transform ${defaultCameraIds.includes(cam.id) ? 'text-white' : 'text-slate-300'}`}>{cam.name}</div>
+                       <div className={`text-[9px] font-black uppercase tracking-[0.2em] mb-0.5 transition-colors ${defaultCameraIds.includes(cam.id) ? 'text-indigo-200' : 'text-slate-500'}`}>SOURCE_{cam.id}</div>
+                       <div className={`text-[11px] font-black uppercase leading-tight truncate ${defaultCameraIds.includes(cam.id) ? 'text-white' : 'text-slate-300'}`}>{cam.name}</div>
                     </div>
-                    <div className={`text-[8px] font-black uppercase tracking-widest relative z-10 ${defaultCameraIds.includes(cam.id) ? 'text-indigo-200' : 'text-slate-600'}`}>
-                      {defaultCameraIds.includes(cam.id) ? 'LINKED' : 'OFFLINE'}
+                    <div className={`text-[7px] font-black uppercase tracking-[0.3em] relative z-10 ${defaultCameraIds.includes(cam.id) ? 'text-white' : 'text-slate-600'}`}>
+                      {defaultCameraIds.includes(cam.id) ? 'DEPLOYED' : 'UNLINKED'}
                     </div>
                     {defaultCameraIds.includes(cam.id) && (
-                      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)] z-20" />
+                      <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)] z-20" />
                     )}
                   </button>
                 ))}
@@ -367,12 +386,18 @@ export function AdminPage() {
         {/* System & Notifications */}
         <div className="lg:col-span-4 space-y-12">
           {/* App Theme Settings */}
-          <section className="tactical-card p-10 space-y-8">
-            <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic">
-              <Settings className="w-5 h-5 text-indigo-500" />
-              Ambience <span className="text-indigo-500 not-italic">Sync</span>
-            </h3>
-            <div className="grid grid-cols-1 gap-4">
+          <section className="tactical-card p-10 space-y-8 bg-indigo-500/[0.02]">
+            <div className="flex items-center justify-between border-b border-white/5 pb-6">
+              <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic">
+                <Settings className="w-5 h-5 text-indigo-500" />
+                Theme <span className="text-indigo-500 not-italic">Engines</span>
+              </h3>
+              <span className="text-[9px] font-black p-2 bg-white/5 rounded-lg text-slate-500 uppercase tracking-widest leading-none border border-white/5">
+                {THEMES.length} Profiles
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-3">
               {THEMES.map((theme) => (
                 <button
                   key={theme.id}
@@ -381,26 +406,21 @@ export function AdminPage() {
                     setShowToast(`${theme.name.toUpperCase()} ENGINE ACTIVATED`);
                   }}
                   className={`
-                    w-full flex items-center justify-between p-5 rounded-2xl border transition-all relative overflow-hidden group
+                    flex flex-col items-center justify-center p-4 rounded-2xl border transition-all relative overflow-hidden group
                     ${appTheme === theme.id 
-                      ? 'bg-white/10 border-white/20 shadow-xl' 
-                      : 'bg-black/40 border-transparent hover:border-white/10'}
+                      ? 'bg-white/10 border-white/20 shadow-xl ring-2 ring-indigo-500/50' 
+                      : 'bg-black/40 border-transparent hover:border-white/10 hover:bg-white/5'}
                   `}
                 >
-                  <div className="flex items-center gap-4 relative z-10">
-                    <div 
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:rotate-12" 
-                      style={{ backgroundColor: theme.color, boxShadow: `0 0 20px ${theme.color}33` }}
-                    >
-                      {appTheme === theme.id && <CheckCircle2 className="w-5 h-5 text-white" />}
-                    </div>
-                    <div className="flex flex-col items-start translate-y-0.5">
-                      <span className={`text-xs font-black uppercase tracking-widest ${appTheme === theme.id ? 'text-white' : 'text-slate-400'}`}>
-                        {theme.name}
-                      </span>
-                      <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1 italic">Core Engine_0{THEMES.indexOf(theme) + 1}</span>
-                    </div>
+                  <div 
+                    className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-all group-hover:scale-110 mb-3" 
+                    style={{ backgroundColor: theme.color, boxShadow: `0 0 20px ${theme.color}33` }}
+                  >
+                    {appTheme === theme.id && <CheckCircle2 className="w-5 h-5 text-white" />}
                   </div>
+                  <span className={`text-[10px] font-black uppercase tracking-widest text-center truncate w-full ${appTheme === theme.id ? 'text-white' : 'text-slate-400'}`}>
+                    {theme.name}
+                  </span>
                   
                   {appTheme === theme.id && (
                     <motion.div
@@ -493,23 +513,44 @@ export function AdminPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {archivedReports.length === 0 ? (
-            <div className="col-span-full py-24 text-center text-slate-600 font-black uppercase tracking-[0.3em] text-sm border-2 border-dashed border-white/5 rounded-[3rem] bg-black/10">
-               No established history found in this sector
+            <div className="col-span-full py-24 text-center text-slate-700 font-black uppercase tracking-[0.3em] text-xs border-2 border-dashed border-white/5 rounded-[3rem] bg-black/10">
+               Archive database is currently empty
             </div>
           ) : (
             archivedReports.map(report => (
-              <div key={report.id} className="p-8 tactical-card bg-black/20 group hover:bg-white/5 duration-500 relative overflow-hidden">
-                <div className="relative z-10 space-y-6">
-                   <div className="flex items-center justify-between">
-                      <span className="px-4 py-1.5 rounded-xl bg-indigo-500/5 border border-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{report.shift} SHIFT MATRIX</span>
-                      <span className="text-[11px] font-mono text-slate-500 font-bold">{report.date}</span>
+              <div key={report.id} className="p-8 tactical-card bg-black/30 group hover:bg-indigo-500/[0.03] transition-all duration-500 relative overflow-hidden flex flex-col gap-6">
+                <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                  <div className="flex flex-col">
+                    <span className="text-[8px] font-black text-indigo-400 uppercase tracking-[0.3em] italic mb-1">Sector Log</span>
+                    <span className="text-sm font-black text-white uppercase">{report.shift} SHIFT</span>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Timecode</span>
+                    <span className="text-[10px] font-mono text-slate-400">{report.date}</span>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <h4 className="text-base font-black text-white uppercase italic tracking-tight group-hover:text-indigo-400 transition-colors leading-snug">
+                    {report.name}
+                  </h4>
+                  <div className="relative">
+                    <p className="text-[11px] text-slate-500 line-clamp-4 uppercase tracking-tight font-medium leading-relaxed italic">
+                      {report.plainReport}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-4 flex items-center justify-between">
+                   <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-emerald-500/50" />
+                      <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest">Integrity Verified</span>
                    </div>
-                   <div className="space-y-2">
-                     <h4 className="text-base font-black text-white uppercase italic tracking-tight">{report.name}</h4>
-                     <p className="text-[11px] text-slate-500 line-clamp-3 uppercase tracking-tight font-medium leading-relaxed">{report.plainReport}</p>
-                   </div>
+                   <button className="text-[8px] font-black text-indigo-400 uppercase tracking-widest hover:text-white transition-colors">
+                      Full Decrypt →
+                   </button>
                 </div>
               </div>
             ))
