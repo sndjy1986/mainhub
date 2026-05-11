@@ -42,7 +42,15 @@ import {
 import { ALL_CAMERAS } from '../../lib/camsConstants';
 
 export function AdminPage() {
-  const { addNotification, notificationPermission, requestNotificationPermission, appTheme, setAppTheme } = useTerminal();
+  const { 
+    addNotification, 
+    notificationPermission, 
+    requestNotificationPermission, 
+    appTheme, 
+    setAppTheme, 
+    toneTestMode, 
+    setToneTestMode 
+  } = useTerminal();
   const [showToast, setShowToast] = useState<string | null>(null);
 
   const THEMES: { id: AppTheme; name: string; color: string }[] = [
@@ -385,19 +393,54 @@ export function AdminPage() {
 
         {/* System & Notifications */}
         <div className="lg:col-span-4 space-y-12">
+          {/* Fleet Controls */}
+          <section className="tactical-card p-10 space-y-8 bg-emerald-500/[0.02]">
+            <div className="flex items-center justify-between border-b border-white/5 pb-6">
+              <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic">
+                <Radio className="w-5 h-5 text-emerald-400" />
+                Fleet <span className="text-emerald-400 not-italic">Logistics</span>
+              </h3>
+              <span className={`text-[8px] font-black px-2 py-1 rounded-md uppercase tracking-widest border ${toneTestMode ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-slate-500/10 border-slate-500/30 text-slate-400'}`}>
+                {toneTestMode ? 'ACTIVE' : 'INACTIVE'}
+              </span>
+            </div>
+            
+            <div className="space-y-4">
+              <div 
+                onClick={() => setToneTestMode(!toneTestMode)}
+                className={`p-6 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group ${toneTestMode ? 'bg-emerald-500/[0.03] border-emerald-500/20 shadow-lg shadow-emerald-500/5' : 'bg-black/40 border-white/5 opacity-60'}`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${toneTestMode ? 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]' : 'bg-slate-800 text-slate-500'}`}>
+                    <Activity className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-[11px] font-black text-white uppercase tracking-[0.2em] group-hover:text-emerald-400 transition-colors">Tone Test Filter</h4>
+                    <p className="text-[9px] text-slate-500 uppercase font-black mt-1 tracking-widest italic">{toneTestMode ? 'Filtering for UP units' : 'Pulling ALL fleet assets'}</p>
+                  </div>
+                </div>
+                <div className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 relative ${toneTestMode ? 'bg-emerald-500' : 'bg-slate-700'}`}>
+                  <div className={`w-4 h-4 bg-white rounded-full transition-all duration-300 shadow-sm ${toneTestMode ? 'translate-x-6' : 'translate-x-0'}`} />
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* App Theme Settings */}
           <section className="tactical-card p-10 space-y-8 bg-indigo-500/[0.02]">
             <div className="flex items-center justify-between border-b border-white/5 pb-6">
               <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic">
-                <Settings className="w-5 h-5 text-indigo-500" />
-                Theme <span className="text-indigo-500 not-italic">Engines</span>
+                <Settings className="w-5 h-5 text-indigo-400" />
+                Theme <span className="text-indigo-400 not-italic">Sync</span>
               </h3>
-              <span className="text-[9px] font-black p-2 bg-white/5 rounded-lg text-slate-500 uppercase tracking-widest leading-none border border-white/5">
-                {THEMES.length} Profiles
-              </span>
+              <div className="flex gap-1">
+                <div className="w-2 h-2 rounded-full bg-indigo-500/20" />
+                <div className="w-2 h-2 rounded-full bg-indigo-500/40" />
+                <div className="w-2 h-2 rounded-full bg-indigo-500" />
+              </div>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 gap-2">
               {THEMES.map((theme) => (
                 <button
                   key={theme.id}
@@ -406,28 +449,22 @@ export function AdminPage() {
                     setShowToast(`${theme.name.toUpperCase()} ENGINE ACTIVATED`);
                   }}
                   className={`
-                    flex flex-col items-center justify-center p-4 rounded-2xl border transition-all relative overflow-hidden group
+                    flex flex-col items-center justify-center p-3 rounded-xl border transition-all relative overflow-hidden group
                     ${appTheme === theme.id 
-                      ? 'bg-white/10 border-white/20 shadow-xl ring-2 ring-indigo-500/50' 
-                      : 'bg-black/40 border-transparent hover:border-white/10 hover:bg-white/5'}
+                      ? 'bg-white/10 border-white/20 shadow-xl' 
+                      : 'bg-black/60 border-transparent hover:border-white/10 hover:bg-white/5'}
                   `}
+                  title={theme.name}
                 >
                   <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-all group-hover:scale-110 mb-3" 
-                    style={{ backgroundColor: theme.color, boxShadow: `0 0 20px ${theme.color}33` }}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 mb-2" 
+                    style={{ backgroundColor: theme.color, boxShadow: `0 0 15px ${theme.color}44` }}
                   >
-                    {appTheme === theme.id && <CheckCircle2 className="w-5 h-5 text-white" />}
+                    {appTheme === theme.id && <CheckCircle2 className="w-4 h-4 text-white" />}
                   </div>
-                  <span className={`text-[10px] font-black uppercase tracking-widest text-center truncate w-full ${appTheme === theme.id ? 'text-white' : 'text-slate-400'}`}>
-                    {theme.name}
+                  <span className={`text-[8px] font-black uppercase tracking-[0.2em] text-center truncate w-full ${appTheme === theme.id ? 'text-white' : 'text-slate-500'}`}>
+                    {theme.id.substring(0, 4)}
                   </span>
-                  
-                  {appTheme === theme.id && (
-                    <motion.div
-                      layoutId="theme-active"
-                      className="absolute inset-0 bg-white/[0.03] pointer-events-none"
-                    />
-                  )}
                 </button>
               ))}
             </div>

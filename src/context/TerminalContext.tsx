@@ -21,6 +21,8 @@ interface TerminalContextType {
   setWeatherZip: (zip: string | null) => void;
   appTheme: AppTheme;
   setAppTheme: (theme: AppTheme) => void;
+  toneTestMode: boolean;
+  setToneTestMode: (val: boolean) => void;
   notifications: Notification[];
   notificationPermission: NotificationPermission;
   requestNotificationPermission: () => Promise<NotificationPermission | undefined>;
@@ -36,6 +38,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const [emergencyOpacity, setEmergencyOpacity] = useState(0.2);
   const [weatherZip, setWeatherZip] = useState<string | null>(() => localStorage.getItem('weatherZip'));
   const [appTheme, setAppTheme] = useState<AppTheme>(() => (localStorage.getItem('appTheme') as AppTheme) || 'midnight');
+  const [toneTestMode, setToneTestMode] = useState<boolean>(() => localStorage.getItem('toneTestMode') !== 'false'); // Default to true
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
@@ -128,6 +131,10 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.setAttribute('data-theme', appTheme);
   }, [appTheme]);
 
+  useEffect(() => {
+    localStorage.setItem('toneTestMode', toneTestMode.toString());
+  }, [toneTestMode]);
+
   return (
     <TerminalContext.Provider value={{ 
       emergencyLevel, 
@@ -140,6 +147,8 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       setWeatherZip,
       appTheme,
       setAppTheme,
+      toneTestMode,
+      setToneTestMode,
       notifications,
       notificationPermission,
       requestNotificationPermission,

@@ -10,12 +10,15 @@ import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, onSnapshot, query } from 'firebase/firestore';
 import { ToneTestRecord } from '../types';
 
+import { useTerminal } from '../context/TerminalContext';
+
 interface UnitAssignment {
   unitId: string;
   postName: string;
 }
 
 export default function DistanceMap() {
+  const { toneTestMode } = useTerminal();
   const [address, setAddress] = useState('');
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,44 +51,77 @@ export default function DistanceMap() {
 
   // Compute active units and their effective coordinates
   const activeTransportUnits = useMemo(() => {
-    // Only MED- units that are UP
-    const upUnits = toneRecords.filter(r => 
-      r.unit.toUpperCase().startsWith('MED') && 
-      r.time && 
-      !r.tenFortyTwo
-    );
+    if (toneTestMode) {
+      // Only MED- units that are UP according to Tone Test
+      const upUnits = toneRecords.filter(r => 
+        r.unit.toUpperCase().startsWith('MED') && 
+        r.time && 
+        !r.tenFortyTwo
+      );
 
-    return upUnits.map(tr => {
-      const unitId = tr.unit;
-      const assignment = assignments.find(a => a.unitId.toLowerCase() === unitId.toLowerCase());
-      
-      let coords: [number, number] | null = null;
-      let addr = TRANSPORT_ADDRS[unitId] || "Unknown Address";
+      return upUnits.map(tr => {
+        const unitId = tr.unit;
+        const assignment = assignments.find(a => a.unitId.toLowerCase() === unitId.toLowerCase());
+        
+        let coords: [number, number] | null = null;
+        let addr = TRANSPORT_ADDRS[unitId] || "Unknown Address";
 
-      if (assignment) {
-        const post = POST_DATA.find(p => p.name === assignment.postName);
-        if (post) {
-          coords = [post.lon, post.lat];
-          addr = `Posted @ ${post.name}`;
+        if (assignment) {
+          const post = POST_DATA.find(p => p.name === assignment.postName);
+          if (post) {
+            coords = [post.lon, post.lat];
+            addr = `Posted @ ${post.name}`;
+          }
+        } else {
+          const unitInfo = INITIAL_UNITS.find(iu => iu.id.toLowerCase() === unitId.toLowerCase());
+          if (unitInfo) {
+            const post = POST_DATA.find(p => p.name === unitInfo.home);
+            if (post) {
+              coords = [post.lon, post.lat];
+              addr = `Home @ ${post.name}`;
+            }
+          }
         }
-      } else {
-        const unitInfo = INITIAL_UNITS.find(iu => iu.id.toLowerCase() === unitId.toLowerCase());
-        if (unitInfo) {
-          const post = POST_DATA.find(p => p.name === unitInfo.home);
+
+        return {
+          name: unitId,
+          addr: addr,
+          coords: coords
+        };
+      });
+    } else {
+      // Pull ALL trucks if Tone Test is NOT in use
+      const medUnits = INITIAL_UNITS.filter(u => u.id.toUpperCase().startsWith('MED'));
+      
+      return medUnits.map(u => {
+        const unitId = u.id;
+        const assignment = assignments.find(a => a.unitId.toLowerCase() === unitId.toLowerCase());
+        
+        let coords: [number, number] | null = null;
+        let addr = TRANSPORT_ADDRS[unitId] || "Unknown Address";
+
+        if (assignment) {
+          const post = POST_DATA.find(p => p.name === assignment.postName);
+          if (post) {
+            coords = [post.lon, post.lat];
+            addr = `Posted @ ${post.name}`;
+          }
+        } else {
+          const post = POST_DATA.find(p => p.name === u.home);
           if (post) {
             coords = [post.lon, post.lat];
             addr = `Home @ ${post.name}`;
           }
         }
-      }
 
-      return {
-        name: unitId,
-        addr: addr,
-        coords: coords // We'll use these to avoid geocoding
-      };
-    });
-  }, [toneRecords, assignments]);
+        return {
+          name: unitId,
+          addr: addr,
+          coords: coords
+        };
+      });
+    }
+  }, [toneRecords, assignments, toneTestMode]);
 
   // QRVs are always active for now, or we could filter them too if needed
   const activeQrvUnits = useMemo(() => {
