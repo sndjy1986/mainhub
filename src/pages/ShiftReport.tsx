@@ -523,11 +523,11 @@ export default function ShiftReport() {
                 </div>
                 <div className="space-y-1">
                   <h1 className="text-5xl font-black tracking-tight text-white uppercase italic leading-tight">
-                    Shift <span className="text-indigo-500 not-italic">Matrix</span>
+                    Shift <span className="text-indigo-500 not-italic">Report</span>
                   </h1>
                   <p className="text-slate-500 text-[10px] uppercase tracking-[0.4em] font-black flex items-center gap-3">
                     <Activity className="w-3 h-3 text-emerald-500 animate-pulse" />
-                    Operational Response Logistics & Deployment Buffer
+                    Shift Report Log & Personnel Management
                   </p>
                 </div>
               </div>
@@ -536,7 +536,7 @@ export default function ShiftReport() {
             <div className="flex flex-wrap items-center gap-4">
                <div className="flex items-center gap-8 px-6 py-3 bg-white/5 border border-white/10 rounded-2xl shadow-inner mr-2">
                  <div className="flex flex-col items-center">
-                   <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Active Matrix</span>
+                   <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Active Report</span>
                    <span className="text-xs font-black text-indigo-400 uppercase italic">SHIFT-{data.shift}</span>
                  </div>
                  <div className="w-px h-6 bg-white/10" />
@@ -569,11 +569,11 @@ export default function ShiftReport() {
               <div className="tactical-card p-8 space-y-8 group">
                 <div className="flex items-center justify-between border-b border-white/5 pb-4">
                    <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 flex items-center gap-3">
-                      <User className="w-3.5 h-3.5" /> Sector Info
+                      <User className="w-3.5 h-3.5" /> Shift Information
                    </h2>
                 </div>
                 <div className="space-y-6">
-                  <Field label="Commander" icon={UserCheck}>
+                  <Field label="Name" icon={UserCheck}>
                     <select name="name" value={data.name} onChange={handleChange}>
                       <option value="">-- SELECT --</option>
                       {Object.entries(shiftTeams).map(([shiftName, team]) => (
@@ -586,10 +586,10 @@ export default function ShiftReport() {
                       ))}
                     </select>
                   </Field>
-                  <Field label="Window Date" icon={Calendar}>
+                  <Field label="Date" icon={Calendar}>
                     <input type="date" name="date" value={data.date} onChange={handleChange} />
                   </Field>
-                  <Field label="Temporal Shift" icon={Activity}>
+                  <Field label="Shift" icon={Activity}>
                     <select name="shift" value={data.shift} onChange={handleChange}>
                       {SHIFTS.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
@@ -600,11 +600,11 @@ export default function ShiftReport() {
               <div className="tactical-card p-8 space-y-8 group">
                 <div className="flex items-center justify-between border-b border-white/5 pb-4">
                    <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 flex items-center gap-3">
-                      <Zap className="w-3.5 h-3.5" /> Comms Relay
+                      <Zap className="w-3.5 h-3.5" /> Radio Assignments
                    </h2>
                 </div>
                 <div className="space-y-6">
-                  <Field label="Primary Net" icon={Radio}>
+                  <Field label="Radio Ch. 1" icon={Radio}>
                     <select name="channel1" value={data.channel1} onChange={handleChange}>
                       <option value="">-- SELECT --</option>
                       {Object.entries(shiftTeams).map(([shiftName, team]) => (
@@ -617,7 +617,7 @@ export default function ShiftReport() {
                       ))}
                     </select>
                   </Field>
-                  <Field label="Tactical Net" icon={Shield}>
+                  <Field label="Radio Ch. 2" icon={Shield}>
                     <select name="channel2" value={data.channel2} onChange={handleChange}>
                       <option value="">-- SELECT --</option>
                       {Object.entries(shiftTeams).map(([shiftName, team]) => (
@@ -630,7 +630,7 @@ export default function ShiftReport() {
                       ))}
                     </select>
                   </Field>
-                  <Field label="Relay Support" icon={Users}>
+                  <Field label="Third Person" icon={Users}>
                     <select name="thirdPerson" value={data.thirdPerson} onChange={handleChange}>
                       <option value="">-- SELECT --</option>
                       {Object.entries(shiftTeams).map(([shiftName, team]) => (
@@ -653,13 +653,13 @@ export default function ShiftReport() {
                    </h2>
                 </div>
                 <div className="space-y-6">
-                  <Field label="Force Commander" icon={Activity}>
+                  <Field label="ALSSUP" icon={Activity}>
                     <select name="alssup" value={data.alssup} onChange={handleChange}>
                       <option value="">-- SELECT --</option>
                       {ALSSUP_OPTIONS.map(a => <option key={a}>{a}</option>)}
                     </select>
                   </Field>
-                  <Field label="Liaison Officer" icon={Globe}>
+                  <Field label="MEDSUP" icon={Globe}>
                     <select name="medsup" value={data.medsup} onChange={handleChange}>
                       <option value="">-- SELECT --</option>
                       {Object.keys(supervisors).map(m => <option key={m} value={m}>{m}</option>)}
@@ -669,25 +669,28 @@ export default function ShiftReport() {
               </div>
             </div>
 
-            {/* Row 2: Fleet Vectors */}
+            {/* Row 2: Available Trucks */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="tactical-card p-8 space-y-8 group">
                 <div className="flex items-center justify-between border-b border-white/5 pb-4">
                    <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 flex items-center gap-3">
-                      <Truck className="w-3.5 h-3.5" /> Fleet Vectors
+                      <Truck className="w-3.5 h-3.5" /> Available Trucks
                    </h2>
                 </div>
                 <div className="grid grid-cols-2 gap-6">
-                  <Field label="Ground Transport" icon={Activity}>
+                  <Field label="911 Trucks" icon={Activity}>
+                    <input type="number" name="truck911" value={data.truck911} onChange={handleChange} min="0" />
+                  </Field>
+                  <Field label="GT Trucks" icon={Activity}>
                     <input type="number" name="truckGT" value={data.truckGT} onChange={handleChange} min="0" />
                   </Field>
-                  <Field label="Sector Zulu" icon={Zap}>
+                  <Field label="Zulu Primary" icon={Zap}>
                     <input type="text" name="zuluPrimary" value={data.zuluPrimary} onChange={handleChange} placeholder="UNIT_ID" />
                   </Field>
-                  <Field label="ALS Response" icon={Shield}>
+                  <Field label="ALS Transport" icon={Shield}>
                     <input type="text" name="truckALS" value={data.truckALS} onChange={handleChange} placeholder="UNIT_IDS" />
                   </Field>
-                  <Field label="Regional QRV" icon={Activity}>
+                  <Field label="County QRV" icon={Activity}>
                     <input type="text" name="truckCountyQRV" value={data.truckCountyQRV} onChange={handleChange} placeholder="UNIT_ID" />
                   </Field>
                 </div>
@@ -696,14 +699,14 @@ export default function ShiftReport() {
               <div className="tactical-card p-8 space-y-8 group">
                 <div className="flex items-center justify-between border-b border-white/5 pb-4">
                    <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 flex items-center gap-3">
-                      <Clock className="w-3.5 h-3.5" /> Temporal Deviations
+                      <Clock className="w-3.5 h-3.5" /> Late Trucks / Chute Deviations
                    </h2>
                 </div>
                 <div className="space-y-6">
                   <div className="flex flex-col gap-3 group/field">
                     <div className="flex items-center gap-2 pl-4">
                       <AlertCircle className="w-3 h-3 text-rose-500/50" />
-                      <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Late Matrix Units</label>
+                      <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Late Trucks</label>
                     </div>
                     <textarea 
                       name="lateTrucks" 
@@ -717,7 +720,7 @@ export default function ShiftReport() {
                   <div className="flex flex-col gap-3 group/field">
                     <div className="flex items-center gap-2 pl-4">
                       <Zap className="w-3 h-3 text-emerald-500/50" />
-                      <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Chute Deviations</label>
+                      <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">Out of Chute</label>
                     </div>
                     <textarea 
                       name="outOfChute" 
@@ -732,35 +735,11 @@ export default function ShiftReport() {
               </div>
             </div>
 
-            {/* Row 3: Call Counts */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {[
-                { name: 'callCount', label: '911 Volume', icon: Radio },
-                { name: 'transportCount', label: 'Deployments', icon: Truck },
-                { name: 'qrvCallCount', label: 'QRV Sorties', icon: Zap },
-                { name: 'mutualAid', label: 'Mutual Aid', icon: Globe },
-              ].map((field) => (
-                <div key={field.name} className="tactical-card p-6 space-y-4 group hover:border-indigo-500/30">
-                  <div className="flex items-center justify-between">
-                    <field.icon className="w-5 h-5 text-indigo-500 group-hover:scale-110 transition-transform" />
-                    <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">{field.label}</span>
-                  </div>
-                  <input
-                    type="number"
-                    name={field.name}
-                    value={data[field.name as keyof typeof data]}
-                    onChange={handleChange}
-                    className="w-full bg-transparent border-none text-5xl font-black text-white focus:ring-0 p-0 text-center glow-number transition-all"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* Row 4: Log */}
+            {/* Row 3: Log */}
             <section className="tactical-card p-8 space-y-6 group">
               <div className="flex items-center justify-between border-b border-white/5 pb-4">
                  <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 flex items-center gap-3">
-                    <FileText className="w-4 h-4" /> Operational Log & Matrix
+                    <FileText className="w-4 h-4" /> Operational Log
                  </h2>
                  <div className="flex items-center gap-4">
                    <button 
@@ -794,7 +773,7 @@ export default function ShiftReport() {
               </div>
               <div className="pt-4 mt-4 border-t border-white/5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600 block">Other Events Matrix</label>
+                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600 block">Other Events</label>
                   <PendingUpdatesSync onAppend={(text) => setData(prev => ({ ...prev, otherEvents: prev.otherEvents ? `${prev.otherEvents}\n${text}` : text }))} />
                 </div>
                 <textarea 
