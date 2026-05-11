@@ -110,44 +110,93 @@ export const CameraGrid: React.FC = React.memo(() => {
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-bg-main relative text-slate-100 font-sans overflow-hidden transition-colors duration-500">
+    <div className="flex flex-col h-full w-full bg-slate-950 relative text-slate-100 font-sans overflow-hidden transition-colors duration-500 selection:bg-indigo-500/30">
+      {/* Tactical Header */}
+      <header className="h-20 bg-black/40 backdrop-blur-xl border-b border-white/5 px-8 flex items-center justify-between z-50 transition-all duration-500 tactical-header-glow shrink-0">
+        <div className="flex items-center gap-6">
+          <div className="w-10 h-10 bg-indigo-600/20 border border-indigo-500/30 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(79,70,229,0.2)]">
+            <Activity className="w-5 h-5 text-indigo-400" />
+          </div>
+          <div className="flex flex-col">
+            <h1 className="text-xl font-black uppercase italic tracking-tight text-white leading-none">
+              Surveillance <span className="text-indigo-500 not-italic">Matrix</span>
+            </h1>
+            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-500 mt-1">Multi-Sensor Response Relay</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-6">
+          <div className="flex flex-col items-end mr-4">
+            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Grid Density</span>
+            <div className="flex gap-1.5 h-1.5">
+               {[4, 6].map((size) => (
+                 <button
+                    key={size}
+                    onClick={() => setGridSize(size as 4 | 6)}
+                    className={`w-4 h-full rounded-full transition-all ${gridSize === size ? 'bg-indigo-500 ring-2 ring-indigo-500/20' : 'bg-white/10 hover:bg-white/20'}`}
+                 />
+               ))}
+            </div>
+          </div>
+          <div className="h-8 w-[1px] bg-white/10" />
+          <button 
+            onClick={() => setGlobalAiEnabled(!globalAiEnabled)}
+            className={`flex items-center gap-3 px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${globalAiEnabled ? 'bg-indigo-600/20 border-indigo-500 text-indigo-400' : 'bg-white/5 border-white/5 text-slate-500 hover:text-white'}`}
+          >
+            <div className={`w-1.5 h-1.5 rounded-full ${globalAiEnabled ? 'bg-indigo-400 animate-pulse' : 'bg-slate-700'}`} />
+            AI Sentry {globalAiEnabled ? 'Active' : 'Standby'}
+          </button>
+        </div>
+      </header>
+
       {/* Grid Container */}
-      <main className={`flex-1 grid gap-4 p-4 z-10 overflow-hidden ${gridSize === 4 ? 'grid-cols-2 grid-rows-2' : 'grid-cols-3 grid-rows-2'}`}>
+      <main className={`flex-1 grid gap-6 p-8 z-10 overflow-y-auto custom-scrollbar ${gridSize === 4 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
         {activeCameras.slice(0, gridSize).map((camera, idx) => (
-          <div key={`${idx}-${camera.id}`} className="relative glass-panel overflow-hidden border-2 border-white/5 hover:border-indigo-500/20 transition-all duration-500">
-            <CameraPlayer 
-              camera={camera}
-              availableCameras={ALL_CAMERAS}
-              onSwitchCamera={(newCam) => handleSwitchCamera(idx, newCam)}
-              globalAiEnabled={globalAiEnabled}
-              onToggleAi={() => setGlobalAiEnabled(!globalAiEnabled)}
-              refreshInterval={REFRESH_RATE}
-            />
+          <div key={`${idx}-${camera.id}`} className="relative tactical-card p-1 overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative h-full rounded-[1.5rem] overflow-hidden">
+               <CameraPlayer 
+                 camera={camera}
+                 availableCameras={ALL_CAMERAS}
+                 onSwitchCamera={(newCam) => handleSwitchCamera(idx, newCam)}
+                 globalAiEnabled={globalAiEnabled}
+                 onToggleAi={() => setGlobalAiEnabled(!globalAiEnabled)}
+                 refreshInterval={REFRESH_RATE}
+               />
+            </div>
           </div>
         ))}
       </main>
 
       {/* Footer Bar */}
-      <footer className="h-12 bg-bg-surface/60 backdrop-blur-xl border-t border-white/5 px-8 flex items-center justify-between z-50 transition-colors duration-500">
+      <footer className="h-12 bg-black/60 backdrop-blur-xl border-t border-white/5 px-8 flex items-center justify-between z-50 shrink-0">
         <div className="flex items-center gap-8">
-          <div className="flex flex-col">
-            <span className="text-[8px] uppercase tracking-[0.2em] font-black text-slate-500">Deployment Status</span>
-            <span className="text-[10px] font-black text-indigo-400 tracking-widest">STABLE_GRID_024</span>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+            <span className="text-[9px] font-black text-emerald-400 tracking-widest uppercase">Encryption Link Stable</span>
           </div>
-          <div className="w-[1px] h-6 bg-white/5" />
-          <div className="flex items-center gap-4 text-[10px] font-black tracking-widest text-slate-500">
-            <span>OPS: {activeCameras.length} SENSORS</span>
-            <Activity size={12} className="text-emerald-500 animate-pulse" />
+          <div className="w-[1px] h-4 bg-white/10" />
+          <div className="flex items-center gap-4 text-[9px] font-black tracking-[0.2em] text-slate-500 uppercase">
+            <span>Relay: Sector {gridSize === 4 ? 'Alpha' : 'Zeta'}</span>
+            <div className="flex gap-1">
+               <div className="w-1 h-3 bg-indigo-500 rounded-full" />
+               <div className="w-1 h-3 bg-indigo-500/50 rounded-full" />
+               <div className="w-1 h-3 bg-indigo-500/20 rounded-full" />
+            </div>
           </div>
         </div>
         <div className="flex gap-6 items-center">
-          <button className="text-[9px] uppercase tracking-[0.2em] font-black text-slate-500 hover:text-white transition-colors">Audit Logs</button>
-          <button className="text-[9px] uppercase tracking-[0.2em] font-black text-slate-500 hover:text-white transition-colors underline underline-offset-4">Relay Config</button>
+          <span className="text-[9px] uppercase tracking-[0.3em] font-black text-slate-600">Spatial Latency: 24ms</span>
+          <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/5">
+             <RefreshCw size={10} className="text-indigo-400 animate-spin-slow" />
+             <span className="text-[8px] font-black uppercase text-indigo-400">Stream Sync</span>
+          </div>
         </div>
       </footer>
 
       {/* Global Hud Detail Overlay */}
       <div className="scanlines" />
+      <div className="radar-sweep !opacity-[0.03]" />
     </div>
   );
 });

@@ -21,6 +21,7 @@ import {
   CreditCard
 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { cn } from '../../lib/utils';
 import { useTerminal } from '../../context/TerminalContext';
 
 const navItems = [
@@ -46,15 +47,23 @@ export function Sidebar() {
   } = useTerminal();
 
   return (
-    <div className="w-64 h-screen backdrop-blur-xl bg-bg-surface border-r border-white/10 flex flex-col fixed left-0 top-0 z-50 overflow-y-auto overflow-x-hidden transition-colors duration-500">
-      <div className="p-8">
-        <div className="flex items-center gap-3 mb-10">
-          <div className="w-8 h-8 bg-brand-indigo rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-brand-indigo/30 transition-all duration-500">D</div>
-          <span className="text-xl font-bold tracking-tight text-white uppercase">Dispatch Ops <span className="text-indigo-400">Central</span></span>
+    <div className="w-64 h-screen bg-bg-main/80 backdrop-blur-2xl border-r border-white/5 flex flex-col fixed left-0 top-0 z-50 overflow-y-auto overflow-x-hidden transition-colors duration-500 shadow-2xl relative">
+      <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/5 to-transparent pointer-events-none" />
+      
+      <div className="p-8 relative">
+        <div className="flex items-center gap-3 mb-10 group">
+          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center font-black text-white shadow-[0_0_20px_rgba(79,70,229,0.4)] group-hover:scale-110 transition-all duration-500">D</div>
+          <div className="flex flex-col">
+            <span className="text-sm font-black tracking-[0.2em] text-white uppercase leading-none">Dispatch</span>
+            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.3em] mt-1">Terminal</span>
+          </div>
         </div>
       </div>
       
-      <nav className="flex-1 px-6 space-y-2">
+      <nav className="flex-1 px-4 space-y-1 relative">
+        <div className="px-4 mb-4">
+          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600">Core Command</span>
+        </div>
         {navItems.map((item) => (
           item.external ? (
             <a
@@ -62,28 +71,28 @@ export function Sidebar() {
               href={item.path}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-400 hover:bg-white/5 hover:text-white border border-transparent group relative"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-500 hover:bg-white/5 hover:text-white border border-transparent group relative"
             >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm font-medium">{item.label}</span>
+              <item.icon className="w-4 h-4 flex-shrink-0 group-hover:text-indigo-400 transition-colors" />
+              <span className="text-[11px] font-bold uppercase tracking-widest">{item.label}</span>
             </a>
           ) : (
             <NavLink
               key={item.path}
               to={item.path}
               className={({ isActive }) => `
-                flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative
-                  ${isActive ? 'bg-white/10 text-white border border-white/10' : 'text-slate-400 hover:bg-bg-main/40 hover:text-white border border-transparent'}
+                flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative
+                  ${isActive ? 'text-white' : 'text-slate-500 hover:text-slate-200'}
               `}
             >
               {({ isActive }) => (
                 <>
-                  <item.icon className="w-5 h-5 flex-shrink-0" />
-                  <span className="text-sm font-medium">{item.label}</span>
+                  <item.icon className={cn("w-4 h-4 flex-shrink-0 transition-colors relative z-10", isActive ? "text-indigo-400" : "group-hover:text-indigo-300")} />
+                  <span className="text-[11px] font-black uppercase tracking-widest relative z-10">{item.label}</span>
                   {isActive && (
                     <motion.div 
                       layoutId="nav-active"
-                      className="absolute inset-0 bg-indigo-500/10 rounded-xl"
+                      className="absolute inset-0 bg-white/5 border border-white/5 rounded-xl shadow-inner shadow-indigo-500/10"
                       initial={false}
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
@@ -95,73 +104,74 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="px-6 py-6 space-y-6">
+      <div className="px-4 py-6 space-y-4 relative">
+        <div className="px-4">
+          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600">System Link</span>
+        </div>
         {/* Emergency Controls in Sidebar */}
-        <div className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-4">
+        <div className="p-4 bg-black/40 border border-white/5 rounded-2xl space-y-4 shadow-inner">
            <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Strobes</span>
-                <span className={`text-[10px] font-bold uppercase transition-colors ${manualEmergencyMode ? 'text-rose-400' : 'text-slate-400'}`}>
+                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-500">Strobes</span>
+                <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${manualEmergencyMode ? 'text-rose-500 glow-text-indigo' : 'text-slate-600'}`}>
                   {manualEmergencyMode ? 'Overdrive' : 'Standby'}
                 </span>
               </div>
               <button
                 onClick={() => setManualEmergencyMode(!manualEmergencyMode)}
                 className={`
-                  w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-300
+                  w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-500 border
                   ${manualEmergencyMode 
-                    ? 'bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)]' 
-                    : 'bg-white/5 text-slate-400 hover:bg-white/10'}
+                    ? 'bg-rose-500 text-white border-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.4)]' 
+                    : 'bg-white/5 border-white/5 text-slate-600 hover:border-white/10 hover:text-slate-400'}
                 `}
               >
-                <Siren className={`w-5 h-5 ${manualEmergencyMode ? 'animate-pulse' : ''}`} />
+                <Siren className={`w-4 h-4 ${manualEmergencyMode ? 'animate-pulse' : ''}`} />
               </button>
            </div>
            
-           <div className="space-y-1.5">
-              <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-slate-500">
-                <span>Intensity</span>
-                <span className="font-mono text-indigo-400">{(emergencyOpacity * 100).toFixed(0)}%</span>
+           <div className="space-y-2">
+              <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-[0.3em] text-slate-600">
+                <span>Power Level</span>
+                <span className="font-mono text-indigo-500">{(emergencyOpacity * 100).toFixed(0)}%</span>
               </div>
-              <input
-                type="range"
-                min="0.05"
-                max="0.8"
-                step="0.05"
-                value={emergencyOpacity}
-                onChange={(e) => setEmergencyOpacity(parseFloat(e.target.value))}
-                className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-indigo-500"
-              />
+              <div className="relative h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                <motion.div 
+                  className="absolute top-0 left-0 h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+                  animate={{ width: `${emergencyOpacity * 100}%` }}
+                />
+                <input
+                  type="range"
+                  min="0.05"
+                  max="0.8"
+                  step="0.05"
+                  value={emergencyOpacity}
+                  onChange={(e) => setEmergencyOpacity(parseFloat(e.target.value))}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+              </div>
            </div>
         </div>
 
         {/* User Profile & Admin Access */}
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/5 rounded-xl">
-             <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-                <UserCheck className="w-4 h-4 text-indigo-400" />
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3 px-4 py-3 bg-black/40 border border-white/5 rounded-2xl group shadow-inner">
+             <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 group-hover:border-indigo-500/40 transition-all">
+                <UserCheck className="w-4 h-4 text-indigo-500" />
              </div>
              <div className="flex flex-col min-w-0">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 truncate">Dispatch Ops</span>
-                <span className="text-[8px] font-bold text-slate-500 truncate lowercase">sndjy1986@gmail.com</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white truncate">Dispatcher</span>
+                <span className="text-[8px] font-bold text-slate-600 truncate leading-none mt-1">v4.2.0-STABLE</span>
              </div>
           </div>
 
           <Link 
             to="/admin/settings"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-indigo-400 transition-colors border border-dashed border-white/5 hover:border-indigo-500/30 group"
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-600 hover:text-indigo-400 transition-all border border-transparent hover:bg-indigo-500/5 group"
           >
             <Lock className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Admin Interface</span>
+            <span className="text-[9px] font-black uppercase tracking-[0.3em]">Matrix Auth</span>
           </Link>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
-          <p className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-1">System Status</p>
-          <div className="flex items-center gap-2 text-emerald-500">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-medium">All Systems Nominal</span>
-          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Map as MapIcon, List, AlertCircle, Loader2, X, Shield } from 'lucide-react';
+import { Search, Map as MapIcon, List, AlertCircle, Loader2, X, Shield, Activity, Truck, Zap, Radio } from 'lucide-react';
 import { Unit, API_LIMIT } from '../lib/distanceConstants';
 import { geocode, getMatrix, fetchCurrentUsage, incrementUsage } from '../services/mapboxService';
 import { POST_DATA, INITIAL_UNITS, TRANSPORT_ADDRS, QRV_UNITS as DISPATCH_QRV } from '../lib/dispatchConstants';
@@ -148,39 +148,53 @@ export default function DistanceMap() {
   const isLimitReached = usageCount >= API_LIMIT;
 
   return (
-    <div className="relative flex flex-col technical-grid text-slate-50 font-sans">
-      
-      <header className="flex justify-between items-end mb-8">
-        <div className="space-y-1"> 
-          <h1 className="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-             <MapIcon className="w-8 h-8 text-blue-500" />
-             Unit Distance Checker
-          </h1>
-          <p className="text-slate-400">Real-time response logistics and fleet positioning for EMS Dispatch</p>
+    <div className="relative flex flex-col technical-grid text-slate-50 font-sans p-8 pt-12 overflow-hidden">
+      {/* Background Decor */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="radar-sweep !opacity-20" />
+        <div className="scanner-line !opacity-20" />
+        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-indigo-500/5 blur-[120px] rounded-full animate-pulse-slow" />
+      </div>
+
+      <header className="flex justify-between items-end mb-12 relative z-10 tactical-header-glow pb-8">
+        <div className="space-y-3"> 
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.4)]">
+              <MapIcon className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-4xl font-black tracking-tight text-white uppercase italic">
+               Fleet <span className="text-indigo-500 not-italic">Matrix</span>
+            </h1>
+          </div>
+          <p className="text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] ml-16">Real-time response logistics and fleet positioning for EMS Dispatch</p>
         </div>
         
-        <div className="flex items-center gap-4 bg-slate-800/50 px-4 py-2 rounded-lg border border-slate-700/50">
+        <div className="flex items-center gap-6 tactical-card px-6 py-4">
           <div className="text-right"> 
-            <span className="block text-[10px] uppercase tracking-wider text-slate-500 font-bold">System Status</span> 
-            <span className="text-emerald-400 font-medium text-sm flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-slow"></span> 
-              Live - {activeTransportUnits.length} Units Active
+            <span className="block text-[8px] uppercase tracking-[0.3em] text-slate-500 font-black">System Pulse</span> 
+            <span className="text-emerald-400 font-black text-[10px] tracking-widest flex items-center justify-end gap-2 mt-1 uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> 
+              Ops Ready - {activeTransportUnits.length} Units Up
             </span>
           </div>
         </div>
       </header>
 
-      <div className="flex gap-6 flex-1 min-h-0">
+      <div className="flex gap-8 flex-1 min-h-0 relative z-10 overflow-hidden">
         {/* Left Column (Search & Summary) */}
-        <div className="w-1/3 flex flex-col gap-6">
-          <div className="glass p-6 rounded-2xl space-y-4 shadow-2xl relative overflow-hidden">
-            <div className="space-y-2"> 
-              <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Target Destination</label>
+        <div className="w-[350px] flex flex-col gap-8 shrink-0">
+          <div className="tactical-card p-8 space-y-6 shadow-2xl relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
+            <div className="space-y-4 relative"> 
+              <div className="flex items-center gap-2">
+                <Search className="w-3.5 h-3.5 text-indigo-500" />
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Target Vector</label>
+              </div>
               <form onSubmit={handleSearch} className="relative"> 
                 <input 
                   type="text" 
-                  placeholder="Enter destination address..." 
-                  className="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-white"
+                  placeholder="DEPLOY TO ADDRESS..." 
+                  className="w-full tactical-input px-5 py-4 text-sm"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   disabled={loading || isLimitReached}
@@ -188,75 +202,83 @@ export default function DistanceMap() {
                 <button 
                   type="submit"
                   disabled={loading || isLimitReached || !address.trim()}
-                  className="absolute right-2 top-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="absolute right-2 top-2 tactical-btn-indigo px-4 py-2 text-[10px] font-black"
                 >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Search"}
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "PING"}
                 </button>
               </form>
             </div>
 
             {status && (
-              <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex gap-3"> 
-                <div className="bg-blue-500/20 p-2 rounded-lg h-fit text-blue-400">
-                  <AlertCircle className="w-4 h-4" />
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl flex gap-3"
+              > 
+                <div className="bg-indigo-500/20 p-2 rounded-lg h-fit text-indigo-400">
+                  <Activity className="w-4 h-4 animate-pulse" />
                 </div>
-                <p className="text-[11px] leading-snug text-blue-100">{status}</p>
-              </div>
+                <p className="text-[11px] leading-snug text-indigo-100 font-bold uppercase tracking-wider">{status}</p>
+              </motion.div>
             )}
 
             {isLimitReached && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex gap-3"> 
-                <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                <p className="text-[11px] leading-snug text-red-100">Monthly budget exhausted. Service resumes on the 1st.</p>
+              <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex gap-3"> 
+                <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                <p className="text-[11px] leading-snug text-rose-100 font-black uppercase tracking-wider">Matrix limit reached. System cooldown initialized.</p>
               </div>
             )}
           </div>
 
-          <div className="flex-1 glass rounded-2xl flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-slate-700 bg-slate-800/30 flex justify-between items-center"> 
-              <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Fleet Summary</h3> 
-              <div className="flex gap-1">
-                <div className="w-16 h-1 bg-blue-500 rounded-full"></div>
-                <div className="w-8 h-1 bg-slate-700 rounded-full"></div>
+          <div className="flex-1 tactical-card flex flex-col overflow-hidden">
+            <div className="p-6 border-b border-white/5 bg-white/[0.02] flex justify-between items-center"> 
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">Response Matrix</h3> 
+              <div className="flex gap-1.5">
+                <div className="w-8 h-[2px] bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
+                <div className="w-4 h-[2px] bg-slate-800 rounded-full"></div>
               </div>
             </div>
-            <div className="p-6 space-y-6 flex-1"> 
-              <div className="flex justify-between items-center"> 
-                <span className="text-slate-400 text-sm">Transport Units</span> 
-                <span className="text-white font-mono bg-slate-800 px-2 py-0.5 rounded text-xs">{activeTransportUnits.length} Up</span> 
-              </div> 
-              <div className="flex justify-between items-center"> 
-                <span className="text-slate-400 text-sm">QRV Paramedics</span> 
-                <span className="text-white font-mono bg-slate-800 px-2 py-0.5 rounded text-xs">{activeQrvUnits.length} Active</span> 
-              </div> 
-              <div className="pt-4 border-t border-slate-700/50"> 
-                <div className="text-center bg-slate-900/50 rounded-xl p-4 border border-white/5"> 
-                  <span className="block text-3xl font-bold text-white mb-1">
+            <div className="p-8 space-y-8 flex-1 flex flex-col"> 
+              <div className="space-y-4">
+                <div className="flex justify-between items-center group/item hover:bg-white/[0.02] p-2 -mx-2 rounded-xl transition-all"> 
+                  <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest group-hover/item:text-slate-300">Fleet Units</span> 
+                  <span className="text-white font-mono bg-black/40 px-3 py-1 rounded-lg text-[10px] border border-white/5 border-b-indigo-500/50">{activeTransportUnits.length} ACTIVE</span> 
+                </div> 
+                <div className="flex justify-between items-center group/item hover:bg-white/[0.02] p-2 -mx-2 rounded-xl transition-all"> 
+                  <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest group-hover/item:text-slate-300">QRV Response</span> 
+                  <span className="text-white font-mono bg-black/40 px-3 py-1 rounded-lg text-[10px] border border-white/5 border-b-emerald-500/50">{activeQrvUnits.length} READY</span> 
+                </div> 
+              </div>
+
+              <div className="pt-8 border-t border-white/5 mt-4"> 
+                <div className="text-center bg-black/40 rounded-[2rem] p-8 border border-white/5 relative group overflow-hidden shadow-inner"> 
+                  <div className="absolute inset-0 bg-indigo-500/[0.02] group-hover:bg-indigo-500/[0.05] transition-all" />
+                  <span className="block text-6xl font-black text-white mb-2 glow-number leading-none">
                     {transportResults.length > 0 ? transportResults[0].distance?.toFixed(1) : '--'}
-                    <span className="text-sm font-normal text-slate-500 ml-1">mi</span>
+                    <span className="text-sm font-black text-slate-600 ml-1 uppercase tracking-widest">mi</span>
                   </span> 
-                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">
-                    Closest Responding Unit ({transportResults.length > 0 ? transportResults[0].name : 'None'})
+                  <span className="text-[9px] text-indigo-400 uppercase font-black tracking-[0.2em] relative z-10 px-4 py-1.5 bg-indigo-500/10 rounded-full border border-indigo-500/20">
+                    Prime Response: {transportResults.length > 0 ? transportResults[0].name : 'STNDBY'}
                   </span> 
                 </div> 
               </div>
 
               {/* View Toggle */}
-              <div className="mt-auto pt-6">
-                <div className="bg-slate-900/80 p-1 rounded-xl border border-slate-700 flex">
+              <div className="mt-auto pt-8">
+                <div className="bg-black/40 p-1.5 rounded-2xl border border-white/10 flex shadow-inner">
                   <button 
                     onClick={() => setView('list')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${view === 'list' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-1 flex items-center justify-center gap-3 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${view === 'list' ? 'bg-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)]' : 'text-slate-600 hover:text-slate-400'}`}
                   >
                     <List className="w-4 h-4" />
-                    List View
+                    List Matrix
                   </button>
                   <button 
                     onClick={() => setView('map')}
-                    className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${view === 'map' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                    className={`flex-1 flex items-center justify-center gap-3 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${view === 'map' ? 'bg-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)]' : 'text-slate-600 hover:text-slate-400'}`}
                   >
                     <MapIcon className="w-4 h-4" />
-                    Map View
+                    Overlay Map
                   </button>
                 </div>
               </div>
@@ -265,19 +287,31 @@ export default function DistanceMap() {
         </div>
 
         {/* Right Column (Results) */}
-        <div className="w-2/3 flex flex-col gap-6">
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+        <div className="flex-1 flex flex-col gap-8">
+          <div className="flex-1 min-h-0">
             <AnimatePresence mode="wait">
               {view === 'list' ? (
                 <motion.div 
                   key="list"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="h-full grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto pr-4 custom-scrollbar"
                 >
-                  <UnitTable title="Transport Units" units={transportResults} loading={loading} />
-                  <UnitTable title="QRV Paramedics" units={qrvResults} loading={loading} />
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 mb-2 px-2">
+                       <Truck className="w-4 h-4 text-indigo-500" />
+                       <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Fleet Deployments</h4>
+                    </div>
+                    <UnitTable units={transportResults} loading={loading} title="Primary Assets" />
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 mb-2 px-2">
+                       <Zap className="w-4 h-4 text-emerald-500" />
+                       <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-white">QRV Support</h4>
+                    </div>
+                    <UnitTable units={qrvResults} loading={loading} title="Operational QRVs" />
+                  </div>
                 </motion.div>
               ) : (
                 <motion.div 
@@ -285,9 +319,20 @@ export default function DistanceMap() {
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
-                  className="h-full min-h-[500px]"
+                  className="h-full tactical-card overflow-hidden relative"
                 >
                   <Map coords={destCoords} />
+                  <div className="absolute top-6 left-6 z-[1000]">
+                    <div className="bg-black/60 backdrop-blur-xl p-4 rounded-2xl border border-white/10 shadow-2xl flex items-center gap-4">
+                       <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+                          <MapIcon className="w-4 h-4" />
+                       </div>
+                       <div className="flex flex-col">
+                          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Overlay active</span>
+                          <span className="text-[10px] font-bold text-white uppercase tracking-widest">{address || 'No destination targeted'}</span>
+                       </div>
+                    </div>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -295,27 +340,29 @@ export default function DistanceMap() {
         </div>
       </div>
 
-      <footer className="mt-8 flex justify-between items-center bg-slate-900/50 rounded-xl border border-slate-800 p-4">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-4"> 
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Global Usage</span> 
-            <div className="w-48 h-2 bg-slate-800 rounded-full overflow-hidden"> 
-              <div 
-                className={`h-full transition-all duration-1000 rounded-full shadow-[0_0_10px_#3B82F6] ${usageCount >= API_LIMIT ? 'bg-red-500' : 'bg-blue-500'}`}
-                style={{ width: `${Math.min(100, (usageCount / API_LIMIT) * 100)}%` }}
-              ></div> 
+      <footer className="mt-8 flex justify-between items-center bg-black/40 rounded-[2rem] border border-white/5 p-6 relative z-10 shadow-2xl">
+        <div className="flex items-center gap-10">
+          <div className="flex items-center gap-6"> 
+            <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Network Load</span> 
+            <div className="w-64 h-2 bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]"> 
+              <motion.div 
+                className={`h-full rounded-full shadow-[0_0_15px_rgba(79,70,229,0.5)] ${usageCount >= API_LIMIT ? 'bg-rose-500' : 'bg-indigo-500'}`}
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(100, (usageCount / API_LIMIT) * 100)}%` }}
+                transition={{ duration: 1.5, ease: "circOut" }}
+              />
             </div> 
-            <span className="text-xs font-mono text-blue-400">{usageCount.toLocaleString()} / 10,000</span>
+            <span className="text-[10px] font-mono text-indigo-400 font-bold bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-500/20">{usageCount.toLocaleString()} / {API_LIMIT.toLocaleString()}</span>
           </div>
-          <div className="h-4 w-px bg-slate-700 hidden md:block"></div>
-          <p className="text-[10px] text-slate-500 max-w-sm hidden lg:block">Search limits refresh on the 1st of each month. Data provided via Mapbox Directions Matrix API.</p>
+          <div className="h-6 w-[1px] bg-white/5 hidden md:block"></div>
+          <p className="text-[9px] text-slate-600 max-w-sm hidden lg:block font-bold uppercase tracking-widest">Quantum usage resets on monthly cycle. Spatial metrics provided via Mapbox Relay Matrix.</p>
         </div>
-        <div className="flex gap-2">
-          <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-700 shadow-sm">
+        <div className="flex gap-4">
+          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 border border-white/5 hover:border-white/20 hover:text-white transition-all cursor-crosshair">
             <Search className="w-4 h-4" />
           </div>
-          <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400 border border-slate-700 shadow-sm">
-            <MapIcon className="w-4 h-4" />
+          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 border border-white/5 hover:border-white/20 hover:text-white transition-all cursor-crosshair">
+            <Radio className="w-4 h-4" />
           </div>
         </div>
       </footer>

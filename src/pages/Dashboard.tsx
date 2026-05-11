@@ -29,51 +29,69 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10 selection:bg-indigo-500/30">
+      <header className="tactical-header-glow pb-8 border-b border-white/5">
+        <h1 className="text-4xl font-black text-white italic uppercase tracking-tight">
+          Sector <span className="text-indigo-500 not-italic">Matrix</span>
+        </h1>
+        <p className="text-slate-500 font-black uppercase tracking-[0.3em] text-[10px] mt-2">Real-time operational telemetry and fleet integration</p>
+      </header>
+
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-bg-surface p-6 rounded-lg border border-border-subtle shadow-sm flex items-start gap-4 hover:border-brand-blue/50 transition-all group">
-          <div className="bg-bg-main p-2.5 rounded text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-colors">
-            <Users className="w-5 h-5" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="tactical-card p-8 flex items-start gap-6 group hover:border-indigo-500/30 transition-all">
+          <div className="w-12 h-12 bg-indigo-600/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-[0_0_15px_rgba(79,70,229,0.1)] group-hover:shadow-[0_0_25px_rgba(79,70,229,0.4)]">
+            <Users className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1">Contract Capacity</p>
-            <div className="space-y-1 mt-1">
-              <p className="text-xl font-semibold text-white tracking-tight">14 Units <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest ml-2">Pre-1100</span></p>
-              <p className="text-xl font-semibold text-white tracking-tight">17 Units <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest ml-2">Post-1100</span></p>
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-3">Deployment Capacity</p>
+            <div className="space-y-2">
+              <div className="flex items-end gap-3">
+                <span className="text-3xl font-black text-white glow-number">14</span>
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest pb-1.5">Alpha Phase</span>
+              </div>
+              <div className="flex items-end gap-3">
+                <span className="text-3xl font-black text-white glow-number text-indigo-400">17</span>
+                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest pb-1.5">Zeta Phase</span>
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-bg-surface p-6 rounded-lg border border-border-subtle shadow-sm flex items-start gap-4 hover:border-brand-blue/50 transition-all group">
-          <div className="bg-bg-main p-2.5 rounded text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-colors">
-            <Truck className="w-5 h-5" />
+        <div className="tactical-card p-8 flex items-start gap-6 group hover:border-emerald-500/30 transition-all">
+          <div className="w-12 h-12 bg-emerald-600/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-[0_0_15px_rgba(16,185,129,0.1)] group-hover:shadow-[0_0_25px_rgba(16,185,129,0.4)]">
+            <Truck className="w-6 h-6 transition-transform group-hover:scale-110" />
           </div>
           <div className="flex-1">
-            <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1">Fleet Telemetry</p>
-            <div className="grid grid-cols-2 gap-x-4 mt-2">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4">Fleet Telemetry</p>
+            <div className="grid grid-cols-2 gap-4">
               {fleetStatus.slice(0, 2).map(unit => (
-                <div key={unit.id}>
-                  <p className="text-[10px] font-bold text-text-muted uppercase">{unit.unit}</p>
-                  <p className="text-lg font-semibold text-white">{unit.time || '--:--'}</p>
+                <div key={unit.id} className="bg-black/20 p-3 rounded-xl border border-white/5">
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{unit.unit}</p>
+                  <p className="text-lg font-black text-white leading-none tracking-tight">{unit.time || '--:--'}</p>
                 </div>
               ))}
               {fleetStatus.length === 0 && (
-                <p className="text-[10px] text-text-muted italic">Awaiting sync...</p>
+                <div className="col-span-2 py-4 text-center">
+                  <div className="w-4 h-4 border-2 border-slate-700 border-t-indigo-500 rounded-full animate-spin mx-auto mb-2" />
+                  <p className="text-[9px] text-slate-600 font-black uppercase tracking-widest animate-pulse">Establishing Uplink...</p>
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        <div className="bg-bg-surface p-6 rounded-lg border border-border-subtle shadow-sm flex items-start gap-4 hover:border-brand-blue/50 transition-all group">
-          <div className="bg-bg-main p-2.5 rounded text-brand-blue group-hover:bg-brand-blue group-hover:text-white transition-colors">
-            <AlertCircle className="w-5 h-5" />
+        <div className="tactical-card p-8 flex items-start gap-6 group hover:border-rose-500/30 transition-all">
+          <div className="w-12 h-12 bg-rose-600/10 border border-rose-500/20 rounded-2xl flex items-center justify-center text-rose-400 group-hover:bg-rose-600 group-hover:text-white transition-all shadow-[0_0_15px_rgba(225,29,72,0.1)] group-hover:shadow-[0_0_25px_rgba(225,29,72,0.4)]">
+            <AlertCircle className="w-6 h-6" />
           </div>
-          <div>
-            <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1">Shift Briefing</p>
-            <p className="text-text-secondary mt-1 text-xs leading-relaxed font-medium">
-              Validate all tone tests by 08:00. Verify 10-42 status before relief handover.
-            </p>
+          <div className="flex-1">
+            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4">Operator Briefing</p>
+            <div className="p-4 bg-rose-600/5 border border-rose-500/10 rounded-2xl">
+              <p className="text-rose-100/70 text-[11px] leading-relaxed font-bold uppercase tracking-wide">
+                Validate all tone tests by 08:00. Verify <span className="text-rose-400">10-42</span> status before relief handover. System integrity check required.
+              </p>
+            </div>
           </div>
         </div>
       </div>

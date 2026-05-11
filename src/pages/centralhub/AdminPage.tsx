@@ -191,37 +191,39 @@ export function AdminPage() {
 
   return (
     <div className="space-y-12 pb-24 h-full overflow-y-auto pr-4 scrollbar-thin transition-colors duration-500">
-      <header className="flex items-center gap-6">
-        <div className="w-16 h-16 rounded-3xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 shadow-2xl shadow-brand-indigo/20 transition-all duration-500">
-           <Lock className="w-8 h-8 text-indigo-400" />
-        </div>
-        <div>
-          <h1 className="text-4xl font-bold text-white tracking-tight">System Configuration</h1>
-          <p className="text-slate-400 mt-1 uppercase tracking-[0.2em] text-[10px] font-black flex items-center gap-2">
-            <Shield className="w-3 h-3 text-emerald-500" />
-            Authenticated Administrative Console
-          </p>
+      <header className="flex flex-wrap items-center justify-between gap-8 pb-10 border-b border-white/5 relative tactical-header-glow">
+        <div className="flex items-center gap-6">
+          <div className="w-16 h-16 rounded-3xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 shadow-2xl shadow-indigo-500/20 group hover:scale-110 transition-all duration-500">
+             <Lock className="w-8 h-8 text-indigo-400 group-hover:animate-pulse" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-black text-white tracking-tight uppercase italic">System <span className="text-indigo-500 not-italic">Matrix</span></h1>
+            <p className="text-slate-500 font-black mt-1 uppercase tracking-[0.2em] text-[10px] flex items-center gap-2">
+              <Shield className="w-3 h-3 text-emerald-500" />
+              Authenticated Administrative Protocols
+            </p>
+          </div>
         </div>
       </header>
 
       {!user && (
-        <section className="backdrop-blur-md bg-rose-500/5 border border-rose-500/10 rounded-[2rem] p-8 flex items-center justify-between gap-8">
-          <div>
-            <h3 className="text-lg font-bold text-white uppercase tracking-tight">Authentication Required</h3>
-            <p className="text-xs text-slate-400 mt-1 italic">Sign in to manage persistent configuration and personnel roster.</p>
+        <section className="tactical-card p-12 flex flex-col md:flex-row items-center justify-between gap-8 border-rose-500/20 bg-rose-500/[0.02]">
+          <div className="flex-1 text-center md:text-left">
+            <h3 className="text-2xl font-black text-white uppercase tracking-tight italic">Security <span className="text-rose-500 not-italic">Barrier</span></h3>
+            <p className="text-sm text-slate-400 mt-2 font-medium">Authentication required to access persistent orchestration nodes and roster databases.</p>
           </div>
           <button 
             onClick={async () => {
               try {
                 await signIn();
-                setShowToast("Authenticated Successfully");
+                setShowToast("AUTHENTICATED_ACCESS_GRANTED");
               } catch (e: any) {
-                setShowToast("Authentication failed");
+                setShowToast("AUTH_REJECTED");
               }
             }}
-            className="bg-indigo-500 hover:bg-indigo-400 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all active:scale-95 shadow-xl shadow-indigo-500/20"
+            className="tactical-btn-indigo px-10 py-5 shadow-indigo-500/30 min-w-[240px]"
           >
-            Google Sign In
+            Google Tactical Auth
           </button>
         </section>
       )}
@@ -229,23 +231,23 @@ export function AdminPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
         {/* Personnel Management - Full Wide */}
         <div className="lg:col-span-12">
-          <section className="backdrop-blur-md bg-bg-surface border border-white/10 rounded-[2.5rem] p-8 space-y-8 transition-colors duration-500">
-            <div className="flex items-center justify-between">
+          <section className="tactical-card p-10 space-y-10">
+            <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/5">
               <div>
-                <h3 className="text-2xl font-bold text-white flex items-center gap-4">
-                  <User className="w-6 h-6 text-indigo-400" />
-                  Operations Personnel
+                <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4">
+                  <User className="w-6 h-6 text-indigo-500" />
+                  Fleet Personnel Array
                 </h3>
-                <p className="text-xs text-slate-500 uppercase tracking-widest font-black mt-2">Manage roster, shifts, and contact information</p>
+                <p className="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black mt-2">Database of active responders and tactical shifts</p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <button 
                   disabled={!user}
                   onClick={seedPersonnel}
-                  className="px-6 py-3 bg-white/5 border border-white/10 text-slate-400 rounded-xl font-bold uppercase tracking-widest text-xs hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
-                  title="Import from Legacy Constants"
+                  className="px-6 py-3 bg-white/5 border border-white/10 text-slate-500 rounded-xl font-black uppercase tracking-widest text-[10px] hover:text-white hover:bg-white/10 transition-all disabled:opacity-30"
+                  title="Import from Hardcoded Seeds"
                 >
-                  Sync Shift Data
+                  Sync Buffer
                 </button>
                 <button 
                   disabled={!user}
@@ -254,31 +256,31 @@ export function AdminPage() {
                   setPersonForm({ name: '', shift: 'A', phone: '', certifications: [] });
                   setShowPersonnelModal(true);
                 }}
-                className="flex items-center gap-3 px-6 py-3 bg-indigo-500 text-white rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-indigo-400 transition-all disabled:opacity-50 shadow-xl shadow-indigo-500/20"
+                className="tactical-btn-indigo px-8 py-3 text-[10px] shadow-indigo-500/20 disabled:opacity-30"
               >
                 <Plus className="w-4 h-4" />
-                Add Personnel
+                Initialize Personnel
               </button>
             </div>
           </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
               {['A', 'B', 'C', 'D', 'Other'].map(shift => (
-                <div key={shift} className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-white/5 pb-2">
-                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{shift} Shift</h4>
-                    <span className="text-[10px] font-mono text-indigo-400">{personnel.filter(p => p.shift === shift).length}</span>
+                <div key={shift} className="space-y-6">
+                  <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                    <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em]">{shift} Shift</h4>
+                    <span className="text-[9px] font-mono text-slate-500 border border-white/10 px-2 py-0.5 rounded bg-black/20">{personnel.filter(p => p.shift === shift).length}</span>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {personnel.filter(p => p.shift === shift).map(p => (
-                      <div key={p.id} className="p-4 bg-bg-main/40 border border-white/5 rounded-2xl group hover:border-indigo-500/30 transition-all duration-500">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="text-sm font-bold text-white">{p.name}</div>
+                      <div key={p.id} className="p-5 bg-black/20 border border-white/5 rounded-2xl group hover:border-indigo-500/40 transition-all duration-300 shadow-inner">
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-xs font-black text-white uppercase tracking-tight truncate">{p.name}</div>
                             {p.phone && (
-                              <div className="flex items-center gap-2 mt-1">
-                                <Phone className="w-3 h-3 text-slate-500" />
-                                <span className="text-[10px] font-mono text-slate-400">{p.phone}</span>
+                              <div className="flex items-center gap-2 mt-2">
+                                <Phone className="w-3 h-3 text-slate-600" />
+                                <span className="text-[9px] font-mono text-slate-500 font-bold tracking-tight">{p.phone}</span>
                               </div>
                             )}
                           </div>
@@ -289,13 +291,13 @@ export function AdminPage() {
                                 setPersonForm({ name: p.name, shift: p.shift, phone: p.phone || '', certifications: p.certifications || [] });
                                 setShowPersonnelModal(true);
                               }}
-                              className="p-1.5 text-slate-400 hover:text-indigo-400 transition-colors"
+                              className="p-1.5 text-slate-500 hover:text-indigo-400 transition-colors"
                             >
                               <Edit2 className="w-3.5 h-3.5" />
                             </button>
                             <button 
                               onClick={() => deletePerson(p.id)}
-                              className="p-1.5 text-slate-400 hover:text-rose-400 transition-colors"
+                              className="p-1.5 text-slate-500 hover:text-rose-400 transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -312,13 +314,16 @@ export function AdminPage() {
 
         {/* Camera Config */}
         <div className="lg:col-span-8">
-           <section className="backdrop-blur-md bg-bg-surface border border-white/10 rounded-[2.5rem] p-8 space-y-6 transition-colors duration-500">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                  <Camera className="w-5 h-5 text-brand-indigo" />
-                  Default Camera Array
+           <section className="tactical-card p-10 space-y-8">
+              <div className="flex items-center justify-between border-b border-white/5 pb-6">
+                <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic font-sans">
+                  <Camera className="w-6 h-6 text-indigo-500" />
+                  Orbital <span className="text-indigo-500 not-italic">Feeds</span>
                 </h3>
-                <p className="text-[10px] font-mono text-indigo-400 uppercase tracking-widest">{defaultCameraIds.length} Initialized</p>
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Links</span>
+                  <span className="text-xs font-mono text-indigo-400 font-black border border-indigo-500/30 px-3 py-1 rounded-lg bg-indigo-500/10 shadow-[0_0_15px_rgba(99,102,241,0.2)]">{defaultCameraIds.length}</span>
+                </div>
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -327,10 +332,23 @@ export function AdminPage() {
                     key={cam.id}
                     disabled={!user}
                     onClick={() => toggleCamera(cam.id)}
-                    className={`p-4 rounded-2xl border transition-all text-left group duration-500 ${defaultCameraIds.includes(cam.id) ? 'bg-indigo-500 border-indigo-400 shadow-xl shadow-brand-indigo/20' : 'bg-bg-main border-white/5 hover:border-white/20'}`}
+                    className={`
+                      p-5 rounded-2xl border transition-all text-left flex flex-col justify-between h-28 group relative overflow-hidden
+                      ${defaultCameraIds.includes(cam.id) 
+                        ? 'bg-indigo-600 border-indigo-400 shadow-xl shadow-indigo-500/30' 
+                        : 'bg-black/40 border-white/5 hover:border-white/20 hover:bg-white/5'}
+                    `}
                   >
-                    <div className={`text-[9px] font-black uppercase tracking-widest mb-1 ${defaultCameraIds.includes(cam.id) ? 'text-indigo-200' : 'text-slate-500'}`}>SENSOR_{cam.id.toUpperCase()}</div>
-                    <div className={`text-xs font-bold leading-tight ${defaultCameraIds.includes(cam.id) ? 'text-white' : 'text-slate-300'}`}>{cam.name}</div>
+                    <div className="relative z-10">
+                       <div className={`text-[10px] font-black uppercase tracking-[0.2em] mb-1 group-hover:text-white transition-colors ${defaultCameraIds.includes(cam.id) ? 'text-white' : 'text-slate-500'}`}>CAM_{cam.id}</div>
+                       <div className={`text-xs font-black uppercase leading-tight group-hover:translate-x-1 transition-transform ${defaultCameraIds.includes(cam.id) ? 'text-white' : 'text-slate-300'}`}>{cam.name}</div>
+                    </div>
+                    <div className={`text-[8px] font-black uppercase tracking-widest relative z-10 ${defaultCameraIds.includes(cam.id) ? 'text-indigo-200' : 'text-slate-600'}`}>
+                      {defaultCameraIds.includes(cam.id) ? 'LINKED' : 'OFFLINE'}
+                    </div>
+                    {defaultCameraIds.includes(cam.id) && (
+                      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)] z-20" />
+                    )}
                   </button>
                 ))}
               </div>
@@ -340,100 +358,105 @@ export function AdminPage() {
         {/* System & Notifications */}
         <div className="lg:col-span-4 space-y-12">
           {/* App Theme Settings */}
-          <section className="backdrop-blur-md bg-bg-surface border border-white/10 rounded-[2.5rem] p-8 space-y-6 transition-colors duration-500">
-            <h3 className="text-lg font-bold text-white flex items-center gap-3">
-              <Settings className="w-5 h-5 text-brand-indigo" />
-              Interface Theme
+          <section className="tactical-card p-10 space-y-8">
+            <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic">
+              <Settings className="w-5 h-5 text-indigo-500" />
+              Ambience <span className="text-indigo-500 not-italic">Sync</span>
             </h3>
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 gap-4">
               {THEMES.map((theme) => (
                 <button
                   key={theme.id}
                   onClick={() => {
                     setAppTheme(theme.id);
-                    setShowToast(`${theme.name} Theme Applied`);
+                    setShowToast(`${theme.name.toUpperCase()} ENGINE ACTIVATED`);
                   }}
                   className={`
-                    w-full flex items-center justify-between p-4 rounded-2xl border transition-all relative overflow-hidden group duration-500
+                    w-full flex items-center justify-between p-5 rounded-2xl border transition-all relative overflow-hidden group
                     ${appTheme === theme.id 
-                      ? 'bg-white/10 border-white/20' 
-                      : 'bg-bg-main border-transparent hover:border-white/10'}
+                      ? 'bg-white/10 border-white/20 shadow-xl' 
+                      : 'bg-black/40 border-transparent hover:border-white/10'}
                   `}
                 >
                   <div className="flex items-center gap-4 relative z-10">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-lg" style={{ backgroundColor: theme.color }}>
-                      {appTheme === theme.id && <CheckCircle2 className="w-4 h-4 text-white" />}
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:rotate-12" 
+                      style={{ backgroundColor: theme.color, boxShadow: `0 0 20px ${theme.color}33` }}
+                    >
+                      {appTheme === theme.id && <CheckCircle2 className="w-5 h-5 text-white" />}
                     </div>
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${appTheme === theme.id ? 'text-white' : 'text-slate-400'}`}>
-                      {theme.name}
-                    </span>
+                    <div className="flex flex-col items-start translate-y-0.5">
+                      <span className={`text-xs font-black uppercase tracking-widest ${appTheme === theme.id ? 'text-white' : 'text-slate-400'}`}>
+                        {theme.name}
+                      </span>
+                      <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-1 italic">Core Engine_0{THEMES.indexOf(theme) + 1}</span>
+                    </div>
                   </div>
                   
                   {appTheme === theme.id && (
                     <motion.div
                       layoutId="theme-active"
-                      className="absolute inset-0 bg-brand-indigo/5"
+                      className="absolute inset-0 bg-white/[0.03] pointer-events-none"
                     />
                   )}
-                  
-                  <div className="flex gap-1 relative z-10">
-                    <div className="w-4 h-4 rounded-full border border-white/10" style={{ backgroundColor: theme.color }} />
-                    <div className="w-4 h-4 rounded-full border border-white/10 opacity-60" style={{ backgroundColor: theme.color }} />
-                    <div className="w-4 h-4 rounded-full border border-white/10 opacity-30" style={{ backgroundColor: theme.color }} />
-                  </div>
                 </button>
               ))}
             </div>
           </section>
 
           {/* Notification Settings */}
-          <section className="backdrop-blur-md bg-bg-surface border border-white/10 rounded-[2.5rem] p-8 space-y-6 transition-colors duration-500">
-            <h3 className="text-lg font-bold text-white flex items-center gap-3">
-              <Bell className="w-5 h-5 text-brand-indigo" />
-              Notifications
+          <section className="tactical-card p-10 space-y-8 h-full">
+            <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic text-sans">
+              <Bell className="w-5 h-5 text-indigo-500" />
+              Alert <span className="text-indigo-500 not-italic">Matrix</span>
             </h3>
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
+            <div className="space-y-8 leading-normal">
+              <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Desktop Integration</p>
-                  <p className="text-[10px] text-slate-400 mt-1 font-mono uppercase">Status: {notificationPermission.toUpperCase()}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">System Integration</p>
+                  <p className={`text-xs font-mono font-black mt-2 uppercase tracking-widest ${notificationPermission === 'granted' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                    STATE: {notificationPermission.toUpperCase()}
+                  </p>
                 </div>
                 {notificationPermission !== 'granted' && (
                   <button 
                     onClick={requestNotificationPermission}
-                    className="px-4 py-2 bg-indigo-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-400 transition-all shadow-lg shadow-indigo-500/20"
+                    className="tactical-btn-indigo px-6 py-3 text-[10px]"
                   >
-                    Enable
+                    Authorize
                   </button>
                 )}
               </div>
 
-              <div className="pt-6 border-t border-white/5 space-y-4">
+              <div className="pt-8 border-t border-white/5 space-y-4">
                 <button
                   onClick={() => {
-                    addNotification('System integrity check: Operational. Desktop notifications functional.', 'success');
+                    addNotification('SYSTEM_READY // ALERT_CHANNEL_ESTABLISHED', 'success');
                   }}
-                  className="w-full py-3 bg-white/5 border border-white/10 text-slate-400 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-white/5 border border-white/10 text-slate-500 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:text-white hover:bg-white/10 transition-all flex items-center justify-center gap-3"
                 >
-                  <Activity className="w-3.5 h-3.5" />
-                  Test OS Notification
+                  <Activity className="w-4 h-4 text-emerald-500" />
+                  INITIATE PING TEST
                 </button>
 
                 {window.self !== window.top && (
-                  <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                    <div className="flex gap-3">
-                      <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
-                      <p className="text-[10px] text-amber-200/60 leading-relaxed uppercase font-medium">
-                        Running in Preview Mode. Windows may block notifications inside the browser iframe.
+                  <div className="p-6 bg-amber-500/5 border border-amber-500/20 rounded-2xl relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-amber-500/30" />
+                    <div className="flex gap-4">
+                      <AlertCircle className="w-5 h-5 text-amber-500/80 shrink-0 mt-0.5" />
+                      <div className="space-y-4">
+                        <p className="text-[10px] text-amber-200/50 leading-relaxed uppercase font-black tracking-widest">
+                          Warning: Organizational sandbox detected. Notifications may be isolated within the security container.
+                        </p>
                         <a 
                           href={window.location.href} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="block mt-2 text-amber-500 font-bold hover:underline"
+                          className="inline-flex items-center gap-2 text-[10px] text-amber-500 font-black hover:text-amber-400 transition-colors uppercase tracking-[0.2em]"
                         >
-                          Open in New Tab →
+                          <Maximize2 size={12} /> External Access Portal →
                         </a>
-                      </p>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -444,36 +467,40 @@ export function AdminPage() {
       </div>
 
       {/* History Feed */}
-      <section className="backdrop-blur-md bg-bg-surface border border-white/10 rounded-[2.5rem] p-10 space-y-8 transition-colors duration-500">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-white flex items-center gap-4">
-            <History className="w-6 h-6 text-indigo-400" />
-            Operations Archive
+      <section className="tactical-card p-12 space-y-10">
+        <div className="flex items-center justify-between border-b border-white/5 pb-8">
+          <h3 className="text-3xl font-black text-white uppercase tracking-tight flex items-center gap-6 italic">
+            <History className="w-8 h-8 text-indigo-500" />
+            Operational <span className="text-indigo-500 not-italic">Archive</span>
           </h3>
           <button 
             onClick={loadHistory}
-            className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-white transition-all flex items-center gap-2"
+            className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-all flex items-center gap-3 group"
           >
-            <Loader2 className={`w-3 h-3 ${loadingReports ? 'animate-spin' : ''}`} />
-            Refresh Log
+            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-indigo-500/20 group-hover:border-indigo-500/30">
+              <Loader2 className={`w-4 h-4 text-indigo-400 ${loadingReports ? 'animate-spin' : ''}`} />
+            </div>
+            Vector Synchronization
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {archivedReports.length === 0 ? (
-            <div className="col-span-full py-16 text-center text-slate-600 font-black uppercase tracking-widest text-xs border-2 border-dashed border-white/5 rounded-[2rem]">
-               No historical data available
+            <div className="col-span-full py-24 text-center text-slate-600 font-black uppercase tracking-[0.3em] text-sm border-2 border-dashed border-white/5 rounded-[3rem] bg-black/10">
+               No established history found in this sector
             </div>
           ) : (
             archivedReports.map(report => (
-              <div key={report.id} className="p-6 bg-bg-main border border-white/5 hover:border-indigo-500/30 transition-all group relative overflow-hidden duration-500">
-                <div className="relative z-10">
-                   <div className="flex items-center justify-between mb-4">
-                      <span className="px-3 py-1 rounded bg-indigo-500/10 text-indigo-400 text-[9px] font-black uppercase tracking-widest">{report.shift} SHIFT</span>
-                      <span className="text-[10px] text-slate-500 font-mono">{report.date}</span>
+              <div key={report.id} className="p-8 tactical-card bg-black/20 group hover:bg-white/5 duration-500 relative overflow-hidden">
+                <div className="relative z-10 space-y-6">
+                   <div className="flex items-center justify-between">
+                      <span className="px-4 py-1.5 rounded-xl bg-indigo-500/5 border border-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-[0.2em] italic">{report.shift} SHIFT MATRIX</span>
+                      <span className="text-[11px] font-mono text-slate-500 font-bold">{report.date}</span>
                    </div>
-                   <h4 className="text-sm font-bold text-white mb-2">{report.name}</h4>
-                   <p className="text-[10px] text-slate-400 line-clamp-2 uppercase tracking-tight">{report.plainReport.slice(0, 100)}...</p>
+                   <div className="space-y-2">
+                     <h4 className="text-base font-black text-white uppercase italic tracking-tight">{report.name}</h4>
+                     <p className="text-[11px] text-slate-500 line-clamp-3 uppercase tracking-tight font-medium leading-relaxed">{report.plainReport}</p>
+                   </div>
                 </div>
               </div>
             ))

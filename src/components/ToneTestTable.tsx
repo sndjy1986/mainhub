@@ -12,7 +12,7 @@ import {
 } from 'firebase/firestore';
 import { ToneTestRecord } from '../types';
 import { useAuthRole as useRole } from '../hooks/useAuthRole';
-import { Check, X, Loader2, Plus, Trash2, Users, ClipboardCopy, Trash, RefreshCw } from 'lucide-react';
+import { Check, X, Loader2, Plus, Trash2, Users, ClipboardCopy, Trash, RefreshCw, Clock, Activity } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -228,153 +228,169 @@ export default function ToneTestTable() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       {/* Control Bar */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-6 bg-bg-surface/40 backdrop-blur-md p-6 rounded-[2rem] border border-white/5 relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+        
         {isEditor && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-4 relative z-10">
             <button
               onClick={handleResetTable}
-              className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95"
+              className="flex items-center gap-3 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all rounded-xl shadow-[0_0_20px_rgba(79,70,229,0.3)] active:scale-95 group/btn"
             >
-              <RefreshCw className="w-4 h-4" />
-              Reset Table
+              <RefreshCw className="w-4 h-4 group-hover/btn:rotate-180 transition-transform duration-500" />
+              Reset Fleet Matrix
             </button>
 
             <button
               onClick={() => setIsAdding(!isAdding)}
               className={cn(
-                "flex items-center gap-2 px-6 py-2.5 border text-[11px] font-black uppercase tracking-[0.2em] transition-all rounded-xl active:scale-95",
+                "flex items-center gap-3 px-6 py-3 border text-[11px] font-black uppercase tracking-[0.2em] transition-all rounded-xl active:scale-95",
                 isAdding 
-                  ? "bg-slate-700 border-white/20 text-white" 
-                  : "bg-white/5 border-white/10 text-slate-300 hover:border-white/20"
+                  ? "bg-white/10 border-indigo-500/50 text-indigo-100 shadow-[0_0_15px_rgba(99,102,241,0.2)]" 
+                  : "bg-white/5 border-white/10 text-slate-400 hover:border-white/20 hover:text-white"
               )}
             >
-              <Plus className="w-4 h-4" />
-              {isAdding ? "Cancel" : "Add Unit"}
+              <Plus className={cn("w-4 h-4 transition-transform duration-300", isAdding && "rotate-45")} />
+              {isAdding ? "Decline Addition" : "Initialize Unit"}
             </button>
 
             <button
               onClick={handleClearFleet}
-              className="flex items-center gap-2 px-6 py-2.5 bg-rose-600/10 border border-rose-500/30 text-rose-500 hover:bg-rose-500 hover:text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all rounded-xl active:scale-95"
+              className="group/delete flex items-center gap-3 px-6 py-3 bg-rose-600/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all rounded-xl active:scale-95 shadow-lg shadow-rose-500/5"
             >
-              <Trash2 className="w-4 h-4" />
-              Save/Clear
+              <Trash2 className="w-4 h-4 group-hover/delete:scale-110 transition-transform" />
+              Purge Status
             </button>
           </div>
         )}
 
         <button
           onClick={handleCopyTable}
-          className="flex items-center gap-2 px-4 py-2 ml-auto bg-white/5 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-white hover:bg-white/10 transition-all rounded-xl"
+          className="flex items-center gap-3 px-6 py-3 ml-auto bg-black/40 border border-white/5 text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 hover:text-white hover:border-white/20 transition-all rounded-xl relative z-10"
         >
-          <ClipboardCopy className="w-3.5 h-3.5" />
-          Export Table
+          <ClipboardCopy className="w-4 h-4 text-indigo-400" />
+          Data Export
         </button>
       </div>
 
-      <div className="overflow-hidden bg-bg-surface rounded-lg border border-border-subtle shadow-lg transition-colors duration-500">
+      <div className="overflow-hidden bg-bg-surface/40 backdrop-blur-xl rounded-[2.5rem] border border-white/5 shadow-2xl relative">
+        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
+        
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-bg-surface border-b border-border-subtle transition-colors duration-500">
-              <th className="w-12 p-4 text-center text-[10px] text-text-muted border-r border-border-subtle uppercase font-bold tracking-widest">ID</th>
-              <th className="px-4 py-3 text-[10px] font-bold uppercase text-text-secondary tracking-widest border-r border-border-subtle">Unit Chassis</th>
-              <th className="px-4 py-3 text-[10px] font-bold uppercase text-text-secondary tracking-widest border-r border-border-subtle">Log Date</th>
-              <th className="px-4 py-3 text-[10px] font-bold uppercase text-text-secondary tracking-widest border-r border-border-subtle">Up-Time</th>
-              <th className="px-4 py-3 text-[10px] font-bold uppercase text-text-secondary tracking-widest border-r border-border-subtle">Call-Sign</th>
-              <th className="px-4 py-3 text-[10px] font-bold uppercase text-text-secondary tracking-widest border-r border-border-subtle">10-42 Code</th>
-              <th className="px-4 py-3 text-[10px] font-bold uppercase text-text-secondary tracking-widest text-center">Status</th>
-              {isAdmin && <th className="w-12 p-4 border-l border-border-subtle"></th>}
+            <tr className="bg-black/40 border-b border-white/5">
+              <th className="w-16 p-6 text-center text-[10px] text-slate-600 uppercase font-black tracking-[0.3em]">ID</th>
+              <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">Unit Chassis</th>
+              <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">Log Date</th>
+              <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">Up-Time</th>
+              <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">Call-Sign</th>
+              <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">10-42 Code</th>
+              <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] text-center">Bio-Sync</th>
+              {isAdmin && <th className="w-16 p-6 border-l border-white/5"></th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-border-subtle/50">
+          <tbody className="divide-y divide-white/5">
             <AnimatePresence mode="popLayout">
               {records.map((record, idx) => (
                 <motion.tr 
                   key={record.id}
                   layout
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className={cn(
-                    "hover:bg-white/5 transition-colors group duration-500",
-                    idx % 2 === 1 ? "bg-bg-surface" : "bg-bg-main/40"
-                  )}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: idx * 0.02 }}
+                  className="hover:bg-indigo-500/[0.02] transition-colors group"
                 >
-                  <td className="p-4 text-center text-[10px] text-text-muted border-r border-border-subtle font-mono">
-                    {idx + 1}
+                  <td className="p-6 text-center text-[10px] text-slate-600 font-mono font-bold tracking-widest border-r border-white/5">
+                    {(idx + 1).toString().padStart(3, '0')}
                   </td>
-                  <td className="px-4 py-3 text-sm font-bold text-brand-blue border-r border-border-subtle group-hover:text-white transition-colors">
-                    {record.unit}
+                  <td className="px-6 py-4 border-r border-white/5">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-1 leading-none">Chassis</span>
+                      <span className="text-lg font-black text-white group-hover:text-indigo-400 glow-text-indigo transition-colors tracking-tight">{record.unit}</span>
+                    </div>
                   </td>
-                  <td className="px-4 py-3 border-r border-border-subtle bg-black/10">
-                    <span className="text-xs text-text-muted font-medium px-1 select-none">
+                  <td className="px-6 py-4 border-r border-white/5">
+                    <span className="text-[10px] text-slate-500 font-black tracking-widest uppercase px-3 py-1 bg-black/20 rounded-full border border-white/5">
                       {record.date}
                     </span>
                   </td>
-                  <td className="px-4 py-3 border-r border-border-subtle relative group/time">
-                    <input
-                      type="text"
-                      value={record.time}
-                      disabled={!isEditor}
-                      onFocus={() => setFocusedTimeField(record.id!)}
-                      onBlur={() => setTimeout(() => setFocusedTimeField(null), 200)}
-                      onChange={(e) => handleFieldUpdate(record.id!, 'time', e.target.value)}
-                      className="bg-transparent border-none focus:ring-1 focus:ring-brand-blue/30 rounded text-sm text-text-primary font-mono outline-none w-full"
-                    />
+                  <td className="px-6 py-4 border-r border-white/5 relative group/time min-w-[140px]">
+                    <div className="flex items-center gap-3">
+                      <Clock className="w-3.5 h-3.5 text-indigo-500/50" />
+                      <input
+                        type="text"
+                        value={record.time}
+                        disabled={!isEditor}
+                        onFocus={() => setFocusedTimeField(record.id!)}
+                        onBlur={() => setTimeout(() => setFocusedTimeField(null), 200)}
+                        onChange={(e) => handleFieldUpdate(record.id!, 'time', e.target.value)}
+                        className="bg-transparent border-none focus:ring-0 rounded text-base text-white font-mono outline-none w-full placeholder:text-slate-700"
+                        placeholder="--:--"
+                      />
+                    </div>
                     {focusedTimeField === record.id && isEditor && (
                       <button
                         onClick={() => handleFieldUpdate(record.id!, 'time', getCurrentTime())}
-                        className="absolute right-1 top-1/2 -translate-y-1/2 bg-brand-blue text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-lg animate-in fade-in zoom-in duration-200 z-10 hover:bg-blue-400"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-indigo-600 text-white text-[9px] font-black px-2 py-1 rounded-lg shadow-xl shadow-indigo-500/40 animate-in fade-in zoom-in slide-in-from-right-2 duration-300 z-10 hover:bg-indigo-500 uppercase tracking-widest"
                       >
-                        NOW?
+                        Capture
                       </button>
                     )}
                   </td>
-                  <td className="px-4 py-3 border-r border-border-subtle italic text-text-muted text-xs">
+                  <td className="px-6 py-4 border-r border-white/5">
                     <input
                       type="text"
                       value={record.callSign}
                       disabled={!isEditor || record.unit.toUpperCase().startsWith('MED')}
                       onChange={(e) => handleFieldUpdate(record.id!, 'callSign', e.target.value)}
                       className={cn(
-                        "bg-transparent border-none focus:ring-1 focus:ring-brand-blue/30 rounded text-xs outline-none w-full font-medium placeholder:text-text-muted",
-                        record.unit.toUpperCase().startsWith('MED') && "opacity-20 cursor-not-allowed"
+                        "bg-transparent border-none focus:ring-0 rounded text-xs outline-none w-full font-black tracking-[0.2em] uppercase placeholder:text-slate-800 transition-all",
+                        record.unit.toUpperCase().startsWith('MED') && "opacity-10 cursor-not-allowed"
                       )}
-                      placeholder={record.unit.toUpperCase().startsWith('MED') ? "N/A" : "ASSIGNED"}
+                      placeholder={record.unit.toUpperCase().startsWith('MED') ? "INACTIVE" : "IDENT_CODE"}
                     />
                   </td>
-                  <td className="px-4 py-3 border-r border-border-subtle">
+                  <td className="px-6 py-4 border-r border-white/5">
                      <input
                       type="text"
                       value={record.tenFortyTwo}
                       disabled={!isEditor}
                       onChange={(e) => handleFieldUpdate(record.id!, 'tenFortyTwo', e.target.value)}
-                      className="bg-transparent border-none focus:ring-1 focus:ring-brand-blue/30 rounded text-sm text-text-primary outline-none w-full font-mono"
+                      className="bg-transparent border-none focus:ring-0 rounded text-base text-white outline-none w-full font-mono placeholder:text-slate-800"
+                      placeholder="STNDBY"
                     />
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-6 py-4 text-center">
                     <button
                       onClick={() => toggleTtDone(record)}
                       disabled={!isEditor}
                       className={cn(
-                        "inline-flex items-center justify-center p-1.5 rounded transition-all duration-200",
-                        !isEditor ? "cursor-not-allowed opacity-30" : "hover:scale-110 active:scale-95",
+                        "relative w-12 h-6 rounded-full transition-all duration-500 overflow-hidden",
+                        !isEditor ? "opacity-30 cursor-not-allowed" : "hover:scale-105 active:scale-95",
                         record.ttDone 
-                          ? "bg-green-500/10 text-green-400 border border-green-500/30 shadow-[0_0_8px_rgba(34,197,94,0.1)]" 
-                          : "bg-red-500/10 text-red-400 border border-red-500/30 shadow-[0_0_8px_rgba(239,68,68,0.1)]"
+                          ? "bg-emerald-500/20 border border-emerald-500/40" 
+                          : "bg-rose-500/10 border border-rose-500/20"
                       )}
                     >
-                      {record.ttDone ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                      <motion.div 
+                        animate={{ x: record.ttDone ? 24 : 4 }}
+                        className={cn(
+                          "w-4 h-4 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)]",
+                          record.ttDone ? "bg-emerald-500" : "bg-rose-500"
+                        )}
+                      />
                     </button>
                   </td>
                   {isAdmin && (
-                    <td className="px-4 py-3 text-center border-l border-border-subtle">
+                    <td className="px-6 py-4 text-center border-l border-white/5">
                       <button
                         onClick={() => handleDeleteUnit(record.id!, record.unit)}
-                        className="text-text-muted hover:text-red-400 transition-colors"
+                        className="text-slate-600 hover:text-rose-500 transition-all hover:scale-110"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-5 h-5" />
                       </button>
                     </td>
                   )}
@@ -383,16 +399,16 @@ export default function ToneTestTable() {
 
               {isAdding && (
                 <motion.tr 
-                  initial={{ opacity: 0, y: -10 }}
+                  initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-bg-surface transition-colors duration-500"
+                  className="bg-indigo-500/[0.03] transition-colors duration-500 shadow-inner"
                 >
-                  <td className="p-4 text-center text-brand-blue">
-                    <Plus className="w-3 h-3 mx-auto" />
+                  <td className="p-6 text-center text-indigo-500">
+                    <Activity className="w-4 h-4 mx-auto animate-pulse" />
                   </td>
-                  <td className="px-4 py-3 border-r border-border-subtle">
+                  <td className="px-6 py-4 border-r border-white/5">
                     <select
-                      className="bg-bg-surface border border-border-subtle focus:border-brand-blue rounded px-2 py-1 outline-none text-white font-bold text-sm w-full"
+                      className="bg-black/40 border border-white/10 focus:border-indigo-500/50 rounded-xl px-4 py-2 outline-none text-white font-black text-xs w-full uppercase tracking-widest transition-all"
                       value={newUnit.unit}
                       onChange={e => setNewUnit({...newUnit, unit: e.target.value})}
                     >
@@ -409,67 +425,67 @@ export default function ToneTestTable() {
                       </optgroup>
                     </select>
                   </td>
-                  <td className="px-4 py-3 border-r border-border-subtle bg-black/10">
-                    <span className="text-[10px] text-text-muted font-bold block px-1">
+                  <td className="px-6 py-4 border-r border-white/5">
+                    <span className="text-[10px] text-slate-500 font-black tracking-[0.2em] block px-3 py-1 bg-black/20 rounded-full border border-white/5 text-center">
                       {newUnit.date}
                     </span>
                   </td>
-                  <td className="px-4 py-3 border-r border-border-subtle relative group/newtime">
+                  <td className="px-6 py-4 border-r border-white/5 relative group/newtime">
                     <input
                       type="text"
-                      placeholder="TIME"
+                      placeholder="AUTO"
                       onFocus={() => setFocusedTimeField('new')}
                       onBlur={() => setTimeout(() => setFocusedTimeField(null), 200)}
-                      className="bg-transparent border-none outline-none text-sm font-mono text-text-primary w-full"
+                      className="bg-transparent border-none outline-none text-base font-mono text-white w-full text-center"
                       value={newUnit.time}
                       onChange={e => setNewUnit({...newUnit, time: e.target.value})}
                     />
                     {focusedTimeField === 'new' && (
                       <button
                         onClick={() => setNewUnit({...newUnit, time: getCurrentTime()})}
-                        className="absolute right-1 top-1/2 -translate-y-1/2 bg-brand-blue text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow-lg animate-in fade-in zoom-in duration-200 z-10 hover:bg-blue-400"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-indigo-600 text-white text-[9px] font-black px-2 py-1 rounded-lg shadow-xl shadow-indigo-500/40 animate-in fade-in zoom-in duration-300 z-10 hover:bg-indigo-500"
                       >
-                        NOW?
+                        TIMESTAMP
                       </button>
                     )}
                   </td>
-                  <td className="px-4 py-3 border-r border-border-subtle">
+                  <td className="px-6 py-4 border-r border-white/5 text-center">
                     {newUnit.unit && newUnit.unit.startsWith('ALS') ? (
                       <input
                         type="text"
-                        placeholder="UNIT CODE"
-                        className="bg-transparent border-none outline-none text-xs text-brand-blue font-bold tracking-widest uppercase w-full"
+                        placeholder="ID_CODE"
+                        className="bg-black/40 border border-white/10 focus:border-indigo-500/50 rounded-xl px-4 py-2 outline-none text-[10px] text-indigo-400 font-black tracking-[0.3em] uppercase w-full text-center"
                         value={newUnit.callSign}
                         onChange={e => setNewUnit({...newUnit, callSign: e.target.value})}
                       />
                     ) : (
-                      <span className="text-xs italic text-text-muted opacity-50 block w-full text-center">N/A</span>
+                      <span className="text-[9px] font-black tracking-[0.2em] text-slate-700 uppercase italic">Static</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 border-r border-border-subtle">
+                  <td className="px-6 py-4 border-r border-white/5">
                     <input
                       type="text"
-                      placeholder="10-42 TIME"
-                      className="bg-transparent border-none outline-none text-sm font-mono text-text-primary"
+                      placeholder="TIME_OUT"
+                      className="bg-transparent border-none outline-none text-base font-mono text-white text-center w-full"
                       value={newUnit.tenFortyTwo}
                       onChange={e => setNewUnit({...newUnit, tenFortyTwo: e.target.value})}
                     />
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-6 py-4 text-center">
                     <button
                       onClick={handleAddUnit}
                       disabled={!newUnit.unit}
                       className={cn(
-                        "p-1 px-3 rounded text-[10px] font-bold uppercase transition-colors",
-                        newUnit.unit ? "bg-brand-blue hover:bg-blue-500 text-white" : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                        "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all",
+                        newUnit.unit ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/30 active:scale-95" : "bg-white/5 text-slate-700 cursor-not-allowed"
                       )}
                     >
-                      Save
+                      Authorize
                     </button>
                   </td>
-                  {isAdmin && <td className="px-4 py-3 border-l border-border-subtle text-center">
-                    <button onClick={() => setIsAdding(false)} className="text-text-muted hover:text-white">
-                      <X className="w-3.5 h-3.5 mx-auto" />
+                  {isAdmin && <td className="px-6 py-4 border-l border-white/5 text-center">
+                    <button onClick={() => setIsAdding(false)} className="text-slate-600 hover:text-white transition-colors">
+                      <X className="w-5 h-5 mx-auto" />
                     </button>
                   </td>}
                 </motion.tr>

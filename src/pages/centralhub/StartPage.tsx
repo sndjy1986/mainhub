@@ -36,27 +36,34 @@ export function StartPage() {
 
   return (
     <>
-      <header className="flex justify-between items-end">
-        <div>
-          <h1 className="text-5xl font-bold text-white tracking-tight">Dispatch Ops</h1>
-          <p className="text-slate-400 mt-2 uppercase tracking-[0.2em] text-xs font-bold flex items-center gap-2">
-            <Shield className="w-4 h-4 text-indigo-400" />
-            {new Date(date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+      <header className="flex flex-wrap items-center justify-between gap-8 pb-10 border-b border-white/5 relative tactical-header-glow">
+        <div className="space-y-4">
+          <div className="flex items-center gap-4 group">
+            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.4)] group-hover:scale-110 transition-transform duration-500">
+              <Shield className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-5xl font-black tracking-tight text-white uppercase italic">
+              Dispatch <span className="text-indigo-500 not-italic">Ops</span>
+            </h1>
+          </div>
+          <p className="text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3">
+             <Activity className="w-3 h-3 text-emerald-500 animate-pulse" />
+             {new Date(date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
         
         <div className="flex flex-col items-end gap-3">
-          <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Active Shift Selection</span>
-          <div className="flex p-1.5 bg-bg-surface/40 backdrop-blur-md rounded-2xl border border-white/10 gap-1 transition-colors duration-500">
+          <span className="text-[10px] uppercase font-black tracking-[0.3em] text-slate-500 italic">Active Shift Matrix</span>
+          <div className="flex p-1.5 glass-effect rounded-2xl border-white/10 gap-1 transition-all">
             {shifts.map((s) => (
               <button
                 key={s}
                 onClick={() => setShift(s)}
                 className={`
-                  w-12 h-10 flex items-center justify-center rounded-xl font-bold transition-all duration-300
+                  w-12 h-10 flex items-center justify-center rounded-xl font-black transition-all duration-300 uppercase tracking-widest
                   ${shift === s 
-                    ? 'bg-indigo-500 text-white shadow-lg shadow-brand-indigo/30' 
-                    : 'text-slate-400 hover:bg-bg-main/40 hover:text-slate-200'}
+                    ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' 
+                    : 'text-slate-500 hover:bg-white/10 hover:text-slate-200'}
                 `}
               >
                 {s}
@@ -66,17 +73,17 @@ export function StartPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-50">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
         {/* Date Selection Card */}
-        <section className="lg:col-span-4 backdrop-blur-md bg-bg-surface border border-white/10 rounded-3xl p-8 flex flex-col justify-between transition-colors duration-500">
+        <section className="lg:col-span-4 tactical-card p-8 flex flex-col justify-between group">
           <div className="space-y-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(79,70,229,0.1)]">
                 <CalendarIcon className="w-6 h-6 text-indigo-400" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Operations Date</h2>
-                <p className="text-sm text-slate-400">Set the active tracking period</p>
+                <h2 className="text-xl font-black text-white uppercase tracking-tight">Temporal Node</h2>
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black mt-0.5">Active Tracking Window</p>
               </div>
             </div>
             
@@ -84,51 +91,58 @@ export function StartPage() {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full h-16 bg-bg-main border border-white/10 rounded-2xl px-6 text-white font-mono text-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all uppercase"
+              className="w-full h-16 tactical-input px-6 text-white font-mono text-xl focus:ring-4 focus:ring-indigo-500/10 transition-all uppercase"
             />
           </div>
           
-          <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between text-xs font-bold tracking-widest text-slate-500 uppercase">
+          <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between text-[10px] font-black tracking-[0.3em] text-slate-600 uppercase">
              <span>Designated Date</span>
-             <span className="text-indigo-400">{date}</span>
+             <span className="text-indigo-400 font-mono italic">{date}</span>
           </div>
         </section>
 
         {/* Environmental Monitoring */}
-        <section className="lg:col-span-8">
+        <section className="lg:col-span-8 h-full">
           <WeatherDashboard />
         </section>
       </div>
 
       {/* Shift Teams Section */}
-      <div className="space-y-6">
-        <h2 className="text-[10px] uppercase font-bold text-slate-500 tracking-widest flex items-center gap-2">
-           <User className="w-3 h-3 text-indigo-400" />
-           Active Shift Personnel
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="space-y-8">
+        <div className="flex items-center gap-4">
+          <h2 className="text-[10px] uppercase font-black text-slate-500 tracking-[0.3em] flex items-center gap-3">
+             <User className="w-4 h-4 text-indigo-500" />
+             Strategic Personnel Deployment
+          </h2>
+          <div className="h-[1px] flex-1 bg-gradient-to-r from-white/5 to-transparent" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {Object.entries(SHIFT_TEAMS).map(([name, team]) => (
-            <div key={name} className="bg-bg-surface border border-white/10 rounded-2xl p-5 hover:bg-white/10 transition-all duration-500">
-              <h3 className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-4 flex items-center justify-between">
-                {name} Shift
-                <span className="text-[9px] text-slate-500 font-bold">ACTIVE</span>
-              </h3>
-              <div className="space-y-3">
+            <div key={name} className="tactical-card p-6 group hover:border-indigo-500/30">
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
+                <h3 className="text-xs font-black text-indigo-400 uppercase tracking-[0.2em] italic">
+                  {name} <span className="text-slate-500 not-italic">Shift</span>
+                </h3>
+                <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
+              </div>
+              <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-                    <Shield className="w-3 h-3 text-emerald-400" />
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                    <Shield className="w-4 h-4 text-emerald-400" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-white leading-tight">{team.lead}</p>
-                    <p className="text-[8px] text-emerald-500 font-bold uppercase tracking-tighter">Team Lead</p>
+                    <p className="text-[11px] font-black text-white leading-tight uppercase tracking-tight">{team.lead}</p>
+                    <p className="text-[8px] text-emerald-500 font-black uppercase tracking-[0.2em] mt-0.5 italic">Protocol Lead</p>
                   </div>
                 </div>
-                {team.members.map(member => (
-                  <div key={member} className="flex items-center gap-3 pl-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-slate-700" />
-                    <p className="text-[10px] font-medium text-slate-300">{member}</p>
-                  </div>
-                ))}
+                <div className="space-y-2 pt-2 border-t border-white/5">
+                  {team.members.map(member => (
+                    <div key={member} className="flex items-center gap-3 pl-2 group/member">
+                      <div className="w-1 h-1 rounded-full bg-slate-700 group-hover/member:bg-indigo-500 transition-colors" />
+                      <p className="text-[10px] font-bold text-slate-400 group-hover/member:text-white transition-colors uppercase tracking-tight">{member}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           ))}
@@ -136,10 +150,13 @@ export function StartPage() {
       </div>
 
       <div className="space-y-8 relative z-0">
-        <h2 className="text-[10px] uppercase font-bold text-slate-500 tracking-widest flex items-center gap-2">
-           <CalendarIcon className="w-3 h-3 text-indigo-400" />
-           Operations Calendar
-        </h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-[10px] uppercase font-black text-slate-500 tracking-[0.3em] flex items-center gap-3">
+             <CalendarIcon className="w-4 h-4 text-indigo-500" />
+             Tactical Operations Calendar
+          </h2>
+          <div className="h-[1px] flex-1 bg-gradient-to-r from-white/5 to-transparent" />
+        </div>
         <OpsCalendar />
       </div>
     </>

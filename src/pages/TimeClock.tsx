@@ -1,35 +1,67 @@
 import React, { useState } from 'react';
-import { ExternalLink, AlertTriangle } from 'lucide-react';
+import { ExternalLink, AlertTriangle, Clock, AlertCircle } from 'lucide-react';
+import { motion } from 'motion/react';
 
 export default function TimeClockPage() {
   const url = "https://scheduling.esosuite.net/eps/main/TimeClock.ashx?db=priorityambulance";
   const [iframeError, setIframeError] = useState(false);
 
   return (
-    <div className="w-full h-full bg-bg-main flex flex-col transition-colors duration-500">
-      <div className="p-4 bg-white/5 border-b border-white/10 flex justify-between items-center shrink-0">
-        <h2 className="text-white font-black uppercase tracking-widest text-xs">ESO Time Clock</h2>
-      </div>
+    <div className="w-full h-full bg-bg-main flex flex-col transition-colors duration-500 overflow-hidden relative">
+      <div className="absolute inset-0 bg-indigo-500/[0.02] pointer-events-none" />
       
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-24 h-24 bg-white/5 rounded-3xl flex items-center justify-center mb-8 border border-white/10 shadow-2xl">
-          <AlertTriangle className="w-10 h-10 text-rose-500" />
+      <header className="p-8 border-b border-white/5 flex justify-between items-center shrink-0 tactical-header-glow bg-black/20">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-indigo-600/20 rounded-xl flex items-center justify-center border border-indigo-500/30">
+            <Clock className="w-5 h-5 text-indigo-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-black text-white uppercase tracking-tight italic">Time <span className="text-indigo-500 not-italic">Uplink</span></h2>
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mt-1">External Protocol Gateway</p>
+          </div>
         </div>
-        
-        <h2 className="text-2xl font-black text-white tracking-tight mb-4">External Portal Required</h2>
-        
-        <p className="text-slate-400 text-sm max-w-md mx-auto mb-10 leading-relaxed">
-          Due to strict organizational security policies (X-Frame-Options), the ESO Time Clock platform blocks embedding inside third-party dashboards. You must access it directly.
-        </p>
-        
-        <a 
-          href={url} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="px-8 py-4 bg-indigo-500 hover:bg-indigo-400 text-white font-black uppercase tracking-widest text-sm rounded-2xl transition-all shadow-[0_0_30px_rgba(99,102,241,0.3)] hover:scale-105 active:scale-95 flex items-center gap-3"
+      </header>
+      
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center relative z-10">
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="tactical-card p-12 max-w-xl space-y-8 relative group"
         >
-          <ExternalLink className="w-5 h-5" /> Launch Secure Time Clock
-        </a>
+          <div className="w-20 h-20 bg-rose-500/10 rounded-2xl flex items-center justify-center mx-auto border border-rose-500/20 shadow-[0_0_20px_rgba(244,63,94,0.1)] group-hover:scale-110 transition-transform">
+            <AlertCircle className="w-10 h-10 text-rose-500 animate-pulse" />
+          </div>
+          
+          <div className="space-y-4">
+            <h2 className="text-3xl font-black text-white tracking-tight uppercase italic">Secure <span className="text-rose-500 not-italic">Isolation</span></h2>
+            <p className="text-slate-400 text-sm leading-relaxed font-medium">
+              Organizational security policies (X-Frame-Options) prevent embedding the ESO Time Clock platform within this matrix. 
+              The connection must be established via a direct encrypted portal.
+            </p>
+          </div>
+
+          <div className="pt-8">
+            <a 
+              href={url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="tactical-btn-indigo px-10 py-5 flex items-center justify-center gap-3 w-full shadow-indigo-500/30"
+            >
+              <ExternalLink className="w-5 h-5" /> ESTABLISH SECURE LINK
+            </a>
+          </div>
+        </motion.div>
+
+        {/* Global HUD elements */}
+        <div className="absolute bottom-10 left-10 p-4 border border-white/5 rounded-2xl bg-black/20 pointer-events-none">
+          <div className="text-[9px] font-mono text-slate-500 space-y-1">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>PROTO: ESO_EPS_v4</span>
+            </div>
+            <div>STATUS: STANDBY</div>
+          </div>
+        </div>
       </div>
     </div>
   );

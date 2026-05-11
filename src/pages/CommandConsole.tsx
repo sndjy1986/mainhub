@@ -650,56 +650,79 @@ export default function CommandConsolePage() {
 
   return (
     <>
-      <header className="h-14 flex items-center justify-between px-6 bg-bg-surface border-b border-white/5 shrink-0 z-[2000] transition-colors duration-500">
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-3">
-             <div className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-                <Terminal className="w-4 h-4 text-indigo-400" />
+      <header className="h-16 flex items-center justify-between px-8 bg-black border-b border-white/5 shrink-0 z-[2000] relative tactical-header-glow">
+        <div className="flex items-center gap-10">
+          <div className="flex items-center gap-4 group">
+             <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(79,70,229,0.2)]">
+                <Terminal className="w-5 h-5 text-indigo-400" />
              </div>
-             <h1 className="text-sm font-black uppercase tracking-widest text-white">Dispatch Ops Central</h1>
+             <div className="flex flex-col">
+               <h1 className="text-sm font-black uppercase tracking-[0.2em] text-white italic">Operational <span className="text-indigo-500 not-italic">Matrix</span></h1>
+               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest mt-0.5">Control Interface_v37.4</span>
+             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
+           <div className="flex items-center gap-8 px-6 py-2 bg-white/5 border border-white/10 rounded-2xl">
+             <div className="flex flex-col items-center">
+               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Active Units</span>
+               <span className="text-xs font-mono font-black text-indigo-400">{INITIAL_UNITS.length - oosUnits.size - inactiveUnits.size}</span>
+             </div>
+             <div className="w-px h-6 bg-white/10" />
+             <div className="flex flex-col items-center">
+               <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">OOS Lock</span>
+               <span className="text-xs font-mono font-black text-rose-500">{oosUnits.size}</span>
+             </div>
+           </div>
+
            {isSyncing ? (
-             <div className="flex items-center gap-2 text-indigo-400">
-                <RefreshCw className="w-3 h-3 animate-spin" />
-                <span className="text-[10px] font-mono uppercase tracking-widest">Syncing Matrix...</span>
+             <div className="flex items-center gap-3 px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
+                <RefreshCw className="w-3 h-3 text-indigo-400 animate-spin" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Syncing...</span>
              </div>
            ) : (
-             <div className="flex items-center gap-2 text-emerald-400">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#10b981]" />
-                <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500">Fleet Link Active</span>
+             <div className="flex items-center gap-3 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Linked</span>
              </div>
            )}
+           
            <button 
              onClick={() => setIsSidePanelOpen(true)}
-             className="p-2 hover:bg-white/5 rounded-xl text-slate-400 hover:text-white transition-all"
+             className="w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-2xl text-slate-500 hover:text-white transition-all border border-transparent hover:border-white/10"
            >
-             <Settings className="w-4 h-4" />
+             <Settings className="w-5 h-5 transition-transform hover:rotate-90" />
            </button>
         </div>
       </header>
 
       {/* MAIN VIEWPORT */}
-      <main className="flex-1 flex flex-col min-w-0 relative">
-        <div className="flex-1 overflow-hidden">
-          <div className="relative w-full h-full overflow-hidden group">
-            <div className={`absolute inset-0 z-0 bg-bg-main ${theme === 'dark' ? 'border-zinc-800' : 'border-slate-200'} transition-colors duration-500`}>
-              <div className="absolute top-4 left-4 flex gap-2 z-[1000] pointer-events-none">
-                <div className="px-3 py-1 bg-black/60 backdrop-blur border border-zinc-800 rounded-full text-[9px] font-mono whitespace-nowrap text-logistics-blue shadow-lg">
-                  TACTICAL SECTOR FEED // RC-35
+      <main className="flex-1 flex flex-col min-w-0 relative bg-black">
+        <div className="flex-1 relative overflow-hidden">
+          <div className="absolute inset-0 z-0">
+             {/* Tactical Map Container */}
+             <div className="absolute top-6 left-8 z-20 pointer-events-none flex flex-col gap-2">
+                <div className="px-4 py-2 bg-black/80 backdrop-blur-xl border border-indigo-500/30 rounded-xl font-black text-[10px] uppercase tracking-[0.22em] text-indigo-400 shadow-[0_0_20px_rgba(79,70,229,0.2)] flex items-center gap-3">
+                   <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse" />
+                   Sector_Anderson // Tactical_Feed
                 </div>
-              </div>
+                <div className="px-4 py-1 bg-black/60 backdrop-blur border border-white/5 rounded-lg font-mono text-[9px] text-slate-500 inline-block uppercase italic">
+                   Lat: 34.5034 // Lon: -82.6501
+                </div>
+             </div>
 
-              <iframe 
-                src="https://www.google.com/maps/d/u/0/embed?mid=1sVuk-qPshgccqAlOzQvumzq7OdeVII8&ehbc=2E312F" 
-                className="w-full h-full border-none absolute inset-0 z-10"
-                style={{ border: "5px solid #22d3ee" }}
-                title="Google My Maps Tactical"
-                allowFullScreen
-              />
-            </div>
+             <div className="w-full h-full p-4">
+                <div className="w-full h-full rounded-[2.5rem] overflow-hidden border border-white/10 relative shadow-[0_0_50px_rgba(0,0,0,0.5)] group">
+                   <iframe 
+                    src="https://www.google.com/maps/d/u/0/embed?mid=1sVuk-qPshgccqAlOzQvumzq7OdeVII8&ehbc=2E312F" 
+                    className="w-full h-[calc(100%+60px)] -translate-y-[60px] border-none grayscale contrast-125 brightness-75 hover:grayscale-0 transition-all duration-700 pointer-events-auto"
+                    title="Google My Maps Tactical"
+                  />
+                  <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_100px_rgba(0,0,0,0.6)]" />
+                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+             </div>
           </div>
         </div>
       </main>
