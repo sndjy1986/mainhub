@@ -25,7 +25,8 @@ import {
   Phone,
   Camera,
   Search,
-  Bell
+  Bell,
+  Cpu
 } from 'lucide-react';
 import { useTerminal, AppTheme } from '../../context/TerminalContext';
 import { 
@@ -37,9 +38,20 @@ import {
   onSnapshot, 
   db, 
   ShiftReport as ShiftReportType,
-  PersonnelMember
+  PersonnelMember,
+  deleteDoc,
+  getDocs,
+  collection,
+  setDoc
 } from '../../lib/firebase';
 import { ALL_CAMERAS } from '../../lib/camsConstants';
+
+export interface TerminalUser {
+  username: string;
+  password?: string;
+  role: 'dispatcher' | 'admin';
+  createdAt: string;
+}
 
 export function AdminPage() {
   const { 
@@ -49,7 +61,8 @@ export function AdminPage() {
     appTheme, 
     setAppTheme, 
     toneTestMode, 
-    setToneTestMode 
+    setToneTestMode,
+    logoutTerminalUser
   } = useTerminal();
   const [showToast, setShowToast] = useState<string | null>(null);
 
@@ -80,6 +93,11 @@ export function AdminPage() {
   const [archivedReports, setArchivedReports] = useState<ShiftReportType[]>([]);
   const [loadingReports, setLoadingReports] = useState(false);
 
+  // Terminal User States
+  const [terminalUsers, setTerminalUsers] = useState<TerminalUser[]>([]);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [userForm, setUserForm] = useState({ username: '', password: '', role: 'dispatcher' as 'dispatcher' | 'admin' });
+
   // Personnel Form State
   const [showPersonnelModal, setShowPersonnelModal] = useState(false);
   const [editingPerson, setEditingPerson] = useState<PersonnelMember | null>(null);
@@ -109,6 +127,62 @@ export function AdminPage() {
 
     return () => unsubscribe();
   }, []);
+
+  // Sync Terminal Users
+  useEffect(() => {
+    if (!user) return;
+    const unsub = onSnapshot(collection(db, 'terminal_users'), (snap) => {
+      setTerminalUsers(snap.docs.map(d => d.data() as TerminalUser));
+    });
+    return () => unsub();
+  }, [user]);
+
+  const createTerminalUser = async () => {
+    if (!userForm.username || !userForm.password) return;
+    try {
+      const username = userForm.username.toLowerCase().trim();
+      const email = `${username}@dispatcher.terminal`;
+      
+      // We use a secondary auth instance to create the user without logging out the admin
+      const { initializeApp } = await import('firebase/app');
+      const { getAuth, createUserWithEmailAndPassword, signOut } = await import('firebase/auth');
+      const firebaseConfig = (await import('../../../firebase-applet-config.json')).default;
+      
+      const tempApp = initializeApp(firebaseConfig, 'AdminRegistration');
+      const tempAuth = getAuth(tempApp);
+      
+      // Create in Firebase Auth
+      await createUserWithEmailAndPassword(tempAuth, email, userForm.password);
+      
+      // Record in Firestore
+      await setDoc(doc(db, 'terminal_users', username), {
+        username,
+        role: userForm.role,
+        createdAt: new Date().toISOString()
+      });
+
+      // Cleanup temp app
+      const { deleteApp } = await import('firebase/app');
+      await deleteApp(tempApp);
+
+      setShowUserModal(false);
+      setUserForm({ username: '', password: '', role: 'dispatcher' });
+      setShowToast("USER_UPLINK_ESTABLISHED");
+    } catch (err: any) {
+      console.error(err);
+      setShowToast(`UPLINK_FAILED: ${err.message}`);
+    }
+  };
+
+  const deleteTerminalUser = async (username: string) => {
+    if (!window.confirm(`Terminate access for operator: ${username.toUpperCase()}?`)) return;
+    try {
+      await deleteDoc(doc(db, 'terminal_users', username));
+      setShowToast("ACCESS_TERMINATED");
+    } catch (err) {
+      setShowToast("TERMINATION_FAILED");
+    }
+  };
 
   const savePersonnel = async () => {
     if (!personForm.name) return;
@@ -379,14 +453,77 @@ export function AdminPage() {
           </section>
         </div>
 
-        {/* Level 2: Fleet Personnel - Full Wide */}
-        <section className="tactical-card p-10 space-y-10">
-          <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/5">
-            <div>
-              <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4">
-                <User className="w-6 h-6 text-indigo-500" />
-                Fleet Personnel Array
-              </h3>
+        {/* Level 2: User Access & Fleet Personnel - Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+          {/* User Access Management */}
+          <section className="tactical-card p-10 space-y-10 xl:col-span-4 bg-indigo-500/[0.02]">
+            <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/5">
+              <div>
+                <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4">
+                  <Cpu className="w-5 h-5 text-indigo-400" />
+                  Terminal <span className="text-indigo-400 not-italic">Nodes</span>
+                </h3>
+                <p className="text-[9px] text-slate-500 uppercase tracking-[0.3em] font-black mt-2">Access Credentials & Privileges</p>
+              </div>
+              <button 
+                disabled={!user}
+                onClick={() => setShowUserModal(true)}
+                className="tactical-btn-indigo px-5 py-2 text-[10px] shadow-indigo-500/10 disabled:opacity-30 flex items-center gap-2"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add Node
+              </button>
+            </div>
+
+            <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin">
+              {terminalUsers.length === 0 ? (
+                <div className="py-12 text-center border-2 border-dashed border-white/5 rounded-[2rem] bg-black/20">
+                  <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">No Authorized Nodes</p>
+                </div>
+              ) : (
+                terminalUsers.map(u => (
+                  <div key={u.username} className="p-5 bg-black/40 border border-white/5 rounded-2xl group hover:border-indigo-500/40 transition-all flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${u.role === 'admin' ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' : 'bg-white/5 border-white/10 text-slate-400'}`}>
+                        {u.role === 'admin' ? <Shield size={18} /> : <Terminal size={18} />}
+                      </div>
+                      <div>
+                        <div className="text-xs font-black text-white uppercase tracking-widest">{u.username}</div>
+                        <div className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em] mt-1 italic">{u.role === 'admin' ? 'FULL_ACCESS_NODE' : 'DISPATCH_OPERATOR'}</div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                       <button 
+                        onClick={() => deleteTerminalUser(u.username)}
+                        className="p-2 text-slate-600 hover:text-rose-400 transition-colors bg-white/5 rounded-lg opacity-0 group-hover:opacity-100"
+                        title="Revoke Access"
+                       >
+                         <Trash2 size={14} />
+                       </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="pt-6 border-t border-white/5">
+              <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 flex gap-4">
+                <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+                <p className="text-[10px] text-amber-200/40 font-bold uppercase tracking-tight leading-relaxed">
+                  Notice: These credentials bypass standard Google authentication. Use unique identifiers and manage rotation frequency.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Fleet Personnel Array */}
+          <section className="tactical-card p-10 space-y-10 xl:col-span-8">
+            <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/5">
+              <div>
+                <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4">
+                  <User className="w-6 h-6 text-indigo-500" />
+                  Fleet Personnel Array
+                </h3>
               <p className="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black mt-2">Database of active responders and tactical shifts</p>
             </div>
             <div className="flex items-center gap-4">
@@ -467,8 +604,9 @@ export function AdminPage() {
             ))}
           </div>
         </section>
+      </div>
 
-        {/* Level 3: Orbital Feeds - Full Wide */}
+      {/* Level 3: Orbital Feeds - Full Wide */}
         <section className="tactical-card p-10 space-y-8">
            <div className="flex items-center justify-between border-b border-white/5 pb-6">
              <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic font-sans">
@@ -711,6 +849,72 @@ export function AdminPage() {
                   className="w-full bg-indigo-500 hover:bg-indigo-400 text-white font-bold py-4 rounded-2xl shadow-xl shadow-indigo-500/20 active:scale-95 transition-all text-sm uppercase tracking-widest"
                 >
                   {editingPerson ? 'Update Member' : 'Enlist Personnel'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Terminal User Modal */}
+      <AnimatePresence>
+        {showUserModal && (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/80 backdrop-blur-3xl"
+              onClick={() => setShowUserModal(false)}
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-sm tactical-card bg-black border-indigo-500/30 p-10 space-y-10 shadow-[0_0_80px_rgba(99,102,241,0.2)]"
+            >
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Create <span className="text-indigo-400 not-italic">Node</span></h3>
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Initialize access credentials</p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Operator ID</label>
+                  <input 
+                    type="text" 
+                    value={userForm.username}
+                    onChange={e => setUserForm({...userForm, username: e.target.value})}
+                    placeholder="USERNAME"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-mono text-sm focus:border-indigo-500 outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Access Key</label>
+                  <input 
+                    type="text" 
+                    value={userForm.password}
+                    onChange={e => setUserForm({...userForm, password: e.target.value})}
+                    placeholder="PASSWORD"
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-mono text-sm focus:border-indigo-500 outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Security Level</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['dispatcher', 'admin'].map(r => (
+                      <button 
+                        key={r}
+                        onClick={() => setUserForm({...userForm, role: r as any})}
+                        className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${userForm.role === r ? 'bg-indigo-500 border-indigo-400 text-white' : 'bg-black/40 border-white/5 text-slate-500'}`}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button 
+                   onClick={createTerminalUser}
+                   className="w-full py-5 bg-indigo-500 text-white font-black uppercase tracking-widest italic rounded-2xl shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 transition-all text-xs"
+                >
+                  Confirm Registration
                 </button>
               </div>
             </motion.div>

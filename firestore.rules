@@ -4,21 +4,27 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
-    function isAdmin() {
+    function isSuperAdmin() {
       return isSignedIn() && request.auth.token.email == 'sndjy1986@gmail.com';
+    }
+    function isOperator() {
+      return isSignedIn() && (request.auth.token.email.endsWith('@dispatcher.terminal') || isSuperAdmin());
     }
 
     match /{document=**} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow read: if isOperator();
+      allow write: if isSuperAdmin();
     }
 
-    // Specific overrides for write access
-    match /units/{unitId} { allow write: if isSignedIn(); }
-    match /unitAssignments/{assignmentId} { allow write: if isSignedIn(); }
-    match /shiftReports/{reportId} { allow write: if isSignedIn(); }
-    match /reports/{reportId} { allow write: if isSignedIn(); }
-    match /toneTests/{testId} { allow write: if isSignedIn(); }
-    match /users/{userId} { allow write: if isSignedIn(); }
+    // Operations allowed for all logged-in operators
+    match /units/{unitId} { allow write: if isOperator(); }
+    match /unitAssignments/{assignmentId} { allow write: if isOperator(); }
+    match /shiftReports/{reportId} { allow write: if isOperator(); }
+    match /reports/{reportId} { allow write: if isOperator(); }
+    match /toneTests/{testId} { allow write: if isOperator(); }
+    match /terminal_users/{username} { 
+      allow read: if isSignedIn(); // Allow reading metadata for login/role checks
+      allow write: if isSuperAdmin();
+    }
   }
 }

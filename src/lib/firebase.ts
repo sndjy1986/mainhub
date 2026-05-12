@@ -1,9 +1,9 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer, collection, addDoc, query, orderBy, limit, getDocs, Timestamp, onSnapshot, setDoc, updateDoc, terminate, clearIndexedDbPersistence, serverTimestamp } from 'firebase/firestore';
+import { initializeApp, getApp, getApps } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
+import { getFirestore, doc, getDocFromServer, collection, addDoc, query, orderBy, limit, getDocs, Timestamp, onSnapshot, setDoc, updateDoc, terminate, clearIndexedDbPersistence, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 // Use the specific database ID from the config if available
 export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || '(default)');
 
@@ -156,5 +156,5 @@ export async function getReports(limitCount: number = 50) {
   }
 }
 
-export { signInWithPopup, doc, onSnapshot, query, orderBy, collection, addDoc, updateDoc, Timestamp, serverTimestamp, setDoc };
+export { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser, doc, onSnapshot, query, orderBy, collection, addDoc, updateDoc, Timestamp, serverTimestamp, setDoc, deleteDoc, getDocs };
 

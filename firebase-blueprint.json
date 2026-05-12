@@ -77,6 +77,18 @@
         "emergencyBackgroundOpacity": { "type": "number" },
         "ambienceMode": { "type": "string" }
       }
+    },
+    "TerminalUser": {
+      "title": "Terminal User",
+      "description": "Custom authentication for dispatchers",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "role": { "type": "string", "enum": ["dispatcher", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["username", "password", "role"]
     }
   },
   "firestore": {
@@ -103,6 +115,10 @@
     "/settings/global": {
       "schema": "GlobalSettings",
       "description": "System settings"
+    },
+    "/terminal_users/{username}": {
+      "schema": "TerminalUser",
+      "description": "Dispatcher access credentials"
     }
   }
 }

@@ -18,7 +18,8 @@ import {
   Clock as ClockIcon,
   Phone,
   Calendar,
-  CreditCard
+  CreditCard,
+  LogOut
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
@@ -43,7 +44,9 @@ export function Sidebar() {
     manualEmergencyMode, 
     setManualEmergencyMode, 
     emergencyOpacity, 
-    setEmergencyOpacity 
+    setEmergencyOpacity,
+    terminalUser,
+    logoutTerminalUser
   } = useTerminal();
 
   return (
@@ -155,14 +158,27 @@ export function Sidebar() {
 
         {/* User Profile & Admin Access */}
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-3 px-4 py-3 bg-black/40 border border-white/5 rounded-2xl group shadow-inner">
-             <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 group-hover:border-indigo-500/40 transition-all">
-                <UserCheck className="w-4 h-4 text-indigo-500" />
+          <div className="flex items-center justify-between px-4 py-3 bg-black/40 border border-white/5 rounded-2xl group shadow-inner">
+             <div className="flex items-center gap-3 min-w-0">
+               <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 group-hover:border-indigo-500/40 transition-all">
+                  <UserCheck className="w-4 h-4 text-indigo-500" />
+               </div>
+               <div className="flex flex-col min-w-0">
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white truncate">{terminalUser?.username || 'Dispatcher'}</span>
+                  <span className="text-[8px] font-bold text-slate-600 truncate leading-none mt-1 uppercase">{terminalUser?.role || 'Operator'}</span>
+               </div>
              </div>
-             <div className="flex flex-col min-w-0">
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white truncate">Dispatcher</span>
-                <span className="text-[8px] font-bold text-slate-600 truncate leading-none mt-1">v4.2.0-STABLE</span>
-             </div>
+             <button 
+              onClick={() => {
+                if (window.confirm("TERMINATE SESSION?")) {
+                  logoutTerminalUser();
+                }
+              }}
+              className="p-2 text-slate-600 hover:text-rose-500 transition-colors"
+              title="Terminate Session"
+             >
+               <LogOut size={14} />
+             </button>
           </div>
 
           <Link 

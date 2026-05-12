@@ -28,6 +28,9 @@ interface TerminalContextType {
   requestNotificationPermission: () => Promise<NotificationPermission | undefined>;
   addNotification: (message: string, type?: Notification['type']) => void;
   removeNotification: (id: string) => void;
+  terminalUser: { username: string; role: string } | null;
+  loginTerminalUser: (username: string, role: string) => void;
+  logoutTerminalUser: () => void;
 }
 
 const TerminalContext = createContext<TerminalContextType | undefined>(undefined);
@@ -40,6 +43,21 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const [appTheme, setAppTheme] = useState<AppTheme>(() => (localStorage.getItem('appTheme') as AppTheme) || 'midnight');
   const [toneTestMode, setToneTestMode] = useState<boolean>(() => localStorage.getItem('toneTestMode') !== 'false'); // Default to true
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [terminalUser, setTerminalUser] = useState<{ username: string; role: string } | null>(() => {
+    const saved = localStorage.getItem('terminalUser');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const loginTerminalUser = (username: string, role: string) => {
+    const user = { username, role };
+    setTerminalUser(user);
+    localStorage.setItem('terminalUser', JSON.stringify(user));
+  };
+
+  const logoutTerminalUser = () => {
+    setTerminalUser(null);
+    localStorage.removeItem('terminalUser');
+  };
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
@@ -153,7 +171,10 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       notificationPermission,
       requestNotificationPermission,
       addNotification,
-      removeNotification
+      removeNotification,
+      terminalUser,
+      loginTerminalUser,
+      logoutTerminalUser
     }}>
       {children}
     </TerminalContext.Provider>
