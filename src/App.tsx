@@ -2,7 +2,6 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/centralhub/Layout';
 import { StartPage } from './pages/centralhub/StartPage';
-import { TerminalProvider } from './context/TerminalContext';
 import { PageWrapper } from './components/centralhub/PageWrapper';
 import { useTerminal } from './context/TerminalContext';
 import { LoginPage } from './pages/centralhub/LoginPage';
@@ -16,17 +15,17 @@ const AdminPage = lazy(() => import('./pages/centralhub/AdminPage'));
 const TimeClock = lazy(() => import('./pages/TimeClock'));
 const Directory = lazy(() => import('./pages/Directory'));
 
-function TerminalApp() {
-  const { terminalUser } = useTerminal();
+export default function App() {
+  const { terminalUser, firebaseUser } = useTerminal();
 
-  if (!terminalUser) {
+  if (!terminalUser && !firebaseUser) {
     return <LoginPage />;
   }
 
   return (
     <Router>
       <Layout>
-        <Suspense fallback={<div className="w-full h-full bg-bg-main" />}>
+        <Suspense fallback={<div className="w-full h-full bg-bg-main flex items-center justify-center"><div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>}>
           <Routes>
             <Route path="/" element={<PageWrapper><StartPage /></PageWrapper>} />
             <Route path="/tone-test" element={<PageWrapper className="overflow-y-auto"><ToneTest /></PageWrapper>} />
@@ -41,13 +40,5 @@ function TerminalApp() {
         </Suspense>
       </Layout>
     </Router>
-  );
-}
-
-export default function App() {
-  return (
-    <TerminalProvider>
-      <TerminalApp />
-    </TerminalProvider>
   );
 }

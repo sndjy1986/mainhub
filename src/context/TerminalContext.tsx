@@ -31,6 +31,7 @@ interface TerminalContextType {
   terminalUser: { username: string; role: string } | null;
   loginTerminalUser: (username: string, role: string) => void;
   logoutTerminalUser: () => void;
+  firebaseUser: any | null;
 }
 
 const TerminalContext = createContext<TerminalContextType | undefined>(undefined);
@@ -47,6 +48,17 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem('terminalUser');
     return saved ? JSON.parse(saved) : null;
   });
+  const [firebaseUser, setFirebaseUser] = useState<any | null>(null);
+
+  useEffect(() => {
+    // Lazy import auth to avoid initialization issues
+    import('../lib/firebase').then(({ auth }) => {
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        setFirebaseUser(user);
+      });
+      return () => unsubscribe();
+    });
+  }, []);
 
   const loginTerminalUser = (username: string, role: string) => {
     const user = { username, role };
@@ -174,7 +186,8 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       removeNotification,
       terminalUser,
       loginTerminalUser,
-      logoutTerminalUser
+      logoutTerminalUser,
+      firebaseUser
     }}>
       {children}
     </TerminalContext.Provider>

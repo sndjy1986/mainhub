@@ -147,12 +147,30 @@ export function LoginPage() {
           </form>
 
           {/* Footer Meta */}
-          <div className="pt-6 border-t border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/50 animate-pulse" />
-              <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Uplink Active</span>
+          <div className="pt-6 border-t border-white/5 space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500/50 animate-pulse" />
+                <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Uplink Active</span>
+              </div>
+              <span className="text-[8px] font-mono text-slate-700 tracking-tighter uppercase font-bold">Node V.02_Alpha</span>
             </div>
-            <span className="text-[8px] font-mono text-slate-700 tracking-tighter uppercase font-bold">Node V.02_Alpha</span>
+
+            <button 
+              type="button"
+              onClick={async () => {
+                const { signInWithPopup, GoogleAuthProvider, auth } = await import('../../lib/firebase');
+                try {
+                  await signInWithPopup(auth, new GoogleAuthProvider());
+                } catch (err) {
+                  console.error(err);
+                }
+              }}
+              className="w-full py-3 rounded-xl border border-white/5 hover:border-indigo-500/30 text-[9px] font-black uppercase tracking-[0.3em] text-slate-600 hover:text-indigo-400 transition-all flex items-center justify-center gap-3 bg-white/[0.02]"
+            >
+              <Shield size={12} />
+              Owner Bootstrap Access
+            </button>
           </div>
         </div>
 

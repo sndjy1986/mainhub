@@ -46,7 +46,8 @@ export function Sidebar() {
     emergencyOpacity, 
     setEmergencyOpacity,
     terminalUser,
-    logoutTerminalUser
+    logoutTerminalUser,
+    firebaseUser
   } = useTerminal();
 
   return (
@@ -140,7 +141,7 @@ export function Sidebar() {
               </div>
               <div className="relative h-1 w-full bg-white/5 rounded-full overflow-hidden">
                 <motion.div 
-                  className="absolute top-0 left-0 h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+                  className="absolute top-0 left-0 h-full bg-indigo-500 shadow-[0_0_100px_rgba(99,102,241,0.5)]"
                   animate={{ width: `${emergencyOpacity * 100}%` }}
                 />
                 <input
@@ -164,14 +165,22 @@ export function Sidebar() {
                   <UserCheck className="w-4 h-4 text-indigo-500" />
                </div>
                <div className="flex flex-col min-w-0">
-                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white truncate">{terminalUser?.username || 'Dispatcher'}</span>
-                  <span className="text-[8px] font-bold text-slate-600 truncate leading-none mt-1 uppercase">{terminalUser?.role || 'Operator'}</span>
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white truncate">
+                    {terminalUser?.username || firebaseUser?.displayName || firebaseUser?.email?.split('@')[0] || 'Dispatcher'}
+                  </span>
+                  <span className="text-[8px] font-bold text-slate-600 truncate leading-none mt-1 uppercase">
+                    {terminalUser?.role || (firebaseUser ? 'Root Admin' : 'Operator')}
+                  </span>
                </div>
              </div>
              <button 
-              onClick={() => {
+              onClick={async () => {
                 if (window.confirm("TERMINATE SESSION?")) {
                   logoutTerminalUser();
+                  if (firebaseUser) {
+                    const { auth } = await import('../../lib/firebase');
+                    await auth.signOut();
+                  }
                 }
               }}
               className="p-2 text-slate-600 hover:text-rose-500 transition-colors"
