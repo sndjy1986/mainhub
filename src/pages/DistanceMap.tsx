@@ -7,7 +7,7 @@ import { POST_DATA, INITIAL_UNITS, TRANSPORT_ADDRS, QRV_UNITS as DISPATCH_QRV } 
 import Map from '../components/distancechecker/Map';
 import UnitTable from '../components/distancechecker/UnitTable';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc } from 'firebase/firestore';
 import { ToneTestRecord } from '../types';
 
 import { useTerminal } from '../context/TerminalContext';
@@ -31,9 +31,19 @@ export default function DistanceMap() {
   
   const [toneRecords, setToneRecords] = useState<ToneTestRecord[]>([]);
   const [assignments, setAssignments] = useState<UnitAssignment[]>([]);
+  const [fleetConfigs, setFleetConfigs] = useState<import('../lib/firebase').UnitConfig[]>([]);
+  const [globalSettings, setGlobalSettings] = useState<any>(null);
 
   useEffect(() => {
     fetchCurrentUsage().then(setUsageCount);
+
+    const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), (s) => {
+      if (s.exists()) {
+        const data = s.data();
+        setGlobalSettings(data);
+        if (data.fleetConfigs) setFleetConfigs(data.fleetConfigs);
+      }
+    }, (error) => handleFirestoreError(error, OperationType.GET, 'settings/global'));
 
     const unsubTone = onSnapshot(query(collection(db, 'toneTests')), (snapshot) => {
       setToneRecords(snapshot.docs.map(doc => doc.data() as ToneTestRecord));
@@ -44,6 +54,7 @@ export default function DistanceMap() {
     }, (error) => handleFirestoreError(error, OperationType.GET, 'unitAssignments'));
 
     return () => {
+      unsubSettings();
       unsubTone();
       unsubAssign();
     };
@@ -61,10 +72,11 @@ export default function DistanceMap() {
 
       return upUnits.map(tr => {
         const unitId = tr.unit;
+        const config = fleetConfigs.find(c => c.id.toLowerCase() === unitId.toLowerCase());
         const assignment = assignments.find(a => a.unitId.toLowerCase() === unitId.toLowerCase());
         
         let coords: [number, number] | null = null;
-        let addr = TRANSPORT_ADDRS[unitId] || "Unknown Address";
+        let addr = config?.address || TRANSPORT_ADDRS[unitId] || "";
 
         if (assignment) {
           const post = POST_DATA.find(p => p.name === assignment.postName);
@@ -73,11 +85,14 @@ export default function DistanceMap() {
             addr = `Posted @ ${post.name}`;
           }
         } else {
-          const unitInfo = INITIAL_UNITS.find(iu => iu.id.toLowerCase() === unitId.toLowerCase());
-          if (unitInfo) {
-            const post = POST_DATA.find(p => p.name === unitInfo.home);
-            if (post) {
-              coords = [post.lon, post.lat];
+          // If NOT assigned, check if we have a valid post name to use for fixed coords
+          const homePostName = config?.homePost || INITIAL_UNITS.find(iu => iu.id.toLowerCase() === unitId.toLowerCase())?.home;
+          const post = homePostName ? POST_DATA.find(p => p.name === homePostName) : null;
+          
+          if (post) {
+            coords = [post.lon, post.lat];
+            // If the user hasn't provided a custom address in config, show the post name
+            if (!config?.address) {
               addr = `Home @ ${post.name}`;
             }
           }
@@ -95,10 +110,11 @@ export default function DistanceMap() {
       
       return medUnits.map(u => {
         const unitId = u.id;
+        const config = fleetConfigs.find(c => c.id.toLowerCase() === unitId.toLowerCase());
         const assignment = assignments.find(a => a.unitId.toLowerCase() === unitId.toLowerCase());
         
         let coords: [number, number] | null = null;
-        let addr = TRANSPORT_ADDRS[unitId] || "Unknown Address";
+        let addr = config?.address || TRANSPORT_ADDRS[unitId] || "";
 
         if (assignment) {
           const post = POST_DATA.find(p => p.name === assignment.postName);
@@ -107,10 +123,14 @@ export default function DistanceMap() {
             addr = `Posted @ ${post.name}`;
           }
         } else {
-          const post = POST_DATA.find(p => p.name === u.home);
+          const homePostName = config?.homePost || u.home;
+          const post = homePostName ? POST_DATA.find(p => p.name === homePostName) : null;
+          
           if (post) {
             coords = [post.lon, post.lat];
-            addr = `Home @ ${post.name}`;
+            if (!config?.address) {
+              addr = `Home @ ${post.name}`;
+            }
           }
         }
 
@@ -125,12 +145,21 @@ export default function DistanceMap() {
 
   // QRVs are always active for now, or we could filter them too if needed
   const activeQrvUnits = useMemo(() => {
+    const qrvConfigs = fleetConfigs.filter(c => c.type === 'qrv');
+    if (qrvConfigs.length > 0) {
+      return qrvConfigs.map(q => ({
+        name: q.name,
+        addr: q.address,
+        coords: null as [number, number] | null
+      }));
+    }
+
     return DISPATCH_QRV.map(q => ({
       name: q.name,
       addr: q.addr,
-      coords: null as [number, number] | null // We'll geocode these as they are static home based in this app's logic
+      coords: null as [number, number] | null
     }));
-  }, []);
+  }, [fleetConfigs]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,8 +194,8 @@ export default function DistanceMap() {
         return validEntries.map((v, i) => ({
           name: v.unit.name,
           addr: v.unit.addr,
-          distance: matrix.distances?.[0]?.[i+1] !== undefined ? matrix.distances[0][i+1] * 0.000621371 : undefined,
-          duration: matrix.durations?.[0]?.[i+1] !== undefined ? Math.round(matrix.durations[0][i+1] / 60) : undefined
+          distance: matrix.distances?.[0]?.[i] !== undefined ? matrix.distances[0][i] * 0.000621371 : undefined,
+          duration: matrix.durations?.[0]?.[i] !== undefined ? Math.round(matrix.durations[0][i] / 60) : undefined
         })).sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
       };
 
@@ -193,8 +222,16 @@ export default function DistanceMap() {
 
   const isLimitReached = usageCount >= API_LIMIT;
 
+  // Determine absolute prime response (closest between transport and qrv)
+  const primeResponse = useMemo(() => {
+    const all = [...transportResults, ...qrvResults]
+      .filter(u => u.distance !== undefined)
+      .sort((a, b) => (a.distance || 0) - (b.distance || 0));
+    return all[0] || null;
+  }, [transportResults, qrvResults]);
+
   return (
-    <div className="relative flex flex-col technical-grid text-text-main font-sans p-8 pt-12 overflow-hidden bg-bg-main">
+    <div className="relative flex flex-col technical-grid text-text-main font-sans p-8 pt-12 overflow-hidden bg-bg-main min-h-screen">
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="radar-sweep !opacity-10" />
@@ -215,12 +252,12 @@ export default function DistanceMap() {
           <p className="text-text-dim font-black uppercase tracking-[0.2em] text-[10px] ml-16">Real-time response logistics and fleet positioning for EMS Dispatch</p>
         </div>
         
-        <div className="flex items-center gap-6 tactical-card px-6 py-4 bg-brand-panel/50">
+        <div className="flex items-center gap-6 tactical-card px-6 py-4 bg-brand-panel/50 border-brand-border">
           <div className="text-right"> 
             <span className="block text-[8px] uppercase tracking-[0.3em] text-text-dim font-black">System Pulse</span> 
             <span className="text-brand-emerald font-black text-[10px] tracking-widest flex items-center justify-end gap-2 mt-1 uppercase">
               <span className="w-1.5 h-1.5 rounded-full bg-brand-emerald animate-pulse"></span> 
-              Ops Ready - {activeTransportUnits.length} Units Up
+              Ops Ready - {activeTransportUnits.length + activeQrvUnits.length} Units Up
             </span>
           </div>
         </div>
@@ -231,29 +268,29 @@ export default function DistanceMap() {
         <div className="w-[350px] flex flex-col gap-8 shrink-0">
           <div className="tactical-card p-8 space-y-6 shadow-2xl relative overflow-hidden group bg-brand-panel/80">
             <div className="absolute inset-0 bg-gradient-to-br from-brand-indigo/5 to-transparent pointer-events-none" />
-            <div className="space-y-4 relative"> 
-              <div className="flex items-center gap-2">
-                <Search className="w-3.5 h-3.5 text-brand-indigo" />
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-text-dim">Target Vector</label>
-              </div>
-              <form onSubmit={handleSearch} className="relative"> 
-                <input 
-                  type="text" 
-                  placeholder="DEPLOY TO ADDRESS..." 
-                  className="w-full tactical-input px-5 py-4 text-sm bg-brand-bg/50 border-brand-border text-text-main"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  disabled={loading || isLimitReached}
-                /> 
-                <button 
-                  type="submit"
-                  disabled={loading || isLimitReached || !address.trim()}
-                  className="absolute right-2 top-2 tactical-btn-indigo px-4 py-2 text-[10px] font-black shadow-brand-indigo"
-                >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "PING"}
-                </button>
-              </form>
-            </div>
+                <div className="space-y-4"> 
+                  <div className="flex items-center gap-2">
+                    <Search className="w-3.5 h-3.5 text-brand-indigo" />
+                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-text-dim">Target Vector</label>
+                  </div>
+                  <form onSubmit={handleSearch} className="relative"> 
+                    <input 
+                      type="text" 
+                      placeholder="DEPLOY TO ADDRESS..." 
+                      className="w-full h-14 bg-brand-panel/50 border border-brand-border rounded-2xl px-5 text-text-main font-mono text-sm focus:border-brand-indigo focus:ring-4 focus:ring-brand-indigo/10 transition-all outline-none placeholder:text-text-dim/30"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      disabled={loading || isLimitReached}
+                    />
+                    <button 
+                      type="submit"
+                      disabled={loading || isLimitReached || !address.trim()}
+                      className="absolute right-2 top-2 tactical-btn-indigo px-4 py-2 text-[10px] font-black shadow-brand-indigo"
+                    >
+                      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "PING"}
+                    </button>
+                  </form>
+                </div>
 
             {status && (
               <motion.div 
@@ -300,11 +337,11 @@ export default function DistanceMap() {
                 <div className="text-center bg-brand-bg/50 rounded-[2rem] p-8 border border-brand-border relative group overflow-hidden shadow-inner"> 
                   <div className="absolute inset-0 bg-brand-indigo/[0.02] group-hover:bg-brand-indigo/[0.05] transition-all" />
                   <span className="block text-6xl font-black text-text-main mb-2 glow-number leading-none">
-                    {transportResults.length > 0 ? transportResults[0].distance?.toFixed(1) : '--'}
+                    {primeResponse ? primeResponse.distance?.toFixed(2) : '--'}
                     <span className="text-sm font-black text-text-dim ml-1 uppercase tracking-widest">mi</span>
                   </span> 
                   <span className="text-[9px] text-brand-indigo uppercase font-black tracking-[0.2em] relative z-10 px-4 py-1.5 bg-brand-indigo/10 rounded-full border border-brand-indigo/20">
-                    Prime Response: {transportResults.length > 0 ? transportResults[0].name : 'STNDBY'}
+                    Prime Response: {primeResponse ? primeResponse.name : 'STNDBY'}
                   </span> 
                 </div> 
               </div>
@@ -369,13 +406,13 @@ export default function DistanceMap() {
                 >
                   <Map coords={destCoords} />
                   <div className="absolute top-6 left-6 z-[1000]">
-                    <div className="bg-black/60 backdrop-blur-xl p-4 rounded-2xl border border-white/10 shadow-2xl flex items-center gap-4">
-                       <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+                    <div className="bg-brand-panel/80 backdrop-blur-xl p-4 rounded-2xl border border-brand-border shadow-2xl flex items-center gap-4">
+                       <div className="w-8 h-8 rounded-lg bg-brand-indigo flex items-center justify-center text-white">
                           <MapIcon className="w-4 h-4" />
                        </div>
                        <div className="flex flex-col">
-                          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Overlay active</span>
-                          <span className="text-[10px] font-bold text-white uppercase tracking-widest">{address || 'No destination targeted'}</span>
+                          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-text-dim">Overlay active</span>
+                          <span className="text-[10px] font-bold text-text-main uppercase tracking-widest">{address || 'No destination targeted'}</span>
                        </div>
                     </div>
                   </div>

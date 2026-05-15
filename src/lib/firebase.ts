@@ -99,6 +99,14 @@ export type PersonnelMember = {
   certifications?: Certification[];
 };
 
+export type UnitConfig = {
+  id: string;
+  name: string;
+  homePost: string;
+  address: string;
+  type: 'transport' | 'qrv';
+};
+
 export type GlobalSettings = {
   backgroundStyle: 'glow' | 'emergency';
   lightIntensity: number;
@@ -106,6 +114,7 @@ export type GlobalSettings = {
   personnel?: PersonnelMember[];
   supervisors?: Record<string, string>;
   defaultCameraIds?: string[];
+  fleetConfigs?: UnitConfig[];
   updatedAt?: any;
   updatedBy?: string | null;
 };

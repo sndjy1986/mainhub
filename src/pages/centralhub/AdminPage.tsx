@@ -26,7 +26,8 @@ import {
   Camera,
   Search,
   Bell,
-  Cpu
+  Cpu,
+  Zap
 } from 'lucide-react';
 import { useTerminal, AppTheme } from '../../context/TerminalContext';
 import { 
@@ -83,6 +84,7 @@ export function AdminPage() {
   const [personnel, setPersonnel] = useState<PersonnelMember[]>([]);
   const [supervisors, setSupervisors] = useState<Record<string, string>>({});
   const [defaultCameraIds, setDefaultCameraIds] = useState<string[]>([]);
+  const [fleetConfigs, setFleetConfigs] = useState<import('../../lib/firebase').UnitConfig[]>([]);
   const [archivedReports, setArchivedReports] = useState<ShiftReportType[]>([]);
   const [loadingReports, setLoadingReports] = useState(false);
 
@@ -115,6 +117,7 @@ export function AdminPage() {
         if (data.personnel) setPersonnel(data.personnel);
         if (data.supervisors) setSupervisors(data.supervisors);
         if (data.defaultCameraIds) setDefaultCameraIds(data.defaultCameraIds);
+        if (data.fleetConfigs) setFleetConfigs(data.fleetConfigs);
       }
     });
 
@@ -246,6 +249,40 @@ export function AdminPage() {
     setPersonnel(merged);
     await updateGlobalSettings({ personnel: merged });
     setShowToast("Shift Personnel Synchronized");
+  };
+
+  const seedFleet = async () => {
+    if (!user) return;
+    if (fleetConfigs.length > 0 && !window.confirm("Fleet configuration already exists. This will reset to system defaults. Proceed?")) return;
+
+    const { INITIAL_UNITS, TRANSPORT_ADDRS, QRV_UNITS } = await import('../../lib/dispatchConstants');
+    
+    const transportFleet: import('../../lib/firebase').UnitConfig[] = INITIAL_UNITS.map(u => ({
+      id: u.id,
+      name: u.id,
+      homePost: u.home || 'Headquarters',
+      address: TRANSPORT_ADDRS[u.id] || "",
+      type: 'transport'
+    }));
+
+    const qrvFleet: import('../../lib/firebase').UnitConfig[] = QRV_UNITS.map(q => ({
+      id: q.name,
+      name: q.name,
+      homePost: 'Headquarters',
+      address: q.addr,
+      type: 'qrv'
+    }));
+
+    const fullFleet = [...transportFleet, ...qrvFleet];
+    setFleetConfigs(fullFleet);
+    await updateGlobalSettings({ fleetConfigs: fullFleet });
+    setShowToast("FLEET_MATRIX_INITIALIZED");
+  };
+
+  const updateFleetUnit = async (id: string, updates: Partial<import('../../lib/firebase').UnitConfig>) => {
+    const newFleet = fleetConfigs.map(u => u.id === id ? { ...u, ...updates } : u);
+    setFleetConfigs(newFleet);
+    await updateGlobalSettings({ fleetConfigs: newFleet });
   };
 
   const loadHistory = useCallback(async () => {
@@ -599,7 +636,75 @@ export function AdminPage() {
         </section>
       </div>
 
-      {/* Level 3: Orbital Feeds - Full Wide */}
+        {/* Level 3: Fleet Configuration Management */}
+        <section className="tactical-card p-10 space-y-10">
+          <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-brand-border">
+            <div>
+              <h3 className="text-2xl font-black text-text-main uppercase tracking-tight flex items-center gap-4">
+                <Truck className="w-6 h-6 text-brand-indigo" />
+                Fleet <span className="text-brand-indigo not-italic">Configuration</span>
+              </h3>
+              <p className="text-[10px] text-text-dim uppercase tracking-[0.3em] font-black mt-2">Manage unit home stations and response addresses</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <button 
+                disabled={!user}
+                onClick={seedFleet}
+                className="px-6 py-3 bg-brand-panel/30 border border-brand-border text-text-dim rounded-xl font-black uppercase tracking-widest text-[10px] hover:text-text-main hover:bg-brand-panel/50 transition-all disabled:opacity-30"
+                title="Populate from System Defaults"
+              >
+                Sync Defaults
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin">
+            {fleetConfigs.length === 0 ? (
+              <div className="col-span-full py-12 text-center border-2 border-dashed border-brand-border rounded-[2rem] bg-brand-bg/20">
+                <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">No Fleet Matrix Configured</p>
+              </div>
+            ) : (
+              fleetConfigs.map(unit => (
+                <div key={unit.id} className="p-6 bg-brand-panel/40 border border-brand-border rounded-2xl group hover:border-brand-indigo/40 transition-all space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${unit.type === 'transport' ? 'bg-brand-indigo/10 border-brand-indigo/30 text-brand-indigo' : 'bg-brand-emerald/10 border-brand-emerald/30 text-brand-emerald'}`}>
+                        {unit.type === 'transport' ? <Truck size={14} /> : <Zap size={14} />}
+                      </div>
+                      <span className="text-sm font-black text-text-main uppercase">{unit.id}</span>
+                    </div>
+                    <span className="text-[8px] font-black px-2 py-0.5 rounded bg-brand-panel/30 border border-brand-border text-text-dim uppercase tracking-widest leading-none">
+                      {unit.type}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-black text-text-dim uppercase tracking-widest">Home Post</label>
+                      <input 
+                        type="text"
+                        value={unit.homePost}
+                        onChange={(e) => updateFleetUnit(unit.id, { homePost: e.target.value })}
+                        className="w-full bg-brand-bg/50 border border-brand-border rounded-lg px-3 py-2 text-[10px] text-text-main font-mono uppercase focus:border-brand-indigo outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-black text-text-dim uppercase tracking-widest">Response Address</label>
+                      <textarea 
+                        value={unit.address}
+                        rows={2}
+                        onChange={(e) => updateFleetUnit(unit.id, { address: e.target.value })}
+                        className="w-full bg-brand-bg/50 border border-brand-border rounded-lg px-3 py-2 text-[10px] text-text-main font-mono uppercase focus:border-brand-indigo outline-none resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+
+        {/* Level 4: Orbital Feeds - Full Wide */}
         <section className="tactical-card p-10 space-y-8">
            <div className="flex items-center justify-between border-b border-white/5 pb-6">
              <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic font-sans">
