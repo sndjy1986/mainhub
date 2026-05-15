@@ -1,5 +1,5 @@
 import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser, signInAnonymously } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer, collection, addDoc, query, orderBy, limit, getDocs, Timestamp, onSnapshot, setDoc, updateDoc, terminate, clearIndexedDbPersistence, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -156,5 +156,5 @@ export async function getReports(limitCount: number = 50) {
   }
 }
 
-export { signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser, doc, onSnapshot, query, orderBy, collection, addDoc, updateDoc, Timestamp, serverTimestamp, setDoc, deleteDoc, getDocs };
+export { signInAnonymously, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser, doc, onSnapshot, query, orderBy, collection, addDoc, updateDoc, Timestamp, serverTimestamp, setDoc, deleteDoc, getDocs };
 

@@ -54,310 +54,189 @@
   --color-slate-800: var(--brand-panel);
   --color-slate-900: var(--bg-surface);
   --color-slate-950: var(--bg-main);
+  --color-text-main: var(--text-main);
+  --color-text-dim: var(--text-dim);
 }
 
 :root {
-  /* Midnight (Default Blue) */
-  --brand-blue: #3b82f6;
-  --brand-indigo: #6366f1;
-  --brand-indigo-dark: #4f46e5;
-  --brand-indigo-darker: #4338ca;
-  --brand-emerald: #10b981;
-  --brand-panel: #1e293b;
-  --brand-border: #334155;
-  --brand-bg: #0f172a;
-  --brand-field: #1e293b;
-  --brand-accent: #818cf8;
-  --brand-accent-medium: #a5b4fc;
-  --brand-accent-light: #c7d2fe;
-  --brand-accent-soft: #e0e7ff;
-  --bg-main: #0a0c10;
-  --bg-surface: #1a1d23;
+  /* Paper (Default Medium-Light) */
+  --brand-blue: #4338ca;
+  --brand-indigo: #4338ca;
+  --brand-indigo-dark: #3730a3;
+  --brand-indigo-darker: #312e81;
+  --brand-emerald: #059669;
+  --brand-panel: #f1f5f9;
+  --brand-border: #cbd5e1;
+  --brand-bg: #e2e8f0;
+  --brand-field: #ffffff;
+  --brand-accent: #4f46e5;
+  --brand-accent-medium: #6366f1;
+  --brand-accent-light: #818cf8;
+  --brand-accent-soft: #c7d2fe;
+  --bg-main: #e2e8f0;
+  --bg-surface: #f1f5f9;
+  --text-main: #0f172a;
+  --text-dim: #334155;
 }
 
-[data-theme='emerald'] {
-  /* Tactical Green */
-  --brand-blue: #10b981;
-  --brand-indigo: #10b981;
-  --brand-indigo-dark: #059669;
-  --brand-indigo-darker: #047857;
-  --brand-emerald: #34d399;
-  --brand-panel: #064e3b;
-  --brand-border: #065f46;
-  --brand-bg: #022c22;
-  --brand-field: #064e3b;
-  --brand-accent: #34d399;
-  --brand-accent-medium: #6ee7b7;
-  --brand-accent-light: #a7f3d0;
-  --brand-accent-soft: #d1fae5;
-  --bg-main: #011612;
-  --bg-surface: #022c22;
-}
-
-[data-theme='amber'] {
-  /* Amber / Gold */
-  --brand-blue: #f59e0b;
-  --brand-indigo: #f59e0b;
-  --brand-indigo-dark: #d97706;
-  --brand-indigo-darker: #b45309;
-  --brand-emerald: #fbbf24;
-  --brand-panel: #451a03;
-  --brand-border: #78350f;
-  --brand-bg: #1c1007;
-  --brand-field: #451a03;
-  --brand-accent: #fbbf24;
-  --brand-accent-medium: #fcd34d;
-  --brand-accent-light: #fde68a;
+[data-theme='ivory'] {
+  /* Ivory / Muted Sand */
+  --brand-blue: #78350f;
+  --brand-indigo: #78350f;
+  --brand-indigo-dark: #451a03;
+  --brand-indigo-darker: #451a03;
+  --brand-emerald: #059669;
+  --brand-panel: #fdf6e3;
+  --brand-border: #eee8d5;
+  --brand-bg: #eee8d5;
+  --brand-field: #fffefb;
+  --brand-accent: #b45309;
+  --brand-accent-medium: #d97706;
+  --brand-accent-light: #f59e0b;
   --brand-accent-soft: #fef3c7;
-  --bg-main: #0c0a09;
-  --bg-surface: #1c1007;
+  --bg-main: #eee8d5;
+  --bg-surface: #fdf6e3;
+  --text-main: #451a03;
+  --text-dim: #92400e;
 }
 
-[data-theme='slate'] {
-  /* Slate / Charcoal */
-  --brand-blue: #64748b;
-  --brand-indigo: #64748b;
-  --brand-indigo-dark: #475569;
-  --brand-indigo-darker: #334155;
-  --brand-emerald: #94a3b8;
-  --brand-panel: #1e293b;
-  --brand-border: #334155;
-  --brand-bg: #0f172a;
-  --brand-field: #1e293b;
-  --brand-accent: #94a3b8;
-  --brand-accent-medium: #cbd5e1;
-  --brand-accent-light: #e2e8f0;
-  --brand-accent-soft: #f1f5f9;
-  --bg-main: #020617;
-  --bg-surface: #0f172a;
+[data-theme='frost'] {
+  /* Frost / Moody Blue */
+  --brand-blue: #1e40af;
+  --brand-indigo: #1e40af;
+  --brand-emerald: #0e7490;
+  --brand-panel: #e0f2fe;
+  --brand-border: #bae6fd;
+  --brand-bg: #bae6fd;
+  --brand-field: #ffffff;
+  --brand-accent: #2563eb;
+  --brand-accent-medium: #3b82f6;
+  --brand-accent-light: #60a5fa;
+  --brand-accent-soft: #dbeafe;
+  --bg-main: #bae6fd;
+  --bg-surface: #e0f2fe;
+  --text-main: #1e3a8a;
+  --text-dim: #2563eb;
 }
 
-[data-theme='crimson'] {
-  /* Crimson / Blood */
-  --brand-blue: #ef4444;
-  --brand-indigo: #ef4444;
-  --brand-indigo-dark: #dc2626;
-  --brand-indigo-darker: #b91c1c;
-  --brand-emerald: #f87171;
-  --brand-panel: #450a0a;
-  --brand-border: #7f1d1d;
-  --brand-bg: #1c0707;
-  --brand-field: #450a0a;
-  --brand-accent: #fca5a5;
-  --brand-accent-medium: #fecaca;
-  --brand-accent-light: #fee2e2;
-  --brand-accent-soft: #fef2f2;
-  --bg-main: #0c0202;
-  --bg-surface: #1c0707;
-}
-
-[data-theme='cyber'] {
-  /* Cyber / Cyberpunk */
-  --brand-blue: #06b6d4;
-  --brand-indigo: #06b6d4;
-  --brand-indigo-dark: #0891b2;
-  --brand-indigo-darker: #0e7490;
-  --brand-emerald: #22d3ee;
-  --brand-panel: #083344;
-  --brand-border: #155e75;
-  --brand-bg: #042f2e;
-  --brand-field: #083344;
-  --brand-accent: #67e8f9;
-  --brand-accent-medium: #a5f3fc;
-  --brand-accent-light: #cffafe;
-  --brand-accent-soft: #ecfeff;
-  --bg-main: #020617;
-  --bg-surface: #042f2e;
-}
-
-[data-theme='royal'] {
-  /* Command Purple */
-  --brand-blue: #8b5cf6;
-  --brand-indigo: #8b5cf6;
-  --brand-indigo-dark: #7c3aed;
-  --brand-indigo-darker: #6d28d9;
-  --brand-emerald: #a78bfa;
-  --brand-panel: #2e1065;
-  --brand-border: #4c1d95;
-  --brand-bg: #1e1b4b;
-  --brand-field: #2e1065;
-  --brand-accent: #c084fc;
-  --brand-accent-medium: #d8b4fe;
-  --brand-accent-light: #e9d5ff;
-  --brand-accent-soft: #f5f3ff;
-  --bg-main: #0f172a;
-  --bg-surface: #1e1b4b;
-}
-
-[data-theme='forest'] {
-  /* Forest / Deep Green */
-  --brand-blue: #22c55e;
-  --brand-indigo: #16a34a;
-  --brand-indigo-dark: #15803d;
-  --brand-indigo-darker: #14532d;
-  --brand-emerald: #4ade80;
-  --brand-panel: #064e3b;
-  --brand-border: #065f46;
-  --brand-bg: #022c22;
-  --brand-field: #064e3b;
-  --brand-accent: #86efac;
-  --brand-accent-medium: #bbf7d0;
-  --brand-accent-light: #dcfce7;
-  --brand-accent-soft: #f0fdf4;
-  --bg-main: #020617;
-  --bg-surface: #064e3b;
+[data-theme='sky'] {
+  /* Sky / Stormy Blue */
+  --brand-blue: #0369a1;
+  --brand-indigo: #0369a1;
+  --brand-emerald: #0f766e;
+  --brand-panel: #7dd3fc;
+  --brand-border: #38bdf8;
+  --brand-bg: #bae6fd;
+  --brand-field: #ffffff;
+  --brand-accent: #0284c7;
+  --brand-accent-medium: #0ea5e9;
+  --brand-accent-light: #7dd3fc;
+  --brand-accent-soft: #bae6fd;
+  --bg-main: #7dd3fc;
+  --bg-surface: #e0f2fe;
+  --text-main: #0c4a6e;
+  --text-dim: #0284c7;
 }
 
 [data-theme='arctic'] {
-  /* Arctic / Ice */
-  --brand-blue: #0ea5e9;
-  --brand-indigo: #0ea5e9;
-  --brand-indigo-dark: #0284c7;
-  --brand-indigo-darker: #0369a1;
-  --brand-emerald: #38bdf8;
-  --brand-panel: #0c4a6e;
-  --brand-border: #075985;
-  --brand-bg: #f0f9ff;
-  --brand-field: #0c4a6e;
-  --brand-accent: #7dd3fc;
-  --brand-accent-medium: #bae6fd;
-  --brand-accent-light: #e0f2fe;
+  /* Arctic / Deep Ice */
+  --brand-blue: #0369a1;
+  --brand-indigo: #0369a1;
+  --brand-indigo-dark: #0c4a6e;
+  --brand-indigo-darker: #082f49;
+  --brand-emerald: #059669;
+  --brand-panel: #e2e8f0;
+  --brand-border: #cbd5e1;
+  --brand-bg: #e2e8f0;
+  --brand-field: #ffffff;
+  --brand-accent: #0ea5e9;
+  --brand-accent-medium: #38bdf8;
+  --brand-accent-light: #7dd3fc;
   --brand-accent-soft: #f0f9ff;
-  --bg-main: #f8fafc;
-  --bg-surface: #e2e8f0;
+  --bg-main: #e2e8f0;
+  --bg-surface: #cbd5e1;
+  --text-main: #0c4a6e;
+  --text-dim: #0369a1;
 }
 
-[data-theme='desert'] {
-  /* Desert / Mirage */
-  --brand-blue: #f59e0b;
-  --brand-indigo: #d97706;
-  --brand-indigo-dark: #b45309;
-  --brand-indigo-darker: #92400e;
-  --brand-emerald: #fbbf24;
-  --brand-panel: #451a03;
-  --brand-border: #78350f;
-  --brand-bg: #1c1917;
-  --brand-field: #451a03;
-  --brand-accent: #fcd34d;
-  --brand-accent-medium: #fde68a;
-  --brand-accent-light: #fef3c7;
-  --brand-accent-soft: #fffbeb;
-  --bg-main: #0c0a09;
-  --bg-surface: #1c1917;
+[data-theme='paper'] {
+  /* Paper / Modern Slate */
+  --brand-blue: #334155;
+  --brand-indigo: #4338ca;
+  --brand-indigo-dark: #3730a3;
+  --brand-indigo-darker: #312e81;
+  --brand-emerald: #059669;
+  --brand-panel: #f1f5f9;
+  --brand-border: #cbd5e1;
+  --brand-bg: #e2e8f0;
+  --brand-field: #ffffff;
+  --brand-accent: #64748b;
+  --brand-accent-medium: #94a3b8;
+  --brand-accent-light: #cbd5e1;
+  --brand-accent-soft: #e2e8f0;
+  --bg-main: #e2e8f0;
+  --bg-surface: #f1f5f9;
+  --text-main: #0f172a;
+  --text-dim: #334155;
 }
 
-[data-theme='nebula'] {
-  /* Nebula / Cosmic */
-  --brand-blue: #d946ef;
-  --brand-indigo: #a21caf;
-  --brand-indigo-dark: #86198f;
-  --brand-indigo-darker: #701a75;
-  --brand-emerald: #e879f9;
-  --brand-panel: #4a044e;
-  --brand-border: #701a75;
-  --brand-bg: #1e1b4b;
-  --brand-field: #4a044e;
-  --brand-accent: #f0abfc;
-  --brand-accent-medium: #f5d0fe;
-  --brand-accent-light: #fae8ff;
-  --brand-accent-soft: #fdf4ff;
-  --bg-main: #020617;
-  --bg-surface: #1e1b4b;
+[data-theme='cream'] {
+  /* Cream / Tan */
+  --brand-blue: #78350f;
+  --brand-indigo: #78350f;
+  --brand-indigo-dark: #451a03;
+  --brand-indigo-darker: #451a03;
+  --brand-emerald: #065f46;
+  --brand-panel: #eee8d5;
+  --brand-border: #dcd7c4;
+  --brand-bg: #eee8d5;
+  --brand-field: #fffffa;
+  --brand-accent: #b45309;
+  --brand-accent-medium: #d97706;
+  --brand-accent-light: #f59e0b;
+  --brand-accent-soft: #fef3c7;
+  --bg-main: #eee8d5;
+  --bg-surface: #fdf6e3;
+  --text-main: #451a03;
+  --text-dim: #78350f;
 }
 
-[data-theme='titanium'] {
-  /* Titanium / Alloy */
-  --brand-blue: #94a3b8;
-  --brand-indigo: #64748b;
-  --brand-indigo-dark: #475569;
-  --brand-indigo-darker: #334155;
-  --brand-emerald: #cbd5e1;
-  --brand-panel: #1e293b;
-  --brand-border: #334155;
-  --brand-bg: #0f172a;
-  --brand-field: #1e293b;
-  --brand-accent: #cbd5e1;
-  --brand-accent-medium: #e2e8f0;
-  --brand-accent-light: #f1f5f9;
-  --brand-accent-soft: #f8fafc;
-  --bg-main: #020617;
-  --bg-surface: #1e293b;
+[data-theme='mint'] {
+  /* Mint / Sage */
+  --brand-blue: #064e40;
+  --brand-indigo: #064e40;
+  --brand-emerald: #059669;
+  --brand-panel: #dcfce7;
+  --brand-border: #bbf7d0;
+  --brand-bg: #dcfce7;
+  --brand-field: #ffffff;
+  --brand-accent: #10b981;
+  --brand-accent-medium: #34d399;
+  --brand-accent-light: #6ee7b7;
+  --brand-accent-soft: #d1fae5;
+  --bg-main: #dcfce7;
+  --bg-surface: #bbf7d0;
+  --text-main: #064e3b;
+  --text-dim: #059669;
 }
 
-[data-theme='neon'] {
-  /* Neon / Night */
-  --brand-blue: #ff00ff;
-  --brand-indigo: #ff00ff;
-  --brand-indigo-dark: #d900d9;
-  --brand-indigo-darker: #b300b3;
-  --brand-emerald: #00ffff;
-  --brand-panel: #2d005d;
-  --brand-border: #5a00b3;
-  --brand-bg: #000000;
-  --brand-field: #2d005d;
-  --brand-accent: #ff77ff;
-  --brand-accent-medium: #ff99ff;
-  --brand-accent-light: #ffbbff;
-  --brand-accent-soft: #ffddff;
-  --bg-main: #000000;
-  --bg-surface: #111111;
-}
-
-[data-theme='ghost'] {
-  /* Ghost / Mono */
-  --brand-blue: #ffffff;
-  --brand-indigo: #ffffff;
-  --brand-indigo-dark: #e5e5e5;
-  --brand-indigo-darker: #d4d4d4;
-  --brand-emerald: #ffffff;
-  --brand-panel: #000000;
-  --brand-border: #262626;
-  --brand-bg: #000000;
-  --brand-field: #171717;
-  --brand-accent: #ffffff;
-  --brand-accent-medium: #f5f5f5;
-  --brand-accent-light: #e5e5e5;
-  --brand-accent-soft: #d4d4d4;
-  --bg-main: #000000;
-  --bg-surface: #0a0a0a;
-}
-
-[data-theme='ocean'] {
-  /* Ocean / Deep Sea */
-  --brand-blue: #0ea5e9;
-  --brand-indigo: #0ea5e9;
-  --brand-indigo-dark: #0284c7;
-  --brand-indigo-darker: #0369a1;
-  --brand-emerald: #14b8a6;
-  --brand-panel: #083344;
-  --brand-border: #155e75;
-  --brand-bg: #042f2e;
-  --brand-field: #083344;
-  --brand-accent: #67e8f9;
-  --brand-accent-medium: #a5f3fc;
-  --brand-accent-light: #cffafe;
-  --brand-accent-soft: #ecfeff;
-  --bg-main: #020617;
-  --bg-surface: #083344;
-}
-
-[data-theme='blood'] {
-  /* Blood / Deep Red */
-  --brand-blue: #ef4444;
-  --brand-indigo: #991b1b;
-  --brand-indigo-dark: #7f1d1d;
-  --brand-indigo-darker: #450a0a;
-  --brand-emerald: #dc2626;
-  --brand-panel: #450a0a;
-  --brand-border: #7f1d1d;
-  --brand-bg: #1c0707;
-  --brand-field: #450a0a;
-  --brand-accent: #f87171;
-  --brand-accent-medium: #fca5a5;
-  --brand-accent-light: #fecaca;
-  --brand-accent-soft: #fee2e2;
-  --bg-main: #0c0202;
-  --bg-surface: #1c0707;
+[data-theme='clay'] {
+  /* Clay / Heathered Purple */
+  --brand-blue: #5b21b6;
+  --brand-indigo: #5b21b6;
+  --brand-emerald: #7c3aed;
+  --brand-panel: #ddd6fe;
+  --brand-border: #c4b5fd;
+  --brand-bg: #ddd6fe;
+  --brand-field: #ffffff;
+  --brand-accent: #7c3aed;
+  --brand-accent-medium: #8b5cf6;
+  --brand-accent-light: #a78bfa;
+  --brand-accent-soft: #ddd6fe;
+  --bg-main: #ddd6fe;
+  --bg-surface: #ede9fe;
+  --text-main: #2e1065;
+  --text-dim: #5b21b6;
 }
 
 @layer components {
@@ -452,7 +331,6 @@
 
   .leaflet-container {
     background: #fdfdfd !important;
-    filter: invert(100%) hue-rotate(180deg) brightness(1.05) contrast(1.1) saturate(0.5) !important;
   }
 
   .tactical-input {

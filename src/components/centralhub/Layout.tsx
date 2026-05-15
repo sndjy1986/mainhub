@@ -35,7 +35,7 @@ export function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="h-screen bg-brand-bg text-slate-200 relative overflow-hidden font-sans transition-colors duration-500" data-theme={appTheme}>
+    <div className="h-screen bg-brand-bg text-text-main relative overflow-hidden font-sans transition-colors duration-500" data-theme={appTheme}>
       {/* Decorative Background Elements (Original) */}
       <div className="fixed top-[-10%] left-[-10%] w-[400px] h-[400px] bg-brand-indigo/10 rounded-full blur-[100px] pointer-events-none transition-colors duration-500"></div>
       <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-brand-emerald/05 rounded-full blur-[120px] pointer-events-none transition-colors duration-500"></div>
@@ -60,7 +60,7 @@ export function Layout({ children }: LayoutProps) {
                     ${note.type === 'error' ? 'bg-rose-500/10 border-rose-500/20' : 
                       note.type === 'warning' ? 'bg-amber-500/10 border-amber-500/20' :
                       note.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20' :
-                      'bg-indigo-500/10 border-indigo-500/20'}
+                      'bg-brand-panel/80 border-white/10'}
                   `}>
                     <div className={`
                       w-10 h-10 rounded-xl flex items-center justify-center shrink-0
@@ -76,17 +76,17 @@ export function Layout({ children }: LayoutProps) {
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-0.5">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-text-dim mb-0.5">
                         {note.type === 'info' ? 'System Notification' : `AI ${note.type.toUpperCase()} ALERT`}
                       </p>
-                      <p className="text-sm font-bold text-white selection:bg-indigo-500/30 leading-snug">
+                      <p className={`text-sm font-bold selection:bg-indigo-500/30 leading-snug ${note.type === 'info' ? 'text-text-main' : 'text-white'}`}>
                         {note.message}
                       </p>
                     </div>
 
                     <button 
                       onClick={() => removeNotification(note.id)}
-                      className="p-1 hover:bg-white/5 rounded-lg text-slate-500 hover:text-white transition-all"
+                      className="p-1 hover:bg-white/5 rounded-lg text-text-dim hover:text-text-main transition-all"
                     >
                       <CloseIcon className="w-4 h-4" />
                     </button>

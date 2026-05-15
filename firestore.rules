@@ -8,7 +8,10 @@ service cloud.firestore {
       return isSignedIn() && request.auth.token.email == 'sndjy1986@gmail.com';
     }
     function isOperator() {
-      return isSignedIn() && (request.auth.token.email.endsWith('@dispatcher.terminal') || isSuperAdmin());
+      return isSignedIn() && (
+        (request.auth.token.email != null && request.auth.token.email.endsWith('@dispatcher.terminal')) || 
+        isSuperAdmin()
+      );
     }
 
     match /{document=**} {
@@ -23,7 +26,8 @@ service cloud.firestore {
     match /reports/{reportId} { allow write: if isOperator(); }
     match /toneTests/{testId} { allow write: if isOperator(); }
     match /terminal_users/{username} { 
-      allow read: if isSignedIn(); // Allow reading metadata for login/role checks
+      allow get: if true; // Support checking existence for login
+      allow list: if isOperator();
       allow write: if isSuperAdmin();
     }
   }

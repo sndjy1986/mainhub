@@ -58,7 +58,7 @@ export function Sidebar() {
         <div className="flex items-center gap-3 mb-10 group">
           <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center font-black text-white shadow-[0_0_20px_rgba(79,70,229,0.4)] group-hover:scale-110 transition-all duration-500">D</div>
           <div className="flex flex-col">
-            <span className="text-sm font-black tracking-[0.2em] text-white uppercase leading-none">Dispatch</span>
+            <span className="text-sm font-black tracking-[0.2em] text-text-main uppercase leading-none">Dispatch</span>
             <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.3em] mt-1">Terminal</span>
           </div>
         </div>
@@ -66,7 +66,7 @@ export function Sidebar() {
       
       <nav className="flex-1 px-4 space-y-1 relative">
         <div className="px-4 mb-4">
-          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600">Core Command</span>
+          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-text-dim">Core Command</span>
         </div>
         {navItems.map((item) => (
           item.external ? (
@@ -75,7 +75,7 @@ export function Sidebar() {
               href={item.path}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-slate-500 hover:bg-white/5 hover:text-white border border-transparent group relative"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-text-dim hover:bg-white/5 hover:text-text-main border border-transparent group relative"
             >
               <item.icon className="w-4 h-4 flex-shrink-0 group-hover:text-indigo-400 transition-colors" />
               <span className="text-[11px] font-bold uppercase tracking-widest">{item.label}</span>
@@ -86,17 +86,17 @@ export function Sidebar() {
               to={item.path}
               className={({ isActive }) => `
                 flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative
-                  ${isActive ? 'text-white' : 'text-slate-500 hover:text-slate-200'}
+                  ${isActive ? 'text-text-main font-black' : 'text-text-dim hover:text-text-main'}
               `}
             >
               {({ isActive }) => (
                 <>
-                  <item.icon className={cn("w-4 h-4 flex-shrink-0 transition-colors relative z-10", isActive ? "text-indigo-400" : "group-hover:text-indigo-300")} />
+                  <item.icon className={cn("w-4 h-4 flex-shrink-0 transition-colors relative z-10", isActive ? "text-indigo-500" : "group-hover:text-indigo-300")} />
                   <span className="text-[11px] font-black uppercase tracking-widest relative z-10">{item.label}</span>
                   {isActive && (
                     <motion.div 
                       layoutId="nav-active"
-                      className="absolute inset-0 bg-white/5 border border-white/5 rounded-xl shadow-inner shadow-indigo-500/10"
+                      className="absolute inset-0 bg-white/10 border border-white/5 rounded-xl shadow-inner shadow-indigo-500/10"
                       initial={false}
                       transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                     />
@@ -110,14 +110,14 @@ export function Sidebar() {
 
       <div className="px-4 py-6 space-y-4 relative">
         <div className="px-4">
-          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600">System Link</span>
+          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-text-dim">System Link</span>
         </div>
         {/* Emergency Controls in Sidebar */}
-        <div className="p-4 bg-black/40 border border-white/5 rounded-2xl space-y-4 shadow-inner">
+        <div className="p-4 bg-black/5 border border-white/10 rounded-2xl space-y-4 shadow-inner">
            <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-500">Strobes</span>
-                <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${manualEmergencyMode ? 'text-rose-500 glow-text-indigo' : 'text-slate-600'}`}>
+                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-text-dim">Strobes</span>
+                <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${manualEmergencyMode ? 'text-rose-500 glow-text-indigo' : 'text-text-dim'}`}>
                   {manualEmergencyMode ? 'Overdrive' : 'Standby'}
                 </span>
               </div>
@@ -127,7 +127,7 @@ export function Sidebar() {
                   w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-500 border
                   ${manualEmergencyMode 
                     ? 'bg-rose-500 text-white border-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.4)]' 
-                    : 'bg-white/5 border-white/5 text-slate-600 hover:border-white/10 hover:text-slate-400'}
+                    : 'bg-white/5 border-white/5 text-text-dim hover:border-white/10 hover:text-text-main'}
                 `}
               >
                 <Siren className={`w-4 h-4 ${manualEmergencyMode ? 'animate-pulse' : ''}`} />
@@ -135,11 +135,11 @@ export function Sidebar() {
            </div>
            
            <div className="space-y-2">
-              <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-[0.3em] text-slate-600">
+              <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-[0.3em] text-text-dim">
                 <span>Power Level</span>
                 <span className="font-mono text-indigo-500">{(emergencyOpacity * 100).toFixed(0)}%</span>
               </div>
-              <div className="relative h-1 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="relative h-1 w-full bg-white/10 rounded-full overflow-hidden">
                 <motion.div 
                   className="absolute top-0 left-0 h-full bg-indigo-500 shadow-[0_0_100px_rgba(99,102,241,0.5)]"
                   animate={{ width: `${emergencyOpacity * 100}%` }}
@@ -159,16 +159,16 @@ export function Sidebar() {
 
         {/* User Profile & Admin Access */}
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between px-4 py-3 bg-black/40 border border-white/5 rounded-2xl group shadow-inner">
+          <div className="flex items-center justify-between px-4 py-3 bg-black/5 border border-white/10 rounded-2xl group shadow-inner">
              <div className="flex items-center gap-3 min-w-0">
                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 group-hover:border-indigo-500/40 transition-all">
                   <UserCheck className="w-4 h-4 text-indigo-500" />
                </div>
                <div className="flex flex-col min-w-0">
-                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white truncate">
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-text-main truncate">
                     {terminalUser?.username || firebaseUser?.displayName || firebaseUser?.email?.split('@')[0] || 'Dispatcher'}
                   </span>
-                  <span className="text-[8px] font-bold text-slate-600 truncate leading-none mt-1 uppercase">
+                  <span className="text-[8px] font-bold text-text-dim truncate leading-none mt-1 uppercase">
                     {terminalUser?.role || (firebaseUser ? 'Root Admin' : 'Operator')}
                   </span>
                </div>
@@ -183,7 +183,7 @@ export function Sidebar() {
                   }
                 }
               }}
-              className="p-2 text-slate-600 hover:text-rose-500 transition-colors"
+              className="p-2 text-text-dim hover:text-rose-500 transition-colors"
               title="Terminate Session"
              >
                <LogOut size={14} />
@@ -192,7 +192,7 @@ export function Sidebar() {
 
           <Link 
             to="/admin/settings"
-            className="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-600 hover:text-indigo-400 transition-all border border-transparent hover:bg-indigo-500/5 group"
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl text-text-dim hover:text-indigo-400 transition-all border border-transparent hover:bg-indigo-500/5 group"
           >
             <Lock className="w-4 h-4 group-hover:scale-110 transition-transform" />
             <span className="text-[9px] font-black uppercase tracking-[0.3em]">Matrix Auth</span>

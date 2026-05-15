@@ -20,90 +20,92 @@ export function LoginPage() {
     setErrorMsg('');
 
     try {
-      // Use Firebase Email/Password Auth
-      // We append a suffix to allow "usernames"
-      const email = username.toLowerCase().includes('@') ? username : `${username.toLowerCase()}@dispatcher.terminal`;
-      const { signInWithEmailAndPassword, auth } = await import('../../lib/firebase');
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const { signInWithEmailAndPassword, auth, db } = await import('../../lib/firebase');
+      const email = `${username.toLowerCase().trim()}@dispatcher.terminal`;
       
-      if (userCredential.user) {
-        // Fetch role from Firestore
-        const userRef = doc(db, 'terminal_users', username.toLowerCase());
-        const userSnap = await getDoc(userRef);
-        const role = userSnap.exists() ? userSnap.data().role : 'dispatcher';
+      // Phase 1: Authenticate via Firebase Auth
+      await signInWithEmailAndPassword(auth, email, password);
 
+      // Phase 2: Retrieve role from Firestore
+      const userRef = doc(db, 'terminal_users', username.toLowerCase());
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        const role = userSnap.data().role || 'dispatcher';
         setStatus('success');
         setTimeout(() => {
           loginTerminalUser(username.toLowerCase(), role);
         }, 800);
+      } else {
+        setStatus('error');
+        setErrorMsg('IDENTITY_CORE_MISSING // ACCESS_VOID');
       }
     } catch (err: any) {
       console.error(err);
       setStatus('error');
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-        setErrorMsg('CREDENTIAL_MISMATCH // ACCESS_DENIED');
-      } else {
-        setErrorMsg('SYSTEM_ERROR // UPLINK_FAILURE');
-      }
+      setErrorMsg(err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' 
+        ? 'INVALID_CREDENTIALS // ACCESS_DENIED' 
+        : 'SYSTEM_ERROR // UPLINK_FAILURE');
     }
   };
 
   return (
-    <div className="min-h-screen bg-bg-main flex items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-bg-main flex items-center justify-center p-6 relative overflow-hidden transition-colors duration-500">
       {/* Background Ambience */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.05)_0%,transparent_70%)]" />
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_80%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_80%)]" />
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-md w-full relative z-10"
       >
-        <div className="tactical-card p-10 space-y-10 border-indigo-500/20 bg-black/40 backdrop-blur-3xl shadow-[0_0_100px_rgba(0,0,0,0.5)]">
+        <div className="tactical-card p-10 space-y-10 border-indigo-500/20 bg-brand-panel/80 backdrop-blur-3xl shadow-[0_0_100px_rgba(0,0,0,0.1)]">
           {/* Header */}
           <div className="flex flex-col items-center text-center space-y-6">
             <div className="w-16 h-16 rounded-[2rem] bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center relative group">
               <div className="absolute inset-0 bg-indigo-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-              <Shield className="w-8 h-8 text-indigo-400 relative z-10" />
+              <Shield className="w-8 h-8 text-indigo-500 relative z-10" />
             </div>
             <div className="space-y-2">
-              <h1 className="text-3xl font-black text-white uppercase tracking-tighter italic">
-                Sector <span className="text-indigo-500 not-italic">Login</span>
+              <h1 className="text-3xl font-black text-text-main uppercase tracking-tighter italic">
+                Strategic <span className="text-indigo-500 not-italic">Access</span>
               </h1>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.4em]">
-                Authenticating Tactical Node Access
+              <p className="text-[10px] text-text-dim font-black uppercase tracking-[0.4em]">
+                Authenticating Node Presence
               </p>
             </div>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-8">
+          <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2 group">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">Operator ID</label>
+                <label className="text-[9px] font-black text-text-dim uppercase tracking-widest px-1">Operator Identity</label>
                 <div className="relative">
-                  <Terminal className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-indigo-400 transition-colors" />
+                  <Terminal className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-indigo-500 transition-colors" />
                   <input 
                     type="text" 
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    autoComplete="off"
-                    placeholder="Enter ID..."
-                    className="w-full h-14 bg-black/40 border border-white/10 rounded-2xl px-12 text-white font-mono text-sm focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none placeholder:text-slate-700"
+                    autoComplete="username"
+                    placeholder="USERNAME"
+                    className="w-full h-14 bg-white/5 border border-black/5 rounded-2xl px-12 text-text-main font-mono text-sm focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none placeholder:text-text-dim/30"
                   />
                 </div>
               </div>
 
               <div className="space-y-2 group">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">Access Protocol</label>
+                <label className="text-[9px] font-black text-text-dim uppercase tracking-widest px-1">Access Key</label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-indigo-400 transition-colors" />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-indigo-500 transition-colors" />
                   <input 
                     type="password" 
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
                     placeholder="••••••••"
-                    className="w-full h-14 bg-black/40 border border-white/10 rounded-2xl px-12 text-white font-mono text-sm focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none placeholder:text-slate-700"
+                    className="w-full h-14 bg-white/5 border border-black/5 rounded-2xl px-12 text-text-main font-mono text-sm focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none placeholder:text-text-dim/30"
                   />
                 </div>
               </div>

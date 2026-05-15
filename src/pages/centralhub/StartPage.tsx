@@ -189,11 +189,11 @@ export function StartPage() {
             <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.4)] group-hover:scale-110 transition-transform duration-500">
               <Shield className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-5xl font-black tracking-tight text-white uppercase italic">
+            <h1 className="text-5xl font-black tracking-tight text-text-main uppercase italic">
               Dispatch <span className="text-indigo-500 not-italic">Ops</span>
             </h1>
           </div>
-          <p className="text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3">
+          <p className="text-text-dim font-black uppercase tracking-[0.2em] text-[10px] flex items-center gap-3">
              <Activity className="w-3 h-3 text-emerald-500 animate-pulse" />
              Strategic Command Hub v5.0
           </p>
@@ -201,12 +201,12 @@ export function StartPage() {
 
         <div className="flex items-center gap-8">
           <div className="text-right">
-            <p className="text-4xl font-black text-white glow-number tracking-tighter leading-none">{format(now, 'HH:mm:ss')}</p>
+            <p className="text-4xl font-black text-text-main glow-number tracking-tighter leading-none">{format(now, 'HH:mm:ss')}</p>
             <p className="text-[9px] text-indigo-400 font-black uppercase tracking-[0.3em] mt-2">{format(now, 'EEEE, LLLL do')}</p>
           </div>
           <button 
             onClick={() => setShowAddMenu(true)}
-            className="px-6 py-3 glass-effect border-indigo-500/30 text-indigo-400 hover:text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all hover:bg-indigo-500/10"
+            className="px-6 py-3 glass-effect border-indigo-500/30 text-indigo-500 hover:text-text-main rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all hover:bg-indigo-500/10"
           >
             <Plus className="w-4 h-4" />
             Add Module
@@ -494,17 +494,17 @@ function SortableWidget({
         <div 
           {...attributes} 
           {...listeners} 
-          className="flex items-center gap-3 cursor-grab active:cursor-grabbing text-slate-500 hover:text-white transition-colors"
+          className="flex items-center gap-3 cursor-grab active:cursor-grabbing text-text-dim hover:text-text-main transition-colors"
         >
           <GripVertical className="w-4 h-4" />
-          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic pr-2">{widget.title}</h4>
+          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-text-dim italic pr-2">{widget.title}</h4>
         </div>
         
         <div className="flex items-center gap-1">
           {widget.type === 'time' && (
             <button 
               onClick={onEditClock}
-              className="p-1.5 text-slate-600 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all mr-1"
+              className="p-1.5 text-text-dim hover:text-indigo-500 hover:bg-indigo-500/10 rounded-lg transition-all mr-1"
             >
               <Info className="w-4 h-4" />
             </button>
@@ -512,12 +512,12 @@ function SortableWidget({
           {widget.type === 'weather' && (
             <button 
               onClick={onEditWeather}
-              className="p-1.5 text-slate-600 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-all mr-1"
+              className="p-1.5 text-text-dim hover:text-indigo-500 hover:bg-indigo-500/10 rounded-lg transition-all mr-1"
             >
               <Settings className="w-4 h-4" />
             </button>
           )}
-          <div className="flex bg-black/40 rounded-lg p-0.5 border border-white/5 mr-2">
+          <div className="flex bg-black/5 rounded-lg p-0.5 border border-white/5 mr-2">
             {(['sm', 'md', 'lg', 'xl'] as const).map((s) => (
               <button
                 key={s}
@@ -526,7 +526,7 @@ function SortableWidget({
                   w-6 h-5 text-[8px] font-black uppercase flex items-center justify-center rounded-md transition-all
                   ${widget.size === s 
                     ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
-                    : 'text-slate-600 hover:text-slate-400 hover:bg-white/5'}
+                    : 'text-text-dim hover:text-text-main hover:bg-white/5'}
                 `}
               >
                 {s}
@@ -535,7 +535,7 @@ function SortableWidget({
           </div>
           <button 
             onClick={onRemove}
-            className="p-1.5 text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"
+            className="p-1.5 text-text-dim hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-all"
           >
             <X className="w-4 h-4" />
           </button>
@@ -555,26 +555,26 @@ function PersonnelModalContent() {
       {Object.entries(SHIFT_TEAMS).map(([name, team]) => (
         <div key={name} className="tactical-card p-6 group hover:border-indigo-500/30">
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
-            <h3 className="text-xs font-black text-indigo-400 uppercase tracking-[0.2em] italic">
-              {name} <span className="text-slate-500 not-italic">Shift</span>
+            <h3 className="text-xs font-black text-indigo-500 uppercase tracking-[0.2em] italic">
+              {name} <span className="text-text-dim not-italic">Shift</span>
             </h3>
             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
           </div>
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                <Shield className="w-4 h-4 text-emerald-400" />
+                <Shield className="w-4 h-4 text-emerald-500" />
               </div>
               <div>
-                <p className="text-[11px] font-black text-white leading-tight uppercase tracking-tight">{team.lead}</p>
-                <p className="text-[8px] text-emerald-500 font-black uppercase tracking-[0.2em] mt-0.5 italic">Protocol Lead</p>
+                <p className="text-[11px] font-black text-text-main leading-tight uppercase tracking-tight">{team.lead}</p>
+                <p className="text-[8px] text-emerald-600 font-black uppercase tracking-[0.2em] mt-0.5 italic">Protocol Lead</p>
               </div>
             </div>
             <div className="space-y-2 pt-2 border-t border-white/5">
               {team.members.map(member => (
                 <div key={member} className="flex items-center gap-3 pl-2 group/member">
                   <div className="w-1 h-1 rounded-full bg-slate-700 group-hover/member:bg-indigo-500 transition-colors" />
-                  <p className="text-[10px] font-bold text-slate-400 group-hover/member:text-white transition-colors uppercase tracking-tight">{member}</p>
+                  <p className="text-[10px] font-bold text-text-dim group-hover/member:text-text-main transition-colors uppercase tracking-tight">{member}</p>
                 </div>
               ))}
             </div>
@@ -698,11 +698,11 @@ function OpsCalendar() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
              <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
-                <CalendarIcon className="w-5 h-5 text-indigo-400" />
+                <CalendarIcon className="w-5 h-5 text-indigo-500" />
              </div>
              <div>
-                <h3 className="text-xl font-bold text-white uppercase tracking-tight">{format(currentMonth, 'MMMM yyyy')}</h3>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Global Ops Schedule</p>
+                <h3 className="text-xl font-bold text-text-main uppercase tracking-tight">{format(currentMonth, 'MMMM yyyy')}</h3>
+                <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest">Global Ops Schedule</p>
              </div>
           </div>
           <div className="flex items-center gap-2">
@@ -777,10 +777,10 @@ function OpsCalendar() {
         <div className="bg-bg-surface border border-white/10 rounded-3xl p-8 backdrop-blur-md flex-1 flex flex-col transition-colors duration-500">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h4 className="text-sm font-black text-white uppercase tracking-widest text-left">
+              <h4 className="text-sm font-black text-text-main uppercase tracking-widest text-left">
                 {selectedDate ? format(selectedDate, 'MMM d, yyyy') : 'Select a date'}
               </h4>
-              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1 text-left">Daily Operations</p>
+              <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest mt-1 text-left">Daily Operations</p>
             </div>
             {isAdmin && selectedDate && (
               <button 
@@ -799,32 +799,32 @@ function OpsCalendar() {
             {selectedDayEvents.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center py-12 text-center opacity-30">
                 <Shield className="w-10 h-10 mb-4" />
-                <p className="text-[10px] font-black uppercase tracking-widest">No Sector Events</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-text-main">No Sector Events</p>
               </div>
             ) : (
               selectedDayEvents.map(event => (
-                <div key={event.id} className="group p-5 bg-black/40 border border-white/5 rounded-2xl hover:border-white/10 transition-colors">
+                <div key={event.id} className="group p-5 bg-black/5 border border-white/10 rounded-2xl hover:border-indigo-500/30 transition-colors">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-3">
                       <div className={`w-2 h-2 rounded-full ${
                          event.type === 'alert' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 
-                         event.type === 'info' ? 'bg-indigo-400' : 'bg-emerald-500'
+                         event.type === 'info' ? 'bg-indigo-500' : 'bg-emerald-500'
                        }`} />
-                      <h5 className="text-xs font-bold text-white uppercase tracking-tight text-left">{event.title}</h5>
+                      <h5 className="text-xs font-bold text-text-main uppercase tracking-tight text-left">{event.title}</h5>
                     </div>
                     {isAdmin && (
                       <button 
                         onClick={() => handleDeleteEvent(event.id)}
-                        className="p-1.5 text-slate-600 hover:text-red-400 transition-colors bg-white/5 rounded-lg"
+                        className="p-1.5 text-text-dim hover:text-red-500 transition-colors bg-white/5 rounded-lg"
                       >
                         <Trash2 size={14} />
                       </button>
                     )}
                   </div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed mb-4 text-left">{event.description}</p>
+                  <p className="text-[11px] text-text-dim leading-relaxed mb-4 text-left">{event.description}</p>
                   <div className="flex items-center gap-2 pt-3 border-t border-white/5">
-                    <Clock size={12} className="text-slate-500" />
-                    <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">{event.eventTime || 'All Day'}</span>
+                    <Clock size={12} className="text-text-dim" />
+                    <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest">{event.eventTime || 'All Day'}</span>
                   </div>
                 </div>
               ))

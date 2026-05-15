@@ -67,22 +67,14 @@ export function AdminPage() {
   const [showToast, setShowToast] = useState<string | null>(null);
 
   const THEMES: { id: AppTheme; name: string; color: string }[] = [
-    { id: 'midnight', name: 'Midnight', color: '#3b82f6' },
-    { id: 'emerald', name: 'Emerald', color: '#10b981' },
-    { id: 'amber', name: 'Amber', color: '#f59e0b' },
-    { id: 'slate', name: 'Slate', color: '#64748b' },
-    { id: 'crimson', name: 'Crimson', color: '#ef4444' },
-    { id: 'cyber', name: 'Cyber', color: '#06b6d4' },
-    { id: 'royal', name: 'Royal', color: '#8b5cf6' },
-    { id: 'forest', name: 'Forest', color: '#16a34a' },
-    { id: 'arctic', name: 'Arctic', color: '#0ea5e9' },
-    { id: 'desert', name: 'Desert', color: '#d97706' },
-    { id: 'nebula', name: 'Nebula', color: '#a21caf' },
-    { id: 'titanium', name: 'Titanium', color: '#64748b' },
-    { id: 'neon', name: 'Neon', color: '#ff00ff' },
-    { id: 'ghost', name: 'Ghost', color: '#ffffff' },
-    { id: 'ocean', name: 'Ocean', color: '#0ea5e9' },
-    { id: 'blood', name: 'Blood', color: '#991b1b' },
+    { id: 'paper', name: 'Paper', color: '#e2e8f0' },
+    { id: 'cream', name: 'Cream', color: '#eee8d5' },
+    { id: 'mint', name: 'Mint', color: '#dcfce7' },
+    { id: 'clay', name: 'Clay', color: '#ddd6fe' },
+    { id: 'arctic', name: 'Arctic', color: '#e2e8f0' },
+    { id: 'ivory', name: 'Ivory', color: '#eee8d5' },
+    { id: 'frost', name: 'Frost', color: '#bae6fd' },
+    { id: 'sky', name: 'Sky', color: '#7dd3fc' },
   ];
 
   // Shift Report Config States
@@ -145,7 +137,7 @@ export function AdminPage() {
       
       // We use a secondary auth instance to create the user without logging out the admin
       const { initializeApp } = await import('firebase/app');
-      const { getAuth, createUserWithEmailAndPassword, signOut } = await import('firebase/auth');
+      const { getAuth, createUserWithEmailAndPassword } = await import('firebase/auth');
       const firebaseConfig = (await import('../../../firebase-applet-config.json')).default;
       
       const tempApp = initializeApp(firebaseConfig, 'AdminRegistration');
