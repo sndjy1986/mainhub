@@ -85,6 +85,7 @@ export function AdminPage() {
   const [supervisors, setSupervisors] = useState<Record<string, string>>({});
   const [defaultCameraIds, setDefaultCameraIds] = useState<string[]>([]);
   const [fleetConfigs, setFleetConfigs] = useState<import('../../lib/firebase').UnitConfig[]>([]);
+  const [themeOverrides, setThemeOverrides] = useState<import('../../lib/firebase').ThemeOverrides>({});
   const [archivedReports, setArchivedReports] = useState<ShiftReportType[]>([]);
   const [loadingReports, setLoadingReports] = useState(false);
 
@@ -118,6 +119,7 @@ export function AdminPage() {
         if (data.supervisors) setSupervisors(data.supervisors);
         if (data.defaultCameraIds) setDefaultCameraIds(data.defaultCameraIds);
         if (data.fleetConfigs) setFleetConfigs(data.fleetConfigs);
+        if (data.themeOverrides) setThemeOverrides(data.themeOverrides);
       }
     });
 
@@ -483,6 +485,140 @@ export function AdminPage() {
           </section>
         </div>
 
+        {/* Level 1.5: Advanced Theme Customization */}
+        <section className="tactical-card p-10 space-y-10 bg-brand-panel/30">
+          <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/5">
+            <div>
+              <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic">
+                <Settings className="w-6 h-6 text-indigo-400" />
+                Advanced <span className="text-indigo-400 not-italic">Visuals</span>
+              </h3>
+              <p className="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black mt-2">Granular UI color and transparency controls</p>
+            </div>
+            <button 
+              onClick={() => {
+                setThemeOverrides({});
+                updateGlobalSettings({ themeOverrides: {} });
+                setShowToast("THEME_RESET_COMPLETE");
+              }}
+              className="px-6 py-2 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-rose-500 hover:text-white transition-all"
+            >
+              Reset to Defaults
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+            {/* Color Matrix */}
+            <div className="space-y-6 lg:col-span-2">
+              <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest italic border-l-2 border-indigo-500 pl-3">Color Vector Matrix</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                {[
+                  { label: 'Brand Indigo', key: 'brandIndigo' },
+                  { label: 'Brand Blue', key: 'brandBlue' },
+                  { label: 'Brand Emerald', key: 'brandEmerald' },
+                  { label: 'Brand Accent', key: 'brandAccent' },
+                  { label: 'Panel BG', key: 'brandPanel' },
+                  { label: 'Border', key: 'brandBorder' },
+                  { label: 'Main BG', key: 'bgMain' },
+                  { label: 'Surface BG', key: 'bgSurface' },
+                  { label: 'Text Main', key: 'textMain' },
+                  { label: 'Text Dim', key: 'textDim' },
+                ].map((item) => (
+                  <div key={item.key} className="space-y-3">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 block">{item.label}</label>
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="color" 
+                        value={themeOverrides[item.key as keyof typeof themeOverrides] as string || '#000000'}
+                        onChange={(e) => {
+                          const newOverrides = { ...themeOverrides, [item.key]: e.target.value };
+                          setThemeOverrides(newOverrides);
+                        }}
+                        onBlur={() => updateGlobalSettings({ themeOverrides })}
+                        className="w-10 h-10 rounded-lg bg-transparent border-white/10 cursor-pointer"
+                      />
+                      <input 
+                        type="text"
+                        value={themeOverrides[item.key as keyof typeof themeOverrides] as string || ''}
+                        onChange={(e) => {
+                          const newOverrides = { ...themeOverrides, [item.key]: e.target.value };
+                          setThemeOverrides(newOverrides);
+                        }}
+                        onBlur={() => updateGlobalSettings({ themeOverrides })}
+                        placeholder="HEX/RGB"
+                        className="flex-1 bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-mono uppercase focus:border-indigo-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Density & Transparency */}
+            <div className="space-y-8">
+              <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest italic border-l-2 border-indigo-500 pl-3">Optics & Density</h4>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Panel Opacity</label>
+                  <span className="text-[10px] font-mono text-indigo-400 font-bold">{Math.round((themeOverrides.panelOpacity || 0.5) * 100)}%</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0" max="1" step="0.05"
+                  value={themeOverrides.panelOpacity || 0.5}
+                  onChange={(e) => {
+                    const newOverrides = { ...themeOverrides, panelOpacity: parseFloat(e.target.value) };
+                    setThemeOverrides(newOverrides);
+                  }}
+                  onMouseUp={() => updateGlobalSettings({ themeOverrides })}
+                  className="w-full h-1.5 bg-black/40 rounded-full appearance-none cursor-pointer accent-indigo-500"
+                />
+                <p className="text-[8px] text-slate-600 uppercase tracking-widest italic">Controls glass effect transparency level</p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">System Scale</label>
+                  <span className="text-[10px] font-mono text-indigo-400 font-bold">x{(themeOverrides.globalScale || 1).toFixed(2)}</span>
+                </div>
+                <input 
+                  type="range" 
+                  min="0.75" max="1.5" step="0.05"
+                  value={themeOverrides.globalScale || 1}
+                  onChange={(e) => {
+                    const newOverrides = { ...themeOverrides, globalScale: parseFloat(e.target.value) };
+                    setThemeOverrides(newOverrides);
+                  }}
+                  onMouseUp={() => updateGlobalSettings({ themeOverrides })}
+                  className="w-full h-1.5 bg-black/40 rounded-full appearance-none cursor-pointer accent-indigo-500"
+                />
+                <p className="text-[8px] text-slate-600 uppercase tracking-widest italic">Scales entire interface typography and grid</p>
+              </div>
+            </div>
+
+            {/* Quick Actions / Presets */}
+            <div className="space-y-6">
+               <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest italic border-l-2 border-indigo-500 pl-3">Override Diagnostics</h4>
+               <div className="p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-[2rem] space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest">Active Tunnel</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 leading-relaxed uppercase tracking-tight">
+                    Manual overrides will persist across all active terminal sessions and bypass standard theme defaults.
+                  </p>
+                  <button 
+                    onClick={() => updateGlobalSettings({ themeOverrides })}
+                    className="w-full py-4 bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95 transition-all"
+                  >
+                    Commit Vector Update
+                  </button>
+               </div>
+            </div>
+          </div>
+        </section>
+
         {/* Level 2: User Access & Fleet Personnel - Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
           {/* User Access Management */}
@@ -511,8 +647,8 @@ export function AdminPage() {
                   <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest">No Authorized Nodes</p>
                 </div>
               ) : (
-                terminalUsers.map(u => (
-                  <div key={u.username} className="p-5 bg-black/40 border border-white/5 rounded-2xl group hover:border-indigo-500/40 transition-all flex items-center justify-between">
+                terminalUsers.map((u, idx) => (
+                  <div key={u.username || idx} className="p-5 bg-black/40 border border-white/5 rounded-2xl group hover:border-indigo-500/40 transition-all flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${u.role === 'admin' ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' : 'bg-white/5 border-white/10 text-slate-400'}`}>
                         {u.role === 'admin' ? <Shield size={18} /> : <Terminal size={18} />}
@@ -593,8 +729,8 @@ export function AdminPage() {
                       <span className="text-[8px] font-black text-slate-700 uppercase tracking-widest">No Personnel Deployed</span>
                     </div>
                   ) : (
-                    personnel.filter(p => p.shift === shift).map(p => (
-                      <div key={p.id} className="p-5 bg-black/20 border border-white/5 rounded-2xl group hover:border-indigo-500/40 transition-all duration-300 shadow-inner hover:shadow-indigo-500/5">
+                    personnel.filter(p => p.shift === shift).map((p, idx) => (
+                      <div key={p.id || idx} className="p-5 bg-black/20 border border-white/5 rounded-2xl group hover:border-indigo-500/40 transition-all duration-300 shadow-inner hover:shadow-indigo-500/5">
                         <div className="flex justify-between items-start gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="text-xs font-black text-white uppercase tracking-tight truncate group-hover:text-indigo-400 transition-colors uppercase">{p.name}</div>
@@ -664,8 +800,8 @@ export function AdminPage() {
                 <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">No Fleet Matrix Configured</p>
               </div>
             ) : (
-              fleetConfigs.map(unit => (
-                <div key={unit.id} className="p-6 bg-brand-panel/40 border border-brand-border rounded-2xl group hover:border-brand-indigo/40 transition-all space-y-4">
+              fleetConfigs.map((unit, idx) => (
+                <div key={unit.id || idx} className="p-6 bg-brand-panel/40 border border-brand-border rounded-2xl group hover:border-brand-indigo/40 transition-all space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${unit.type === 'transport' ? 'bg-brand-indigo/10 border-brand-indigo/30 text-brand-indigo' : 'bg-brand-emerald/10 border-brand-emerald/30 text-brand-emerald'}`}>
@@ -770,8 +906,8 @@ export function AdminPage() {
                Archive database is currently empty
             </div>
           ) : (
-            archivedReports.map(report => (
-              <div key={report.id} className="p-8 tactical-card bg-black/30 group hover:bg-indigo-500/[0.03] transition-all duration-500 relative overflow-hidden flex flex-col gap-6">
+            archivedReports.map((report, idx) => (
+              <div key={report.id || idx} className="p-8 tactical-card bg-black/30 group hover:bg-indigo-500/[0.03] transition-all duration-500 relative overflow-hidden flex flex-col gap-6">
                 <div className="flex items-center justify-between border-b border-white/5 pb-4">
                   <div className="flex flex-col">
                     <span className="text-[8px] font-black text-indigo-400 uppercase tracking-[0.3em] italic mb-1">Sector Log</span>

@@ -195,6 +195,52 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('toneTestMode', toneTestMode.toString());
   }, [toneTestMode]);
 
+  // Apply theme overrides from global settings
+  useEffect(() => {
+    let unsubPromise: Promise<() => void> | null = null;
+    
+    unsubPromise = import('../lib/firebase').then(({ db, doc, onSnapshot, handleFirestoreError, OperationType }) => {
+      return onSnapshot(doc(db, 'settings', 'global'), (s) => {
+        if (s.exists()) {
+          const data = s.data();
+          if (data.themeOverrides) {
+            const overrides = data.themeOverrides;
+            const root = document.documentElement;
+            
+            const vars: Record<string, string | undefined> = {
+              '--brand-blue': overrides.brandBlue,
+              '--brand-indigo': overrides.brandIndigo,
+              '--brand-emerald': overrides.brandEmerald,
+              '--brand-panel': overrides.brandPanel,
+              '--brand-border': overrides.brandBorder,
+              '--brand-bg': overrides.brandBg,
+              '--brand-field': overrides.brandField,
+              '--brand-accent': overrides.brandAccent,
+              '--bg-main': overrides.bgMain,
+              '--bg-surface': overrides.bgSurface,
+              '--text-main': overrides.textMain,
+              '--text-dim': overrides.textDim,
+              '--panel-opacity': overrides.panelOpacity?.toString(),
+              '--global-scale': overrides.globalScale?.toString(),
+            };
+
+            Object.entries(vars).forEach(([key, value]) => {
+              if (value !== undefined) root.style.setProperty(key, value);
+            });
+
+            if (overrides.globalScale !== undefined) {
+              root.style.fontSize = `${16 * overrides.globalScale}px`;
+            }
+          }
+        }
+      }, (error) => handleFirestoreError(error, OperationType.GET, 'settings/global'));
+    });
+
+    return () => {
+      unsubPromise?.then(unsub => unsub());
+    };
+  }, []);
+
   return (
     <TerminalContext.Provider value={{ 
       emergencyLevel, 

@@ -107,6 +107,23 @@ export type UnitConfig = {
   type: 'transport' | 'qrv';
 };
 
+export type ThemeOverrides = {
+  brandBlue?: string;
+  brandIndigo?: string;
+  brandEmerald?: string;
+  brandPanel?: string;
+  brandBorder?: string;
+  brandBg?: string;
+  brandField?: string;
+  brandAccent?: string;
+  bgMain?: string;
+  bgSurface?: string;
+  textMain?: string;
+  textDim?: string;
+  panelOpacity?: number;
+  globalScale?: number;
+};
+
 export type GlobalSettings = {
   backgroundStyle: 'glow' | 'emergency';
   lightIntensity: number;
@@ -115,6 +132,7 @@ export type GlobalSettings = {
   supervisors?: Record<string, string>;
   defaultCameraIds?: string[];
   fleetConfigs?: UnitConfig[];
+  themeOverrides?: ThemeOverrides;
   updatedAt?: any;
   updatedBy?: string | null;
 };

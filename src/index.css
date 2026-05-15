@@ -363,13 +363,14 @@
   }
 
   .tactical-card {
-    @apply bg-bg-surface/50 backdrop-blur-md border border-white/5 rounded-[2rem] hover:border-white/10 transition-all duration-300;
+    background-color: color-mix(in srgb, var(--bg-surface) calc(var(--panel-opacity, 0.5) * 100%), transparent);
+    @apply backdrop-blur-md border border-white/5 rounded-[2rem] hover:border-white/10 transition-all duration-300;
   }
 
   .technical-grid {
     background-image: 
       radial-gradient(circle at 2px 2px, var(--brand-indigo) 1px, transparent 0);
-    background-size: 24px 24px;
+    background-size: calc(24px * var(--global-scale, 1)) calc(24px * var(--global-scale, 1));
     background-color: var(--bg-main);
   }
 }
