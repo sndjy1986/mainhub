@@ -19,27 +19,38 @@ import {
   Phone,
   Calendar,
   CreditCard,
-  LogOut
+  LogOut,
+  ExternalLink,
+  Link as LinkIcon
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
 import { useTerminal } from '../../context/TerminalContext';
+import { onSnapshot, doc, db } from '../../lib/firebase';
+import type { SidebarLink as SidebarLinkType } from '../../lib/firebase';
 
-const navItems = [
-  { icon: LayoutDashboard, label: 'Start Page', path: '/' },
-  { icon: Activity, label: 'Tone Test', path: '/tone-test' },
-  { icon: Terminal, label: 'Unit Posting', path: '/unit-posting' },
-  { icon: MapIcon, label: 'Distance Map', path: '/distance-map' },
-  { icon: FileText, label: 'Shift Report', path: '/shift-report' },
-  { icon: Calendar, label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/1Lq3m5KIhkwP7zQZu9RTKlXRO18BPhx1A/view?usp=drive_link', external: true },
-  { icon: Table, label: 'Daily Worksheet', path: 'https://docs.google.com/spreadsheets/d/1-4Uwh00g4orCaOQoOrLIcRkamAhdxrBNhVVOt2IEOoY/edit?gid=534085027#gid=534085027', external: true },
-  { icon: CreditCard, label: 'PayCom Online', path: 'https://www.paycomonline.net/v4/ee/web.php/app/login', external: true },
-  { icon: Camera, label: 'Cameras', path: '/cameras' },
-  { icon: ClockIcon, label: 'Time Clock', path: '/time-clock' },
-  { icon: Phone, label: 'Directory', path: '/directory' },
+const iconMap: Record<string, any> = {
+  LayoutDashboard, Activity, Terminal, MapIcon, Camera, FileText, 
+  AlertTriangle, Zap, Radio, Siren, Settings2, Table, Lock, 
+  UserCheck, ClockIcon, Phone, Calendar, CreditCard, ExternalLink, LinkIcon
+};
+
+const DEFAULT_NAV_ITEMS = [
+  { icon: 'LayoutDashboard', label: 'Start Page', path: '/', external: false, id: 'start' },
+  { icon: 'Activity', label: 'Tone Test', path: '/tone-test', external: false, id: 'tone' },
+  { icon: 'Terminal', label: 'Unit Posting', path: '/unit-posting', external: false, id: 'unit' },
+  { icon: 'MapIcon', label: 'Distance Map', path: '/distance-map', external: false, id: 'dist' },
+  { icon: 'FileText', label: 'Shift Report', path: '/shift-report', external: false, id: 'report' },
+  { icon: 'Camera', label: 'Cameras', path: '/cameras', external: false, id: 'cams' },
+  { icon: 'ClockIcon', label: 'Time Clock', path: '/time-clock', external: false, id: 'clock' },
+  { icon: 'Phone', label: 'Directory', path: '/directory', external: false, id: 'dir' },
+  { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/1Lq3m5KIhkwP7zQZu9RTKlXRO18BPhx1A/view?usp=drive_link', external: true, id: 'coroner' },
+  { icon: 'Table', label: 'Daily Worksheet', path: 'https://docs.google.com/spreadsheets/d/1-4Uwh00g4orCaOQoOrLIcRkamAhdxrBNhVVOt2IEOoY/edit?gid=534085027#gid=534085027', external: true, id: 'worksheet' },
+  { icon: 'CreditCard', label: 'PayCom Online', path: 'https://www.paycomonline.net/v4/ee/web.php/app/login', external: true, id: 'paycom' },
 ];
 
 export function Sidebar() {
+  const [customLinks, setCustomLinks] = React.useState<SidebarLinkType[]>([]);
   const { 
     manualEmergencyMode, 
     setManualEmergencyMode, 
@@ -49,6 +60,28 @@ export function Sidebar() {
     logoutTerminalUser,
     firebaseUser
   } = useTerminal();
+
+  React.useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'global'), (s) => {
+      if (s.exists()) {
+        const data = s.data();
+        if (data.sidebarLinks) {
+          setCustomLinks(data.sidebarLinks);
+        }
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const linksToRender = React.useMemo(() => {
+    const baseLinks = customLinks.length > 0 ? customLinks : DEFAULT_NAV_ITEMS as SidebarLinkType[];
+    
+    // Sort: internals first, externals at the bottom
+    const internal = baseLinks.filter(l => !l.external);
+    const external = baseLinks.filter(l => l.external);
+    
+    return [...internal, ...external];
+  }, [customLinks]);
 
   return (
     <div className="w-64 h-screen bg-bg-main/80 backdrop-blur-2xl border-r border-white/5 flex flex-col fixed left-0 top-0 z-50 overflow-y-auto overflow-x-hidden transition-colors duration-500 shadow-2xl">
@@ -68,8 +101,10 @@ export function Sidebar() {
         <div className="px-4 mb-4">
           <span className="text-[9px] font-black uppercase tracking-[0.3em] text-text-dim">Core Command</span>
         </div>
-        {navItems.map((item) => (
-          item.external ? (
+        {linksToRender.map((item) => {
+          const IconComponent = iconMap[item.icon] || LinkIcon;
+          
+          return item.external ? (
             <a
               key={item.path}
               href={item.path}
@@ -77,8 +112,9 @@ export function Sidebar() {
               rel="noopener noreferrer"
               className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-text-dim hover:bg-white/5 hover:text-text-main border border-transparent group relative"
             >
-              <item.icon className="w-4 h-4 flex-shrink-0 group-hover:text-indigo-400 transition-colors" />
+              <IconComponent className="w-4 h-4 flex-shrink-0 group-hover:text-indigo-400 transition-colors" />
               <span className="text-[11px] font-bold uppercase tracking-widest">{item.label}</span>
+              <ExternalLink className="w-2.5 h-2.5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
             </a>
           ) : (
             <NavLink
@@ -91,7 +127,7 @@ export function Sidebar() {
             >
               {({ isActive }) => (
                 <>
-                  <item.icon className={cn("w-4 h-4 flex-shrink-0 transition-colors relative z-10", isActive ? "text-indigo-500" : "group-hover:text-indigo-300")} />
+                  <IconComponent className={cn("w-4 h-4 flex-shrink-0 transition-colors relative z-10", isActive ? "text-indigo-500" : "group-hover:text-indigo-300")} />
                   <span className="text-[11px] font-black uppercase tracking-widest relative z-10">{item.label}</span>
                   {isActive && (
                     <motion.div 
@@ -104,8 +140,8 @@ export function Sidebar() {
                 </>
               )}
             </NavLink>
-          )
-        ))}
+          );
+        })}
       </nav>
 
       <div className="px-4 py-6 space-y-4 relative">

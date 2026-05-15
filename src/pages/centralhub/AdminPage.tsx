@@ -85,6 +85,7 @@ export function AdminPage() {
   const [supervisors, setSupervisors] = useState<Record<string, string>>({});
   const [defaultCameraIds, setDefaultCameraIds] = useState<string[]>([]);
   const [fleetConfigs, setFleetConfigs] = useState<import('../../lib/firebase').UnitConfig[]>([]);
+  const [sidebarLinks, setSidebarLinks] = useState<import('../../lib/firebase').SidebarLink[]>([]);
   const [themeOverrides, setThemeOverrides] = useState<import('../../lib/firebase').ThemeOverrides>({});
   const [archivedReports, setArchivedReports] = useState<ShiftReportType[]>([]);
   const [loadingReports, setLoadingReports] = useState(false);
@@ -119,6 +120,7 @@ export function AdminPage() {
         if (data.supervisors) setSupervisors(data.supervisors);
         if (data.defaultCameraIds) setDefaultCameraIds(data.defaultCameraIds);
         if (data.fleetConfigs) setFleetConfigs(data.fleetConfigs);
+        if (data.sidebarLinks) setSidebarLinks(data.sidebarLinks);
         if (data.themeOverrides) setThemeOverrides(data.themeOverrides);
       }
     });
@@ -305,12 +307,85 @@ export function AdminPage() {
     if (user) loadHistory();
   }, [user, loadHistory]);
 
+  // Apply local theme overrides for instant preview
+  useEffect(() => {
+    const root = document.documentElement;
+    const overrides = themeOverrides;
+    
+    const vars: Record<string, string | undefined> = {
+      '--brand-blue': overrides.brandBlue,
+      '--brand-indigo': overrides.brandIndigo,
+      '--brand-emerald': overrides.brandEmerald,
+      '--brand-panel': overrides.brandPanel,
+      '--brand-border': overrides.brandBorder,
+      '--brand-bg': overrides.brandBg,
+      '--brand-field': overrides.brandField,
+      '--brand-accent': overrides.brandAccent,
+      '--bg-main': overrides.bgMain,
+      '--bg-surface': overrides.bgSurface,
+      '--text-main': overrides.textMain,
+      '--text-dim': overrides.textDim,
+      '--panel-opacity': overrides.panelOpacity?.toString(),
+      '--global-scale': overrides.globalScale?.toString(),
+    };
+
+    Object.entries(vars).forEach(([key, value]) => {
+      if (value !== undefined) {
+        root.style.setProperty(key, value);
+      }
+    });
+
+    if (overrides.globalScale !== undefined) {
+      root.style.fontSize = `${16 * overrides.globalScale}px`;
+    }
+  }, [themeOverrides]);
+
   useEffect(() => {
     if (showToast) {
       const timer = setTimeout(() => setShowToast(null), 5000);
       return () => clearTimeout(timer);
     }
   }, [showToast]);
+
+  const updateSidebarLink = (id: string, updates: Partial<import('../../lib/firebase').SidebarLink>) => {
+    const newLinks = sidebarLinks.length > 0 ? [...sidebarLinks] : [
+      { icon: 'LayoutDashboard', label: 'Start Page', path: '/', external: false, id: 'start' },
+      { icon: 'Activity', label: 'Tone Test', path: '/tone-test', external: false, id: 'tone' },
+      { icon: 'Terminal', label: 'Unit Posting', path: '/unit-posting', external: false, id: 'unit' },
+      { icon: 'MapIcon', label: 'Distance Map', path: '/distance-map', external: false, id: 'dist' },
+      { icon: 'FileText', label: 'Shift Report', path: '/shift-report', external: false, id: 'report' },
+      { icon: 'Camera', label: 'Cameras', path: '/cameras', external: false, id: 'cams' },
+      { icon: 'ClockIcon', label: 'Time Clock', path: '/time-clock', external: false, id: 'clock' },
+      { icon: 'Phone', label: 'Directory', path: '/directory', external: false, id: 'dir' },
+      { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/1Lq3m5KIhkwP7zQZu9RTKlXRO18BPhx1A/view?usp=drive_link', external: true, id: 'coroner' },
+      { icon: 'Table', label: 'Daily Worksheet', path: 'https://docs.google.com/spreadsheets/d/1-4Uwh00g4orCaOQoOrLIcRkamAhdxrBNhVVOt2IEOoY/edit?gid=534085027#gid=534085027', external: true, id: 'worksheet' },
+      { icon: 'CreditCard', label: 'PayCom Online', path: 'https://www.paycomonline.net/v4/ee/web.php/app/login', external: true, id: 'paycom' },
+    ];
+
+    const updated = newLinks.map(l => l.id === id ? { ...l, ...updates } : l);
+    setSidebarLinks(updated as any);
+    updateGlobalSettings({ sidebarLinks: updated as any });
+  };
+
+  const addSidebarLink = () => {
+    const newLink = {
+      id: crypto.randomUUID(),
+      label: 'New Link',
+      path: 'https://',
+      icon: 'LinkIcon',
+      external: true
+    };
+    const updated = [...(sidebarLinks.length > 0 ? sidebarLinks : []), newLink];
+    setSidebarLinks(updated as any);
+    updateGlobalSettings({ sidebarLinks: updated as any });
+  };
+
+  const removeSidebarLink = (id: string) => {
+    if (!window.confirm("Remove this link?")) return;
+    const updated = sidebarLinks.filter(l => l.id !== id);
+    setSidebarLinks(updated);
+    updateGlobalSettings({ sidebarLinks: updated });
+  };
 
   return (
     <div className="space-y-12 pb-24 h-full overflow-y-auto pr-4 scrollbar-thin transition-colors duration-500">
@@ -531,18 +606,18 @@ export function AdminPage() {
                         type="color" 
                         value={themeOverrides[item.key as keyof typeof themeOverrides] as string || '#000000'}
                         onChange={(e) => {
-                          const newOverrides = { ...themeOverrides, [item.key]: e.target.value };
-                          setThemeOverrides(newOverrides);
+                          const val = e.target.value;
+                          setThemeOverrides(prev => ({ ...prev, [item.key]: val }));
                         }}
                         onBlur={() => updateGlobalSettings({ themeOverrides })}
-                        className="w-10 h-10 rounded-lg bg-transparent border-white/10 cursor-pointer"
+                        className="w-10 h-10 rounded-lg bg-transparent border-white/10 cursor-pointer p-0"
                       />
                       <input 
                         type="text"
                         value={themeOverrides[item.key as keyof typeof themeOverrides] as string || ''}
                         onChange={(e) => {
-                          const newOverrides = { ...themeOverrides, [item.key]: e.target.value };
-                          setThemeOverrides(newOverrides);
+                          const val = e.target.value;
+                          setThemeOverrides(prev => ({ ...prev, [item.key]: val }));
                         }}
                         onBlur={() => updateGlobalSettings({ themeOverrides })}
                         placeholder="HEX/RGB"
@@ -568,8 +643,8 @@ export function AdminPage() {
                   min="0" max="1" step="0.05"
                   value={themeOverrides.panelOpacity || 0.5}
                   onChange={(e) => {
-                    const newOverrides = { ...themeOverrides, panelOpacity: parseFloat(e.target.value) };
-                    setThemeOverrides(newOverrides);
+                    const val = parseFloat(e.target.value);
+                    setThemeOverrides(prev => ({ ...prev, panelOpacity: val }));
                   }}
                   onMouseUp={() => updateGlobalSettings({ themeOverrides })}
                   className="w-full h-1.5 bg-black/40 rounded-full appearance-none cursor-pointer accent-indigo-500"
@@ -587,8 +662,8 @@ export function AdminPage() {
                   min="0.75" max="1.5" step="0.05"
                   value={themeOverrides.globalScale || 1}
                   onChange={(e) => {
-                    const newOverrides = { ...themeOverrides, globalScale: parseFloat(e.target.value) };
-                    setThemeOverrides(newOverrides);
+                    const val = parseFloat(e.target.value);
+                    setThemeOverrides(prev => ({ ...prev, globalScale: val }));
                   }}
                   onMouseUp={() => updateGlobalSettings({ themeOverrides })}
                   className="w-full h-1.5 bg-black/40 rounded-full appearance-none cursor-pointer accent-indigo-500"
@@ -837,6 +912,110 @@ export function AdminPage() {
                 </div>
               ))
             )}
+          </div>
+        </section>
+
+        {/* Level 3.5: Sidebar Link Management */}
+        <section className="tactical-card p-10 space-y-10 bg-brand-panel/20">
+          <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/5">
+            <div>
+              <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic">
+                <Settings className="w-6 h-6 text-indigo-400" />
+                Sidebar <span className="text-indigo-400 not-italic">Matrix</span>
+              </h3>
+              <p className="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black mt-2">Manage menu navigation and external portals</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => {
+                  setSidebarLinks([]);
+                  updateGlobalSettings({ sidebarLinks: [] });
+                  setShowToast("NAVIGATION_VECTORS_RECALIBRATED");
+                }}
+                className="px-6 py-2 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-rose-500 hover:text-white transition-all"
+              >
+                Reset Navigation
+              </button>
+              <button 
+                onClick={addSidebarLink}
+                className="tactical-btn-indigo px-8 py-3 text-[10px]"
+              >
+                <Plus className="w-4 h-4" />
+                Inject Link
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {(sidebarLinks.length > 0 ? sidebarLinks : [
+              { icon: 'LayoutDashboard', label: 'Start Page', path: '/', external: false, id: 'start' },
+              { icon: 'Activity', label: 'Tone Test', path: '/tone-test', external: false, id: 'tone' },
+              { icon: 'Terminal', label: 'Unit Posting', path: '/unit-posting', external: false, id: 'unit' },
+              { icon: 'MapIcon', label: 'Distance Map', path: '/distance-map', external: false, id: 'dist' },
+              { icon: 'FileText', label: 'Shift Report', path: '/shift-report', external: false, id: 'report' },
+              { icon: 'Camera', label: 'Cameras', path: '/cameras', external: false, id: 'cams' },
+              { icon: 'ClockIcon', label: 'Time Clock', path: '/time-clock', external: false, id: 'clock' },
+              { icon: 'Phone', label: 'Directory', path: '/directory', external: false, id: 'dir' },
+              { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/1Lq3m5KIhkwP7zQZu9RTKlXRO18BPhx1A/view?usp=drive_link', external: true, id: 'coroner' },
+              { icon: 'Table', label: 'Daily Worksheet', path: 'https://docs.google.com/spreadsheets/d/1-4Uwh00g4orCaOQoOrLIcRkamAhdxrBNhVVOt2IEOoY/edit?gid=534085027#gid=534085027', external: true, id: 'worksheet' },
+              { icon: 'CreditCard', label: 'PayCom Online', path: 'https://www.paycomonline.net/v4/ee/web.php/app/login', external: true, id: 'paycom' },
+            ]).map((link) => (
+              <div key={link.id} className="p-6 bg-black/40 border border-white/5 rounded-2xl group hover:border-indigo-500/40 transition-all space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{link.external ? 'EXTERNAL' : 'CORE'}</span>
+                  </div>
+                  <button 
+                    onClick={() => removeSidebarLink(link.id)}
+                    className="p-1.5 text-slate-600 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Label</label>
+                    <input 
+                      type="text" 
+                      value={link.label}
+                      onChange={(e) => updateSidebarLink(link.id, { label: e.target.value })}
+                      className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-black uppercase focus:border-indigo-500 outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Target Path / URL</label>
+                    <input 
+                      type="text" 
+                      value={link.path}
+                      onChange={(e) => updateSidebarLink(link.id, { path: e.target.value })}
+                      className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-mono focus:border-indigo-500 outline-none"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Icon Key</label>
+                      <input 
+                        type="text" 
+                        value={link.icon}
+                        onChange={(e) => updateSidebarLink(link.id, { icon: e.target.value })}
+                        className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-mono focus:border-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div className="flex flex-col justify-end">
+                      <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-white/5 transition-colors">
+                        <input 
+                          type="checkbox" 
+                          checked={link.external}
+                          onChange={(e) => updateSidebarLink(link.id, { external: e.target.checked })}
+                          className="w-3 h-3 accent-indigo-500 rounded bg-black/40 border-white/10"
+                        />
+                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">External</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 

@@ -107,6 +107,14 @@ export type UnitConfig = {
   type: 'transport' | 'qrv';
 };
 
+export type SidebarLink = {
+  id: string;
+  label: string;
+  path: string;
+  icon: string;
+  external: boolean;
+};
+
 export type ThemeOverrides = {
   brandBlue?: string;
   brandIndigo?: string;
@@ -132,6 +140,7 @@ export type GlobalSettings = {
   supervisors?: Record<string, string>;
   defaultCameraIds?: string[];
   fleetConfigs?: UnitConfig[];
+  sidebarLinks?: SidebarLink[];
   themeOverrides?: ThemeOverrides;
   updatedAt?: any;
   updatedBy?: string | null;
