@@ -59,64 +59,85 @@
 }
 
 :root {
-  /* Paper (Default Medium-Light) */
-  --brand-blue: #4338ca;
+  /* Paper (Neutral Light) */
+  --brand-blue: #2563eb;
   --brand-indigo: #4338ca;
   --brand-indigo-dark: #3730a3;
   --brand-indigo-darker: #312e81;
   --brand-emerald: #059669;
   --brand-panel: #f1f5f9;
   --brand-border: #cbd5e1;
-  --brand-bg: #e2e8f0;
+  --brand-bg: #f8fafc;
   --brand-field: #ffffff;
-  --brand-accent: #4f46e5;
-  --brand-accent-medium: #6366f1;
-  --brand-accent-light: #818cf8;
+  --brand-accent: #6366f1;
+  --brand-accent-medium: #818cf8;
+  --brand-accent-light: #a5b4fc;
   --brand-accent-soft: #c7d2fe;
-  --bg-main: #e2e8f0;
+  --bg-main: #f8fafc;
   --bg-surface: #f1f5f9;
   --text-main: #0f172a;
-  --text-dim: #334155;
+  --text-dim: #475569;
+}
+
+[data-theme='midnight'] {
+  /* Tactical Midnight (Based on user image) */
+  --brand-blue: #5f5495;
+  --brand-indigo: #5f5495;
+  --brand-indigo-dark: #3c3175;
+  --brand-indigo-darker: #231858;
+  --brand-emerald: #57ac57;
+  --brand-panel: #262a33;
+  --brand-border: #333945;
+  --brand-bg: #1a1d23;
+  --brand-field: #2d343f;
+  --brand-accent: #d76c6c;
+  --brand-accent-medium: #aa3838;
+  --brand-accent-light: #801515;
+  --brand-accent-soft: #fff3c4;
+  --bg-main: #1a1d23;
+  --bg-surface: #262a33;
+  --text-main: #f8fafc;
+  --text-dim: #94a3b8;
 }
 
 [data-theme='ivory'] {
-  /* Ivory / Muted Sand */
+  /* Ivory / Elegant Off-White */
   --brand-blue: #78350f;
   --brand-indigo: #78350f;
   --brand-indigo-dark: #451a03;
   --brand-indigo-darker: #451a03;
   --brand-emerald: #059669;
-  --brand-panel: #fdf6e3;
-  --brand-border: #eee8d5;
-  --brand-bg: #eee8d5;
-  --brand-field: #fffefb;
+  --brand-panel: #fffbf0;
+  --brand-border: #f3e8d2;
+  --brand-bg: #fffbf0;
+  --brand-field: #ffffff;
   --brand-accent: #b45309;
   --brand-accent-medium: #d97706;
   --brand-accent-light: #f59e0b;
   --brand-accent-soft: #fef3c7;
-  --bg-main: #eee8d5;
-  --bg-surface: #fdf6e3;
+  --bg-main: #fffbf0;
+  --bg-surface: #f3e8d2;
   --text-main: #451a03;
   --text-dim: #92400e;
 }
 
 [data-theme='frost'] {
-  /* Frost / Moody Blue */
-  --brand-blue: #1e40af;
-  --brand-indigo: #1e40af;
-  --brand-emerald: #0e7490;
-  --brand-panel: #e0f2fe;
-  --brand-border: #bae6fd;
-  --brand-bg: #bae6fd;
+  /* Frost / Soft Blue Light */
+  --brand-blue: #2563eb;
+  --brand-indigo: #2563eb;
+  --brand-emerald: #0891b2;
+  --brand-panel: #f0f9ff;
+  --brand-border: #e0f2fe;
+  --brand-bg: #f0f9ff;
   --brand-field: #ffffff;
-  --brand-accent: #2563eb;
-  --brand-accent-medium: #3b82f6;
-  --brand-accent-light: #60a5fa;
+  --brand-accent: #3b82f6;
+  --brand-accent-medium: #60a5fa;
+  --brand-accent-light: #93c5fd;
   --brand-accent-soft: #dbeafe;
-  --bg-main: #bae6fd;
+  --bg-main: #f0f9ff;
   --bg-surface: #e0f2fe;
-  --text-main: #1e3a8a;
-  --text-dim: #2563eb;
+  --text-main: #1e40af;
+  --text-dim: #3b82f6;
 }
 
 [data-theme='sky'] {
@@ -343,5 +364,12 @@
 
   .tactical-card {
     @apply bg-bg-surface/50 backdrop-blur-md border border-white/5 rounded-[2rem] hover:border-white/10 transition-all duration-300;
+  }
+
+  .technical-grid {
+    background-image: 
+      radial-gradient(circle at 2px 2px, var(--brand-indigo) 1px, transparent 0);
+    background-size: 24px 24px;
+    background-color: var(--bg-main);
   }
 }

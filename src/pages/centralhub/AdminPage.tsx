@@ -68,6 +68,7 @@ export function AdminPage() {
 
   const THEMES: { id: AppTheme; name: string; color: string }[] = [
     { id: 'paper', name: 'Paper', color: '#e2e8f0' },
+    { id: 'midnight', name: 'Midnight', color: '#1a1d23' },
     { id: 'cream', name: 'Cream', color: '#eee8d5' },
     { id: 'mint', name: 'Mint', color: '#dcfce7' },
     { id: 'clay', name: 'Clay', color: '#ddd6fe' },

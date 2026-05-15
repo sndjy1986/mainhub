@@ -194,32 +194,32 @@ export default function DistanceMap() {
   const isLimitReached = usageCount >= API_LIMIT;
 
   return (
-    <div className="relative flex flex-col technical-grid text-slate-50 font-sans p-8 pt-12 overflow-hidden">
+    <div className="relative flex flex-col technical-grid text-text-main font-sans p-8 pt-12 overflow-hidden bg-bg-main">
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="radar-sweep !opacity-20" />
-        <div className="scanner-line !opacity-20" />
-        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-indigo-500/5 blur-[120px] rounded-full animate-pulse-slow" />
+        <div className="radar-sweep !opacity-10" />
+        <div className="scanner-line !opacity-10" />
+        <div className="absolute top-[-10%] right-[-10%] w-[60%] h-[60%] bg-brand-indigo/5 blur-[120px] rounded-full animate-pulse-slow" />
       </div>
 
-      <header className="flex justify-between items-end mb-12 relative z-10 tactical-header-glow pb-8">
+      <header className="flex justify-between items-end mb-12 relative z-10 tactical-header-glow pb-8 border-b border-brand-border">
         <div className="space-y-3"> 
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.4)]">
+            <div className="w-12 h-12 bg-brand-indigo rounded-2xl flex items-center justify-center shadow-brand-indigo">
               <MapIcon className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-4xl font-black tracking-tight text-white uppercase italic">
-               Fleet <span className="text-indigo-500 not-italic">Matrix</span>
+            <h1 className="text-4xl font-black tracking-tight text-text-main uppercase italic">
+               Fleet <span className="text-brand-indigo not-italic">Matrix</span>
             </h1>
           </div>
-          <p className="text-slate-500 font-black uppercase tracking-[0.2em] text-[10px] ml-16">Real-time response logistics and fleet positioning for EMS Dispatch</p>
+          <p className="text-text-dim font-black uppercase tracking-[0.2em] text-[10px] ml-16">Real-time response logistics and fleet positioning for EMS Dispatch</p>
         </div>
         
-        <div className="flex items-center gap-6 tactical-card px-6 py-4">
+        <div className="flex items-center gap-6 tactical-card px-6 py-4 bg-brand-panel/50">
           <div className="text-right"> 
-            <span className="block text-[8px] uppercase tracking-[0.3em] text-slate-500 font-black">System Pulse</span> 
-            <span className="text-emerald-400 font-black text-[10px] tracking-widest flex items-center justify-end gap-2 mt-1 uppercase">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> 
+            <span className="block text-[8px] uppercase tracking-[0.3em] text-text-dim font-black">System Pulse</span> 
+            <span className="text-brand-emerald font-black text-[10px] tracking-widest flex items-center justify-end gap-2 mt-1 uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-emerald animate-pulse"></span> 
               Ops Ready - {activeTransportUnits.length} Units Up
             </span>
           </div>
@@ -229,18 +229,18 @@ export default function DistanceMap() {
       <div className="flex gap-8 flex-1 min-h-0 relative z-10 overflow-hidden">
         {/* Left Column (Search & Summary) */}
         <div className="w-[350px] flex flex-col gap-8 shrink-0">
-          <div className="tactical-card p-8 space-y-6 shadow-2xl relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
+          <div className="tactical-card p-8 space-y-6 shadow-2xl relative overflow-hidden group bg-brand-panel/80">
+            <div className="absolute inset-0 bg-gradient-to-br from-brand-indigo/5 to-transparent pointer-events-none" />
             <div className="space-y-4 relative"> 
               <div className="flex items-center gap-2">
-                <Search className="w-3.5 h-3.5 text-indigo-500" />
-                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Target Vector</label>
+                <Search className="w-3.5 h-3.5 text-brand-indigo" />
+                <label className="text-[10px] font-black uppercase tracking-[0.3em] text-text-dim">Target Vector</label>
               </div>
               <form onSubmit={handleSearch} className="relative"> 
                 <input 
                   type="text" 
                   placeholder="DEPLOY TO ADDRESS..." 
-                  className="w-full tactical-input px-5 py-4 text-sm"
+                  className="w-full tactical-input px-5 py-4 text-sm bg-brand-bg/50 border-brand-border text-text-main"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   disabled={loading || isLimitReached}
@@ -248,7 +248,7 @@ export default function DistanceMap() {
                 <button 
                   type="submit"
                   disabled={loading || isLimitReached || !address.trim()}
-                  className="absolute right-2 top-2 tactical-btn-indigo px-4 py-2 text-[10px] font-black"
+                  className="absolute right-2 top-2 tactical-btn-indigo px-4 py-2 text-[10px] font-black shadow-brand-indigo"
                 >
                   {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "PING"}
                 </button>
@@ -259,51 +259,51 @@ export default function DistanceMap() {
               <motion.div 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl flex gap-3"
+                className="p-4 bg-brand-indigo/10 border border-brand-indigo/20 rounded-2xl flex gap-3"
               > 
-                <div className="bg-indigo-500/20 p-2 rounded-lg h-fit text-indigo-400">
+                <div className="bg-brand-indigo/20 p-2 rounded-lg h-fit text-brand-indigo">
                   <Activity className="w-4 h-4 animate-pulse" />
                 </div>
-                <p className="text-[11px] leading-snug text-indigo-100 font-bold uppercase tracking-wider">{status}</p>
+                <p className="text-[11px] leading-snug text-text-main font-bold uppercase tracking-wider">{status}</p>
               </motion.div>
             )}
 
             {isLimitReached && (
               <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex gap-3"> 
                 <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-                <p className="text-[11px] leading-snug text-rose-100 font-black uppercase tracking-wider">Matrix limit reached. System cooldown initialized.</p>
+                <p className="text-[11px] leading-snug text-text-main font-black uppercase tracking-wider">Matrix limit reached. System cooldown initialized.</p>
               </div>
             )}
           </div>
 
-          <div className="flex-1 tactical-card flex flex-col overflow-hidden">
-            <div className="p-6 border-b border-white/5 bg-white/[0.02] flex justify-between items-center"> 
-              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400">Response Matrix</h3> 
+          <div className="flex-1 tactical-card flex flex-col overflow-hidden bg-brand-panel/40">
+            <div className="p-6 border-b border-brand-border bg-brand-indigo/5 flex justify-between items-center"> 
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-indigo">Response Matrix</h3> 
               <div className="flex gap-1.5">
-                <div className="w-8 h-[2px] bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
-                <div className="w-4 h-[2px] bg-slate-800 rounded-full"></div>
+                <div className="w-8 h-[2px] bg-brand-indigo rounded-full shadow-brand-indigo"></div>
+                <div className="w-4 h-[2px] bg-brand-border rounded-full"></div>
               </div>
             </div>
             <div className="p-8 space-y-8 flex-1 flex flex-col"> 
               <div className="space-y-4">
-                <div className="flex justify-between items-center group/item hover:bg-white/[0.02] p-2 -mx-2 rounded-xl transition-all"> 
-                  <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest group-hover/item:text-slate-300">Fleet Units</span> 
-                  <span className="text-white font-mono bg-black/40 px-3 py-1 rounded-lg text-[10px] border border-white/5 border-b-indigo-500/50">{activeTransportUnits.length} ACTIVE</span> 
+                <div className="flex justify-between items-center group/item hover:bg-brand-indigo/5 p-2 -mx-2 rounded-xl transition-all"> 
+                  <span className="text-text-dim text-[10px] font-black uppercase tracking-widest group-hover/item:text-text-main">Fleet Units</span> 
+                  <span className="text-text-main font-mono bg-brand-bg/50 px-3 py-1 rounded-lg text-[10px] border border-brand-border border-b-brand-indigo/50">{activeTransportUnits.length} ACTIVE</span> 
                 </div> 
-                <div className="flex justify-between items-center group/item hover:bg-white/[0.02] p-2 -mx-2 rounded-xl transition-all"> 
-                  <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest group-hover/item:text-slate-300">QRV Response</span> 
-                  <span className="text-white font-mono bg-black/40 px-3 py-1 rounded-lg text-[10px] border border-white/5 border-b-emerald-500/50">{activeQrvUnits.length} READY</span> 
+                <div className="flex justify-between items-center group/item hover:bg-brand-indigo/5 p-2 -mx-2 rounded-xl transition-all"> 
+                  <span className="text-text-dim text-[10px] font-black uppercase tracking-widest group-hover/item:text-text-main">QRV Response</span> 
+                  <span className="text-text-main font-mono bg-brand-bg/50 px-3 py-1 rounded-lg text-[10px] border border-brand-border border-b-brand-emerald/50">{activeQrvUnits.length} READY</span> 
                 </div> 
               </div>
 
-              <div className="pt-8 border-t border-white/5 mt-4"> 
-                <div className="text-center bg-black/40 rounded-[2rem] p-8 border border-white/5 relative group overflow-hidden shadow-inner"> 
-                  <div className="absolute inset-0 bg-indigo-500/[0.02] group-hover:bg-indigo-500/[0.05] transition-all" />
-                  <span className="block text-6xl font-black text-white mb-2 glow-number leading-none">
+              <div className="pt-8 border-t border-brand-border mt-4"> 
+                <div className="text-center bg-brand-bg/50 rounded-[2rem] p-8 border border-brand-border relative group overflow-hidden shadow-inner"> 
+                  <div className="absolute inset-0 bg-brand-indigo/[0.02] group-hover:bg-brand-indigo/[0.05] transition-all" />
+                  <span className="block text-6xl font-black text-text-main mb-2 glow-number leading-none">
                     {transportResults.length > 0 ? transportResults[0].distance?.toFixed(1) : '--'}
-                    <span className="text-sm font-black text-slate-600 ml-1 uppercase tracking-widest">mi</span>
+                    <span className="text-sm font-black text-text-dim ml-1 uppercase tracking-widest">mi</span>
                   </span> 
-                  <span className="text-[9px] text-indigo-400 uppercase font-black tracking-[0.2em] relative z-10 px-4 py-1.5 bg-indigo-500/10 rounded-full border border-indigo-500/20">
+                  <span className="text-[9px] text-brand-indigo uppercase font-black tracking-[0.2em] relative z-10 px-4 py-1.5 bg-brand-indigo/10 rounded-full border border-brand-indigo/20">
                     Prime Response: {transportResults.length > 0 ? transportResults[0].name : 'STNDBY'}
                   </span> 
                 </div> 
@@ -311,17 +311,17 @@ export default function DistanceMap() {
 
               {/* View Toggle */}
               <div className="mt-auto pt-8">
-                <div className="bg-black/40 p-1.5 rounded-2xl border border-white/10 flex shadow-inner">
+                <div className="bg-brand-bg/60 p-1.5 rounded-2xl border border-brand-border flex shadow-inner">
                   <button 
                     onClick={() => setView('list')}
-                    className={`flex-1 flex items-center justify-center gap-3 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${view === 'list' ? 'bg-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)]' : 'text-slate-600 hover:text-slate-400'}`}
+                    className={`flex-1 flex items-center justify-center gap-3 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${view === 'list' ? 'bg-brand-indigo text-white shadow-brand-indigo' : 'text-text-dim hover:text-text-main'}`}
                   >
                     <List className="w-4 h-4" />
                     List Matrix
                   </button>
                   <button 
                     onClick={() => setView('map')}
-                    className={`flex-1 flex items-center justify-center gap-3 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${view === 'map' ? 'bg-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.3)]' : 'text-slate-600 hover:text-slate-400'}`}
+                    className={`flex-1 flex items-center justify-center gap-3 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${view === 'map' ? 'bg-brand-indigo text-white shadow-brand-indigo' : 'text-text-dim hover:text-text-main'}`}
                   >
                     <MapIcon className="w-4 h-4" />
                     Overlay Map
@@ -346,15 +346,15 @@ export default function DistanceMap() {
                 >
                   <div className="space-y-4">
                     <div className="flex items-center gap-3 mb-2 px-2">
-                       <Truck className="w-4 h-4 text-indigo-500" />
-                       <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Fleet Deployments</h4>
+                       <Truck className="w-4 h-4 text-brand-indigo" />
+                       <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-text-main">Fleet Deployments</h4>
                     </div>
                     <UnitTable units={transportResults} loading={loading} title="Primary Assets" />
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center gap-3 mb-2 px-2">
-                       <Zap className="w-4 h-4 text-emerald-500" />
-                       <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-white">QRV Support</h4>
+                       <Zap className="w-4 h-4 text-brand-emerald" />
+                       <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-text-main">QRV Support</h4>
                     </div>
                     <UnitTable units={qrvResults} loading={loading} title="Operational QRVs" />
                   </div>
@@ -386,28 +386,28 @@ export default function DistanceMap() {
         </div>
       </div>
 
-      <footer className="mt-8 flex justify-between items-center bg-black/40 rounded-[2rem] border border-white/5 p-6 relative z-10 shadow-2xl">
+      <footer className="mt-8 flex justify-between items-center bg-brand-panel/40 rounded-[2rem] border border-brand-border p-6 relative z-10 shadow-2xl">
         <div className="flex items-center gap-10">
           <div className="flex items-center gap-6"> 
-            <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em]">Network Load</span> 
-            <div className="w-64 h-2 bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]"> 
+            <span className="text-[9px] font-black text-text-dim uppercase tracking-[0.3em]">Network Load</span> 
+            <div className="w-64 h-2 bg-brand-bg/50 rounded-full overflow-hidden border border-brand-border p-[1px]"> 
               <motion.div 
-                className={`h-full rounded-full shadow-[0_0_15px_rgba(79,70,229,0.5)] ${usageCount >= API_LIMIT ? 'bg-rose-500' : 'bg-indigo-500'}`}
+                className={`h-full rounded-full shadow-brand-indigo ${usageCount >= API_LIMIT ? 'bg-rose-500' : 'bg-brand-indigo'}`}
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min(100, (usageCount / API_LIMIT) * 100)}%` }}
                 transition={{ duration: 1.5, ease: "circOut" }}
               />
             </div> 
-            <span className="text-[10px] font-mono text-indigo-400 font-bold bg-indigo-500/10 px-3 py-1 rounded-lg border border-indigo-500/20">{usageCount.toLocaleString()} / {API_LIMIT.toLocaleString()}</span>
+            <span className="text-[10px] font-mono text-brand-indigo font-bold bg-brand-indigo/10 px-3 py-1 rounded-lg border border-brand-indigo/20">{usageCount.toLocaleString()} / {API_LIMIT.toLocaleString()}</span>
           </div>
-          <div className="h-6 w-[1px] bg-white/5 hidden md:block"></div>
-          <p className="text-[9px] text-slate-600 max-w-sm hidden lg:block font-bold uppercase tracking-widest">Quantum usage resets on monthly cycle. Spatial metrics provided via Mapbox Relay Matrix.</p>
+          <div className="h-6 w-[1px] bg-brand-border hidden md:block"></div>
+          <p className="text-[9px] text-text-dim max-w-sm hidden lg:block font-bold uppercase tracking-widest">Quantum usage resets on monthly cycle. Spatial metrics provided via Mapbox Relay Matrix.</p>
         </div>
         <div className="flex gap-4">
-          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 border border-white/5 hover:border-white/20 hover:text-white transition-all cursor-crosshair">
+          <div className="w-10 h-10 rounded-xl bg-brand-bg/50 flex items-center justify-center text-text-dim border border-brand-border hover:border-brand-indigo hover:text-brand-indigo transition-all cursor-crosshair">
             <Search className="w-4 h-4" />
           </div>
-          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-500 border border-white/5 hover:border-white/20 hover:text-white transition-all cursor-crosshair">
+          <div className="w-10 h-10 rounded-xl bg-brand-bg/50 flex items-center justify-center text-text-dim border border-brand-border hover:border-brand-indigo hover:text-brand-indigo transition-all cursor-crosshair">
             <Radio className="w-4 h-4" />
           </div>
         </div>
