@@ -87,6 +87,13 @@ export function AdminPage() {
   const [fleetConfigs, setFleetConfigs] = useState<import('../../lib/firebase').UnitConfig[]>([]);
   const [sidebarLinks, setSidebarLinks] = useState<import('../../lib/firebase').SidebarLink[]>([]);
   const [themeOverrides, setThemeOverrides] = useState<import('../../lib/firebase').ThemeOverrides>({});
+  const themeRef = React.useRef(themeOverrides);
+
+  // Sync ref with state
+  useEffect(() => {
+    themeRef.current = themeOverrides;
+  }, [themeOverrides]);
+
   const [archivedReports, setArchivedReports] = useState<ShiftReportType[]>([]);
   const [loadingReports, setLoadingReports] = useState(false);
 
@@ -121,7 +128,10 @@ export function AdminPage() {
         if (data.defaultCameraIds) setDefaultCameraIds(data.defaultCameraIds);
         if (data.fleetConfigs) setFleetConfigs(data.fleetConfigs);
         if (data.sidebarLinks) setSidebarLinks(data.sidebarLinks);
-        if (data.themeOverrides) setThemeOverrides(data.themeOverrides);
+        // Only set theme overrides if they are different from current local state to avoid race conditions
+        if (data.themeOverrides && JSON.stringify(data.themeOverrides) !== JSON.stringify(themeRef.current)) {
+          setThemeOverrides(data.themeOverrides);
+        }
       }
     });
 
@@ -609,7 +619,7 @@ export function AdminPage() {
                           const val = e.target.value;
                           setThemeOverrides(prev => ({ ...prev, [item.key]: val }));
                         }}
-                        onBlur={() => updateGlobalSettings({ themeOverrides })}
+                        onBlur={() => updateGlobalSettings({ themeOverrides: themeRef.current })}
                         className="w-10 h-10 rounded-lg bg-transparent border-white/10 cursor-pointer p-0"
                       />
                       <input 
@@ -619,7 +629,7 @@ export function AdminPage() {
                           const val = e.target.value;
                           setThemeOverrides(prev => ({ ...prev, [item.key]: val }));
                         }}
-                        onBlur={() => updateGlobalSettings({ themeOverrides })}
+                        onBlur={() => updateGlobalSettings({ themeOverrides: themeRef.current })}
                         placeholder="HEX/RGB"
                         className="flex-1 bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-mono uppercase focus:border-indigo-500 outline-none"
                       />
@@ -646,7 +656,7 @@ export function AdminPage() {
                     const val = parseFloat(e.target.value);
                     setThemeOverrides(prev => ({ ...prev, panelOpacity: val }));
                   }}
-                  onMouseUp={() => updateGlobalSettings({ themeOverrides })}
+                  onMouseUp={() => updateGlobalSettings({ themeOverrides: themeRef.current })}
                   className="w-full h-1.5 bg-black/40 rounded-full appearance-none cursor-pointer accent-indigo-500"
                 />
                 <p className="text-[8px] text-slate-600 uppercase tracking-widest italic">Controls glass effect transparency level</p>
@@ -665,7 +675,7 @@ export function AdminPage() {
                     const val = parseFloat(e.target.value);
                     setThemeOverrides(prev => ({ ...prev, globalScale: val }));
                   }}
-                  onMouseUp={() => updateGlobalSettings({ themeOverrides })}
+                  onMouseUp={() => updateGlobalSettings({ themeOverrides: themeRef.current })}
                   className="w-full h-1.5 bg-black/40 rounded-full appearance-none cursor-pointer accent-indigo-500"
                 />
                 <p className="text-[8px] text-slate-600 uppercase tracking-widest italic">Scales entire interface typography and grid</p>
