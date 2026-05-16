@@ -137,7 +137,7 @@ const DEFAULT_WIDGETS: WidgetItem[] = [
   { id: 'widget-personnel', type: 'personnel', title: 'Personnel Deployment', size: 'xl', isVisible: true },
   { id: 'widget-calendar', type: 'calendar', title: 'Operations Calendar', size: 'xl', isVisible: true },
   { id: 'widget-shift-report', type: 'shift_report', title: 'Shift Report Entry', size: 'md', isVisible: true },
-  { id: 'widget-news', type: 'news', title: 'Global Intel Feed', size: 'lg', isVisible: false, newsSettings: DEFAULT_NEWS_SETTINGS },
+  { id: 'widget-news', type: 'news', title: 'Global Intel Feed', size: 'lg', isVisible: true, newsSettings: DEFAULT_NEWS_SETTINGS },
 ];
 
 export function StartPage() {

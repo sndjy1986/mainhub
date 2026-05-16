@@ -50,6 +50,7 @@ interface WeatherData {
   humidity?: number;
   windSpeed?: string;
   windDirection?: string;
+  daily: any[];
 }
 
 const DEFAULT_MODULES = {
@@ -186,6 +187,23 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
         const pressurePa = obsData?.properties?.barometricPressure?.value;
         const pressureInHg = pressurePa ? (pressurePa * 0.0002953).toFixed(2) : undefined;
         
+        // Derive daily from forecast periods (NOAA returns roughly 14 periods, usually Day/Night entries)
+        const daily: any[] = [];
+        for (let i = 0; i < forecastData.properties.periods.length; i += 2) {
+          const dayPeriod = forecastData.properties.periods[i];
+          const nightPeriod = forecastData.properties.periods[i + 1];
+          if (dayPeriod && nightPeriod) {
+            daily.push({
+              name: dayPeriod.name,
+              high: dayPeriod.temperature,
+              low: nightPeriod.temperature,
+              condition: dayPeriod.shortForecast,
+              icon: dayPeriod.icon,
+              detailed: dayPeriod.detailedForecast
+            });
+          }
+        }
+
         setWeather({
           temperature: currentPeriod.temperature,
           condition: currentPeriod.shortForecast,
@@ -197,7 +215,8 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
           pressure: pressureInHg ? parseFloat(pressureInHg) : undefined,
           humidity: obsData?.properties?.relativeHumidity?.value,
           windSpeed: currentPeriod.windSpeed,
-          windDirection: currentPeriod.windDirection
+          windDirection: currentPeriod.windDirection,
+          daily: daily
         });
       } catch (err: any) {
         console.error(err);
@@ -300,29 +319,98 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
 
   if (compact) {
     return (
-      <div className={cn("w-full h-full flex flex-col justify-center p-6 gap-4", settings?.fontFamily)}>
+      <div className={cn("w-full h-full flex flex-col p-6 gap-6 overflow-hidden", settings?.fontFamily)}>
          {activeModules.showCurrent && (
-           <div className="flex items-center gap-4">
-              <div className="text-4xl font-black text-white glow-number">
-                {weather?.temperature}<span className="text-sm text-slate-500">°</span>
+           <div className="flex items-center gap-6 shrink-0">
+              <div className="text-5xl font-black text-white glow-number leading-none flex items-start">
+                {weather?.temperature}<span className="text-lg text-slate-500 mt-1">°</span>
               </div>
-              {weather && <AnimatedWeatherIcon condition={weather.condition} size={32} />}
-              <div className="flex-1">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{weather?.condition}</p>
-                <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em]">{weather?.location}</p>
+              {weather && <AnimatedWeatherIcon condition={weather.condition} size={48} />}
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] truncate leading-tight mb-1">{weather?.condition}</p>
+                <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] truncate italic">{weather?.location}</p>
+              </div>
+              {activeModules.showPressure && weather?.pressure && (
+                <div className="hidden xl:flex flex-col items-end gap-1 px-4 py-2 bg-white/5 border border-white/5 rounded-xl">
+                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Barometric</span>
+                  <span className="text-xs font-black text-indigo-400 font-mono italic">{weather.pressure} INHG</span>
+                </div>
+              )}
+              <div className="hidden sm:flex flex-col items-end gap-1 opacity-40">
+                <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest">Telemetry Sync</span>
+                <span className="text-[9px] font-black text-slate-400 font-mono italic">{format(new Date(), 'HH:mm')}</span>
               </div>
            </div>
          )}
-         {activeModules.showTimeline && (
-           <div className="flex gap-2 overflow-hidden opacity-40 grayscale group-hover:opacity-100 group-hover:grayscale-0 transition-all">
-             {weather?.hourly.slice(0, 6).map((hour, idx) => (
-               <div key={idx} className="flex-shrink-0 flex flex-col items-center">
-                 <span className="text-[7px] font-bold text-slate-500">{format(new Date(hour.startTime), 'HH')}</span>
-                 <span className="text-[9px] font-black text-white">{hour.temperature}°</span>
+         
+         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+           {activeModules.showCurrent && (
+             <div className="flex flex-col gap-2 min-h-0 lg:border-r lg:border-white/5 pr-4">
+               <h4 className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
+                 <Wind className="w-3 h-3" /> Vector Dynamics
+               </h4>
+               <div className="flex flex-col gap-1 px-5 py-2 bg-white/[0.02] border border-white/5 rounded-xl flex-1 justify-center">
+                 <div className="flex justify-between items-center">
+                   <span className="text-[8px] font-bold text-slate-500 uppercase">Wind Velocity</span>
+                   <span className="text-[10px] font-black text-white">{weather?.windSpeed} {weather?.windDirection}</span>
+                 </div>
+                 <div className="flex justify-between items-center">
+                   <span className="text-[8px] font-bold text-slate-500 uppercase">Humidity Matrix</span>
+                   <span className="text-[10px] font-black text-white">{weather?.humidity}%</span>
+                 </div>
                </div>
-             ))}
-           </div>
-         )}
+             </div>
+           )}
+
+           {activeModules.showTimeline && (
+             <div className="flex flex-col gap-2 min-h-0">
+               <h4 className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
+                 <Clock className="w-3 h-3" /> 24H Forecast
+               </h4>
+               <div className="flex justify-between items-center gap-2 px-4 py-2 bg-white/[0.03] border border-white/5 rounded-xl flex-1 overflow-hidden">
+                 {weather?.hourly.slice(0, 5).map((hour, idx) => (
+                   <div key={idx} className="flex flex-col items-center gap-1.5 min-w-[32px]">
+                     <span className="text-[8px] font-black text-slate-500">{format(new Date(hour.startTime), 'HH')}</span>
+                     <span className="text-[10px] font-black text-white">{hour.temperature}°</span>
+                   </div>
+                 ))}
+               </div>
+             </div>
+           )}
+
+           {activeModules.showTomorrow && weather?.daily && weather.daily.length > 1 && (
+             <div className="flex flex-col gap-2 min-h-0">
+               <h4 className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
+                 <Shield className="w-3 h-3" /> T+24H Outlook
+               </h4>
+               <div className="flex items-center justify-between px-5 py-2 bg-indigo-500/5 border border-indigo-500/10 rounded-xl flex-1">
+                 <div className="flex items-center gap-3">
+                   <AnimatedWeatherIcon condition={weather.daily[1].condition} size={24} />
+                   <div className="flex flex-col">
+                     <span className="text-[9px] font-black text-white uppercase tracking-wider">{weather.daily[1].condition}</span>
+                     <span className="text-[8px] font-bold text-slate-500 uppercase leading-none">Trend</span>
+                   </div>
+                 </div>
+                 <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-black text-white">{weather.daily[1].high}°</span>
+                    <span className="text-[10px] font-black text-slate-500">/ {weather.daily[1].low}°</span>
+                 </div>
+               </div>
+             </div>
+           )}
+
+           {activeModules.showPressure && weather?.pressure && (
+             <div className="xl:hidden flex flex-col gap-2">
+                <h4 className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
+                  <Gauge className="w-3 h-3" /> Pressure Analytics
+                </h4>
+                <div className="px-5 py-2 bg-white/5 border border-white/5 rounded-xl flex items-center justify-between flex-1">
+                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Steady State</span>
+                   <span className="text-sm font-black text-indigo-400 font-mono italic">{weather.pressure} INHG</span>
+                </div>
+             </div>
+           )}
+         </div>
       </div>
     );
   }
