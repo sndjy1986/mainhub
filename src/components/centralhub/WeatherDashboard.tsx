@@ -392,10 +392,6 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
               </button>
             ))}
           </div>
-          <div className="hidden sm:flex flex-col items-end gap-0.5 opacity-40">
-            <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Telemetry</span>
-            <span className="text-[9px] font-black text-slate-400 font-mono italic">{format(new Date(), 'HH:mm')}</span>
-          </div>
         </div>
 
         <div className="flex-1 min-h-0 overflow-hidden relative">
@@ -406,15 +402,15 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="grid grid-cols-1 xl:grid-cols-2 gap-6 h-full items-center"
+                className="grid grid-cols-1 xl:grid-cols-12 gap-6 h-full"
               >
-                <div className="space-y-6">
+                <div className="xl:col-span-4 space-y-6 flex flex-col justify-center">
                   <div className="flex items-center gap-6">
                     <div className="text-7xl font-black text-white tracking-tighter flex items-start">
                       {weather?.temperature}<span className="text-2xl text-slate-500 mt-2 ml-1">°</span>
                     </div>
                     {weather && <AnimatedWeatherIcon condition={weather.condition} size={64} />}
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] truncate leading-tight mb-1">{weather?.condition}</p>
                       <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] truncate italic">{weather?.location}</p>
                     </div>
@@ -431,12 +427,12 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
                   </div>
                 </div>
                 {/* Mini Radar */}
-                <div className="hidden xl:block h-full relative group cursor-pointer" onClick={() => setIsRadarExpanded(true)}>
-                  <div className="absolute inset-0 bg-indigo-500/10 opacity-40 rounded-3xl" />
-                  <div className="absolute inset-0 border border-white/5 rounded-3xl overflow-hidden">
+                <div className="hidden xl:block xl:col-span-8 h-full relative group cursor-pointer" onClick={() => setIsRadarExpanded(true)}>
+                  <div className="absolute inset-0 bg-indigo-500/10 opacity-30 rounded-3xl" />
+                  <div className="absolute inset-0 border border-white/10 rounded-3xl overflow-hidden">
                     <iframe 
                       src={radarUrl || ""} 
-                      className="w-full h-full border-none pointer-events-none scale-150 origin-center opacity-70"
+                      className="w-full h-full border-none pointer-events-none scale-150 origin-center opacity-70 group-hover:opacity-90 transition-opacity"
                       title="Mini Radar"
                     />
                   </div>
