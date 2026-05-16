@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { WeatherDashboard } from '../../components/centralhub/WeatherDashboard';
 import { NewsWidget } from '../../components/centralhub/NewsWidget';
+import { WotdWidget } from '../../components/centralhub/WotdWidget';
 import { useTerminal } from '../../context/TerminalContext';
 import { onSnapshot, collection, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError } from '../../lib/firebase';
@@ -94,7 +95,7 @@ interface NewsSettings {
 
 interface WidgetItem {
   id: string;
-  type: 'time' | 'weather' | 'personnel' | 'calendar' | 'shift_report' | 'custom_new' | 'news';
+  type: 'time' | 'weather' | 'personnel' | 'calendar' | 'shift_report' | 'custom_new' | 'news' | 'wotd';
   title: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   isVisible: boolean;
@@ -210,7 +211,7 @@ export function StartPage() {
     setWidgets(prev => prev.filter(w => w.id !== id));
   };
 
-  const addWidget = (type: string, titleStr: string, sizeStr: any) => {
+  const addWidget = (type: WidgetItem['type'], titleStr: string, sizeStr: any) => {
     const newId = `widget-${type}-${Date.now()}`;
     let newWidget: WidgetItem = {
       id: newId,
@@ -556,13 +557,14 @@ export function StartPage() {
             { type: 'time', title: 'Local Time', size: 'sm', desc: 'Chronometer node' },
             { type: 'weather', title: 'Tactical Weather', size: 'lg', desc: 'Atmospheric monitor' },
             { type: 'news', title: 'Intel Feed', size: 'lg', desc: 'External news stream' },
+            { type: 'wotd', title: 'Word of the Day', size: 'md', desc: 'Linguistic analysis' },
             { type: 'personnel', title: 'Active Personnel', size: 'md', desc: 'Fleet dashboard' },
             { type: 'calendar', title: 'Global Schedule', size: 'xl', desc: 'Operations calendar' },
             { type: 'shift_report', title: 'Shift Uplink', size: 'sm', desc: 'Post operations' },
           ].map(widget => (
             <button
               key={widget.type}
-              onClick={() => addWidget(widget.type, widget.title, widget.size)}
+              onClick={() => addWidget(widget.type as WidgetItem['type'], widget.title, widget.size)}
               className="p-6 tactical-card hover:border-indigo-500 transition-all text-left flex items-center justify-between group"
             >
               <div>
@@ -630,6 +632,8 @@ function SortableWidget({
         return <div className="h-full"><WeatherDashboard settings={widget.weatherSettings} compact={true} /></div>;
       case 'news':
         return <div className="h-full"><NewsWidget settings={widget.newsSettings} compact={widget.size === 'sm' || widget.size === 'md'} /></div>;
+      case 'wotd':
+        return <div className="h-full"><WotdWidget compact={widget.size === 'sm'} /></div>;
       case 'personnel':
         return <PersonnelModalContent />;
       case 'calendar':

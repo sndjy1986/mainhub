@@ -48,6 +48,22 @@ async function startServer() {
     }
   });
 
+  app.get('/api/wotd', async (req, res) => {
+    try {
+      const feed = await parser.parseURL('https://www.merriam-webster.com/wotd/feed/rss2');
+      const item = feed.items[0];
+      res.json({
+        title: item.title,
+        link: item.link,
+        pubDate: item.pubDate,
+        contentSnippet: item.contentSnippet
+      });
+    } catch (error) {
+      console.error('WOTD proxy error:', error);
+      res.status(500).json({ error: 'Failed to fetch WOTD' });
+    }
+  });
+
   // Health check
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
