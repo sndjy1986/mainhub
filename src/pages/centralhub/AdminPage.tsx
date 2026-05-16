@@ -92,12 +92,25 @@ export function AdminPage() {
   const [themeOverrides, setThemeOverrides] = useState<import('../../lib/firebase').ThemeOverrides>({});
   const [globalSettings, setGlobalSettings] = useState<import('../../lib/firebase').GlobalSettings | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const themeRef = React.useRef(themeOverrides);
+  // Replace handleUpdateSettings with a debounced version for theme overrides
+  const debouncedThemeUpdate = React.useMemo(
+    () => {
+      let timeout: any;
+      return (overrides: any) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          handleUpdateSettings({ themeOverrides: overrides });
+        }, 1000);
+      };
+    },
+    []
+  );
 
-  // Sync ref with state
   useEffect(() => {
-    themeRef.current = themeOverrides;
-  }, [themeOverrides]);
+    return () => {
+      // Final flush if unmounting? 
+    };
+  }, []);
 
   const [archivedReports, setArchivedReports] = useState<ShiftReportType[]>([]);
   const [loadingReports, setLoadingReports] = useState(false);
@@ -397,9 +410,16 @@ export function AdminPage() {
     try {
       setIsSaving(true);
       await updateGlobalSettings(updates);
+      // Success toast
+      if (updates.themeOverrides) {
+        setShowToast("VECTORS_COMMITTED_TO_CORE");
+      }
+    } catch (err) {
+      console.error(err);
+      setShowToast("UPLINK_SYNC_REJECTED");
     } finally {
       // Stay in saving mode for a moment to ignore the immediate snapshot echo
-      setTimeout(() => setIsSaving(false), 1500);
+      setTimeout(() => setIsSaving(false), 3000);
     }
   };
 
@@ -706,9 +726,10 @@ export function AdminPage() {
                         value={themeOverrides[item.key as keyof typeof themeOverrides] as string || '#000000'}
                         onChange={(e) => {
                           const val = e.target.value;
-                          setThemeOverrides(prev => ({ ...prev, [item.key]: val }));
+                          const next = { ...themeOverrides, [item.key]: val };
+                          setThemeOverrides(next);
+                          debouncedThemeUpdate(next);
                         }}
-                        onBlur={() => handleUpdateSettings({ themeOverrides: themeRef.current })}
                         className="w-20 h-20 rounded-2xl bg-transparent border-2 border-white/10 cursor-pointer p-0 hover:scale-105 active:scale-95 transition-all shadow-lg overflow-hidden"
                       />
                       <div className="flex-1 space-y-2">
@@ -717,9 +738,10 @@ export function AdminPage() {
                           value={themeOverrides[item.key as keyof typeof themeOverrides] as string || ''}
                           onChange={(e) => {
                             const val = e.target.value;
-                            setThemeOverrides(prev => ({ ...prev, [item.key]: val }));
+                            const next = { ...themeOverrides, [item.key]: val };
+                            setThemeOverrides(next);
+                            debouncedThemeUpdate(next);
                           }}
-                          onBlur={() => handleUpdateSettings({ themeOverrides: themeRef.current })}
                           placeholder="HEX/RGB"
                           className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-mono uppercase focus:border-indigo-500 outline-none"
                         />

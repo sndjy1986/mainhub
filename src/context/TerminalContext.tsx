@@ -42,6 +42,23 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const [emergencyOpacity, setEmergencyOpacity] = useState(0.2);
   const [weatherZip, setWeatherZip] = useState<string | null>(() => localStorage.getItem('weatherZip'));
   const [appTheme, setAppTheme] = useState<AppTheme>(() => (localStorage.getItem('appTheme') as AppTheme) || 'paper');
+  const [isSyncingTheme, setIsSyncingTheme] = useState(false);
+
+  const setAppThemeGlobal = async (theme: AppTheme) => {
+    setAppTheme(theme);
+    localStorage.setItem('appTheme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+    
+    // Attempt to sync to Firestore if user is admin/root
+    try {
+      const { db, doc, updateDoc } = await import('../lib/firebase');
+      await updateDoc(doc(db, 'settings', 'global'), {
+        appTheme: theme
+      });
+    } catch (e) {
+      // Silently fail if not authorized, local remains
+    }
+  };
   const [toneTestMode, setToneTestMode] = useState<boolean>(() => localStorage.getItem('toneTestMode') !== 'false'); // Default to true
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [terminalUser, setTerminalUser] = useState<{ username: string; role: string } | null>(() => {
@@ -225,6 +242,11 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
               '--global-scale': overrides.globalScale?.toString(),
             };
 
+            if (data.appTheme && data.appTheme !== appTheme) {
+              setAppTheme(data.appTheme);
+              document.documentElement.setAttribute('data-theme', data.appTheme);
+            }
+
             Object.entries(vars).forEach(([key, value]) => {
               if (value !== undefined) root.style.setProperty(key, value);
             });
@@ -253,7 +275,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       weatherZip,
       setWeatherZip,
       appTheme,
-      setAppTheme,
+      setAppTheme: setAppThemeGlobal,
       toneTestMode,
       setToneTestMode,
       notifications,
