@@ -25,7 +25,6 @@
     "express": "^4.22.2",
     "firebase": "^12.12.1",
     "firebase-admin": "^13.8.0",
-    "framer-motion": "^12.38.0",
     "hls.js": "^1.6.16",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.546.0",

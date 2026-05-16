@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Camera } from '../../lib/camsTypes';
 import { ALL_CAMERAS } from '../../lib/camsConstants';
 import { CameraPlayer } from './CameraPlayer';

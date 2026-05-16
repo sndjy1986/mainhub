@@ -282,7 +282,7 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
 
       {/* Right-click instruction toast (temporary hint) */}
       <AnimatePresence>
-        {isHovered && !showMenu && (
+        {isHovered && (
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
