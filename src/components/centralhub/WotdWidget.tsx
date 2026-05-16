@@ -21,6 +21,12 @@ export function WotdWidget({ compact = false }: WotdWidgetProps) {
     try {
       const response = await fetch('/api/wotd');
       if (!response.ok) throw new Error('Failed to fetch data');
+      
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('text/html')) {
+        throw new Error('Backend out of date. Please re-share/re-deploy to update the server.');
+      }
+      
       const wotd = await response.json();
       setData(wotd);
       setError(null);

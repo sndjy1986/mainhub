@@ -36,6 +36,12 @@ export function NewsWidget({ settings, compact = false }: NewsWidgetProps) {
     try {
       const response = await fetch(`/api/news?source=${source}`);
       if (!response.ok) throw new Error('News broadcast interrupted');
+      
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('text/html')) {
+        throw new Error('Backend out of date. Please re-share/re-deploy to update the server.');
+      }
+      
       const data = await response.json();
       setNews(data.items.slice(0, articleCount));
       setError(null);
