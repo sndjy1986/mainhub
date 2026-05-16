@@ -383,20 +383,41 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex h-full"
+                className="flex h-full relative"
               >
-                {/* Left Side: Stats (Fixed width) */}
-                <div className="w-[45%] p-8 space-y-8 flex flex-col justify-center relative z-10 bg-gradient-to-r from-black/60 to-transparent">
-                  <div className="flex items-center gap-2 mb-2">
+                {/* Full-height Radar bleed */}
+                <div className="flex-1 h-full relative group cursor-pointer overflow-hidden border-2 border-indigo-500/20 rounded-[2rem] mx-2 my-2 shadow-[0_0_40px_rgba(79,70,229,0.1)]" onClick={() => setIsRadarExpanded(true)}>
+                  <div className="absolute inset-0 bg-indigo-500/10 opacity-20" />
+                  <iframe 
+                    src={radarUrl || ""} 
+                    className="w-full h-full border-none pointer-events-none scale-[1.8] origin-center opacity-90 group-hover:opacity-100 transition-opacity duration-1000"
+                    title="Mini Radar"
+                  />
+                  
+                  {/* REDUCED METRICS OVERLAY - Removed Telemetry and Time as requested */}
+                  <div className="absolute inset-y-0 left-0 w-[35%] bg-gradient-to-r from-black/80 via-black/30 to-transparent p-6 flex flex-col justify-center gap-2 pointer-events-none">
+                     <div className="flex items-center gap-4">
+                        <div className="text-6xl font-black text-white tracking-tighter flex items-start drop-shadow-2xl">
+                          {weather?.temperature}<span className="text-xl text-indigo-400 mt-1 ml-0.5">°</span>
+                        </div>
+                        {weather && <AnimatedWeatherIcon condition={weather.condition} size={40} className="drop-shadow-2xl" />}
+                     </div>
+                     <div className="space-y-0.5">
+                        <p className="text-[10px] font-black text-white uppercase tracking-[0.2em] truncate leading-tight drop-shadow-md opacity-80">{weather?.condition}</p>
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em] truncate italic opacity-60">Sect: {weather?.location?.split(',')[0]}</p>
+                     </div>
+                  </div>
+
+                  <div className="absolute top-8 right-8 flex items-center gap-2">
                     {['now', 'today', 'forecast', 'radar'].map(tab => (
                       <button
                         key={tab}
-                        onClick={() => setActiveTab(tab as any)}
+                        onClick={(e) => { e.stopPropagation(); setActiveTab(tab as any); }}
                         className={cn(
-                          "px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all",
+                          "px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all backdrop-blur-md",
                           activeTab === tab 
                             ? "bg-white text-black font-black" 
-                            : "text-slate-500 hover:text-white"
+                            : "bg-black/60 text-slate-300 hover:text-white"
                         )}
                       >
                         {tab}
@@ -404,40 +425,6 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
                     ))}
                   </div>
 
-                  <div className="flex items-center gap-6">
-                    <div className="text-8xl font-black text-white tracking-tighter flex items-start">
-                      {weather?.temperature}<span className="text-3xl text-slate-500 mt-2 ml-1">°</span>
-                    </div>
-                    {weather && <AnimatedWeatherIcon condition={weather.condition} size={64} />}
-                    <div className="min-w-0">
-                      <p className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] truncate leading-tight mb-1">{weather?.condition}</p>
-                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] truncate italic">{weather?.location}</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-white/5 border border-white/5 rounded-2xl flex flex-col gap-1">
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Wind Vector</span>
-                      <span className="text-xs font-black text-white">{weather?.windSpeed} {weather?.windDirection}</span>
-                    </div>
-                    <div className="p-4 bg-white/5 border border-white/5 rounded-2xl flex flex-col gap-1">
-                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Barometric</span>
-                      <span className="text-xs font-black text-indigo-400 font-mono">{weather?.pressure || '---'} INHG</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Side: Full-height Radar bleed */}
-                <div className="flex-1 h-full relative group cursor-pointer overflow-hidden" onClick={() => setIsRadarExpanded(true)}>
-                  <div className="absolute inset-0 bg-indigo-500/10 opacity-20" />
-                  <iframe 
-                    src={radarUrl || ""} 
-                    className="w-full h-full border-none pointer-events-none scale-[2.2] origin-center opacity-80 group-hover:opacity-100 transition-opacity duration-1000"
-                    title="Mini Radar"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-black/80 pointer-events-none" />
-                  <div className="absolute top-8 right-8 flex flex-col items-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-[8px] font-black text-white bg-indigo-600 px-3 py-1 rounded-full uppercase tracking-[0.3em]">Live Feed Active</span>
-                  </div>
                   <div className="absolute bottom-8 right-8">
                     <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-indigo-600 transition-all">
                       <Maximize2 size={18} />

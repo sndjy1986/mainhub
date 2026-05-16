@@ -66,7 +66,8 @@ export function AdminPage() {
     setAppTheme, 
     toneTestMode, 
     setToneTestMode,
-    logoutTerminalUser
+    logoutTerminalUser,
+    setIsSavingGlobal
   } = useTerminal();
   const [showToast, setShowToast] = useState<string | null>(null);
 
@@ -92,6 +93,12 @@ export function AdminPage() {
   const [themeOverrides, setThemeOverrides] = useState<import('../../lib/firebase').ThemeOverrides>({});
   const [globalSettings, setGlobalSettings] = useState<import('../../lib/firebase').GlobalSettings | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  
+  const themeRef = React.useRef(themeOverrides);
+  useEffect(() => {
+    themeRef.current = themeOverrides;
+  }, [themeOverrides]);
+
   // Replace handleUpdateSettings with a debounced version for theme overrides
   const debouncedThemeUpdate = React.useMemo(
     () => {
@@ -409,6 +416,7 @@ export function AdminPage() {
   const handleUpdateSettings = async (updates: Partial<import('../../lib/firebase').GlobalSettings>) => {
     try {
       setIsSaving(true);
+      if (updates.themeOverrides) setIsSavingGlobal(true);
       await updateGlobalSettings(updates);
       // Success toast
       if (updates.themeOverrides) {
@@ -419,7 +427,10 @@ export function AdminPage() {
       setShowToast("UPLINK_SYNC_REJECTED");
     } finally {
       // Stay in saving mode for a moment to ignore the immediate snapshot echo
-      setTimeout(() => setIsSaving(false), 3000);
+      setTimeout(() => {
+        setIsSaving(false);
+        setIsSavingGlobal(false);
+      }, 3000);
     }
   };
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
+import { format } from 'date-fns';
 import { 
   LayoutDashboard, 
   Activity, 
@@ -75,6 +76,10 @@ export function Sidebar() {
       </nav>
 
       <div className="px-6 py-6 space-y-6">
+        {/* Time Clock moved down to Links Section */}
+        <div className="mb-2 flex flex-col items-center justify-center p-4 bg-white/5 border border-white/5 rounded-2xl group cursor-default">
+          <ClockDisplay />
+        </div>
         {/* Emergency Controls in Sidebar */}
         <div className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-4">
            <div className="flex items-center justify-between">
@@ -142,6 +147,27 @@ export function Sidebar() {
             <span className="text-xs font-medium">All Systems Nominal</span>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ClockDisplay() {
+  const [now, setNow] = React.useState(new Date());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="text-3xl font-black text-white tracking-tighter tabular-nums leading-none">
+        {format(now, 'HH:mm')}
+        <span className="text-indigo-500 text-sm ml-1 opacity-50">{format(now, 'ss')}</span>
+      </div>
+      <div className="text-[8px] font-black uppercase tracking-[0.3em] text-slate-500 mt-2 italic shadow-sm">
+        {format(now, 'EEE, MMM d')}
       </div>
     </div>
   );

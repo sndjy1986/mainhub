@@ -32,40 +32,130 @@ interface TerminalContextType {
   loginTerminalUser: (username: string, role: string) => void;
   logoutTerminalUser: () => void;
   firebaseUser: any | null;
+  userSettings: any | null;
+  updateUserSettings: (key: string, value: any) => Promise<void>;
+  isSavingGlobal: boolean;
+  setIsSavingGlobal: (val: boolean) => void;
 }
 
 const TerminalContext = createContext<TerminalContextType | undefined>(undefined);
 
 export function TerminalProvider({ children }: { children: React.ReactNode }) {
+  // 1. All state declarations first to avoid TDZ (Temporal Dead Zone) issues
+  const [userSettings, setUserSettings] = useState<any | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<any | null>(null);
   const [emergencyLevel, setEmergencyLevel] = useState<EmergencyLevel>('NORMAL');
   const [manualEmergencyMode, setManualEmergencyMode] = useState(false);
   const [emergencyOpacity, setEmergencyOpacity] = useState(0.2);
-  const [weatherZip, setWeatherZip] = useState<string | null>(() => localStorage.getItem('weatherZip'));
-  const [appTheme, setAppTheme] = useState<AppTheme>(() => (localStorage.getItem('appTheme') as AppTheme) || 'paper');
+  const [weatherZip, setWeatherZip] = useState<string | null>(null);
+  const [appTheme, setAppTheme] = useState<AppTheme>('paper');
   const [isSyncingTheme, setIsSyncingTheme] = useState(false);
+  const [isSavingGlobal, setIsSavingGlobal] = useState(false);
+  const [toneTestMode, setToneTestMode] = useState<boolean>(() => localStorage.getItem('toneTestMode') !== 'false');
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [terminalUser, setTerminalUser] = useState<{ username: string; role: string } | null>(() => {
+    const saved = localStorage.getItem('terminalUser');
+    return saved ? JSON.parse(saved) : null;
+  });
 
-  const setAppThemeGlobal = async (theme: AppTheme) => {
+  // 2. Function declarations (hoisted within the functional component scope)
+  async function updateUserSettings(key: string, value: any) {
+    // Update local state first for responsiveness
+    setUserSettings((prev: any) => ({ ...prev, [key]: value }));
+    
+    if (firebaseUser) {
+      try {
+        const { db, doc, setDoc } = await import('../lib/firebase');
+        await setDoc(doc(db, 'users', firebaseUser.uid, 'settings', 'terminal'), {
+          [key]: value
+        }, { merge: true });
+      } catch (err) {
+        console.error('Failed to sync user settings:', err);
+      }
+    }
+  }
+
+  function setWeatherZipGlobal(zip: string | null) {
+    setWeatherZip(zip);
+    if (zip) {
+      localStorage.setItem('weatherZip', zip);
+    } else {
+      localStorage.removeItem('weatherZip');
+    }
+    updateUserSettings('weatherZip', zip);
+  }
+
+  async function setAppThemeGlobal(theme: AppTheme) {
     setAppTheme(theme);
     localStorage.setItem('appTheme', theme);
     document.documentElement.setAttribute('data-theme', theme);
     
-    // Attempt to sync to Firestore if user is admin/root
+    updateUserSettings('appTheme', theme);
+
+    // Also attempt to sync to global settings if user is admin/root
+    setIsSavingGlobal(true);
     try {
       const { db, doc, updateDoc } = await import('../lib/firebase');
       await updateDoc(doc(db, 'settings', 'global'), {
         appTheme: theme
       });
     } catch (e) {
-      // Silently fail if not authorized, local remains
+      // Silently fail if not admin
+    } finally {
+      setTimeout(() => setIsSavingGlobal(false), 2000);
     }
-  };
-  const [toneTestMode, setToneTestMode] = useState<boolean>(() => localStorage.getItem('toneTestMode') !== 'false'); // Default to true
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [terminalUser, setTerminalUser] = useState<{ username: string; role: string } | null>(() => {
-    const saved = localStorage.getItem('terminalUser');
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [firebaseUser, setFirebaseUser] = useState<any | null>(null);
+  }
+
+  function loginTerminalUser(username: string, role: string) {
+    const user = { username, role };
+    setTerminalUser(user);
+    localStorage.setItem('terminalUser', JSON.stringify(user));
+  }
+
+  function logoutTerminalUser() {
+    setTerminalUser(null);
+    localStorage.removeItem('terminalUser');
+  }
+
+  // 3. Effects last
+  useEffect(() => {
+    const savedLocal = localStorage.getItem('weatherZip');
+    const savedRemote = userSettings?.weatherZip;
+    if (savedRemote && savedRemote !== weatherZip) {
+      setWeatherZip(savedRemote);
+    } else if (savedLocal && !savedRemote && savedLocal !== weatherZip) {
+      setWeatherZip(savedLocal);
+    }
+  }, [userSettings?.weatherZip]);
+
+  useEffect(() => {
+    const savedLocal = localStorage.getItem('appTheme') as AppTheme;
+    const savedRemote = userSettings?.appTheme as AppTheme;
+    
+    if (savedRemote && savedRemote !== appTheme) {
+      setAppTheme(savedRemote);
+      document.documentElement.setAttribute('data-theme', savedRemote);
+    } else if (savedLocal && !savedRemote && savedLocal !== appTheme) {
+      setAppTheme(savedLocal);
+      document.documentElement.setAttribute('data-theme', savedLocal);
+    }
+  }, [userSettings?.appTheme]);
+  // Sync user settings from Firestore
+  useEffect(() => {
+    let unsub: any = null;
+    if (firebaseUser) {
+      import('../lib/firebase').then(({ db, doc, onSnapshot }) => {
+        unsub = onSnapshot(doc(db, 'users', firebaseUser.uid, 'settings', 'terminal'), (s) => {
+          if (s.exists()) {
+            setUserSettings(s.data());
+          }
+        });
+      });
+    } else {
+      setUserSettings(null);
+    }
+    return () => { if (unsub) unsub(); };
+  }, [firebaseUser]);
 
   // ONE-TIME CLEANUP: Delete all terminal_users as requested and add sndjy
   useEffect(() => {
@@ -107,16 +197,6 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const loginTerminalUser = (username: string, role: string) => {
-    const user = { username, role };
-    setTerminalUser(user);
-    localStorage.setItem('terminalUser', JSON.stringify(user));
-  };
-
-  const logoutTerminalUser = () => {
-    setTerminalUser(null);
-    localStorage.removeItem('terminalUser');
-  };
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'default'
   );
@@ -195,6 +275,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
+  // Sync weatherZip to local
   useEffect(() => {
     if (weatherZip) {
       localStorage.setItem('weatherZip', weatherZip);
@@ -218,7 +299,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     
     unsubPromise = import('../lib/firebase').then(({ db, doc, onSnapshot, handleFirestoreError, OperationType }) => {
       return onSnapshot(doc(db, 'settings', 'global'), (s) => {
-        if (s.exists()) {
+        if (s.exists() && !isSavingGlobal) {
           const data = s.data();
           if (data.themeOverrides) {
             const overrides = data.themeOverrides;
@@ -273,7 +354,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       emergencyOpacity,
       setEmergencyOpacity,
       weatherZip,
-      setWeatherZip,
+      setWeatherZip: setWeatherZipGlobal,
       appTheme,
       setAppTheme: setAppThemeGlobal,
       toneTestMode,
@@ -286,7 +367,11 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       terminalUser,
       loginTerminalUser,
       logoutTerminalUser,
-      firebaseUser
+      firebaseUser,
+      userSettings,
+      updateUserSettings,
+      isSavingGlobal,
+      setIsSavingGlobal
     }}>
       {children}
     </TerminalContext.Provider>

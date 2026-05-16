@@ -136,9 +136,8 @@ const DEFAULT_NEWS_SETTINGS: NewsSettings = {
 };
 
 const DEFAULT_WIDGETS: WidgetItem[] = [
-  { id: 'widget-time', type: 'time', title: 'Operational Clock', size: 'sm', isVisible: true, clockSettings: DEFAULT_CLOCK_SETTINGS },
   { id: 'widget-scanner', type: 'scanner', title: 'Tactical Radio Uplink', size: 'md', isVisible: true },
-  { id: 'widget-weather', type: 'weather', title: 'Environment Monitor', size: 'md', isVisible: true, weatherSettings: DEFAULT_WEATHER_SETTINGS },
+  { id: 'widget-weather', type: 'weather', title: 'Environment Monitor', size: 'xl', isVisible: true, weatherSettings: DEFAULT_WEATHER_SETTINGS },
   { id: 'widget-personnel', type: 'personnel', title: 'Personnel Deployment', size: 'xl', isVisible: true },
   { id: 'widget-calendar', type: 'calendar', title: 'Operations Calendar', size: 'xl', isVisible: true },
   { id: 'widget-shift-report', type: 'shift_report', title: 'Shift Report Entry', size: 'md', isVisible: true },
@@ -146,19 +145,47 @@ const DEFAULT_WIDGETS: WidgetItem[] = [
 ];
 
 export function StartPage() {
+  const { userSettings, updateUserSettings } = useTerminal();
   const [now, setNow] = useState(new Date());
-  const [widgets, setWidgets] = useState<WidgetItem[]>(() => {
-    const saved = localStorage.getItem('start-page-widgets-v7');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      const hasNews = parsed.some((w: WidgetItem) => w.type === 'news');
-      if (!hasNews) {
-        return [...parsed, { id: 'widget-news', type: 'news', title: 'Global Intel Feed', size: 'lg', isVisible: true, newsSettings: DEFAULT_NEWS_SETTINGS }];
-      }
-      return parsed;
+  const [widgets, setWidgets] = useState<WidgetItem[]>(DEFAULT_WIDGETS);
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  // Load initial widgets
+  useEffect(() => {
+    if (hasInitialized) return;
+
+    const savedLocal = localStorage.getItem('start-page-widgets-v7');
+    const savedRemote = userSettings?.startPageWidgets;
+
+    if (savedRemote) {
+      // Filter out widget-time if it exists since it's now in the sidebar
+      const filtered = savedRemote.filter((w: WidgetItem) => w.type !== 'time');
+      setWidgets(filtered);
+      setHasInitialized(true);
+    } else if (savedLocal) {
+      const parsed = JSON.parse(savedLocal);
+      const filtered = parsed.filter((w: WidgetItem) => w.type !== 'time');
+      const hasNews = filtered.some((w: WidgetItem) => w.type === 'news');
+      const final = hasNews ? filtered : [...filtered, { id: 'widget-news', type: 'news', title: 'Global Intel Feed', size: 'lg', isVisible: true, newsSettings: DEFAULT_NEWS_SETTINGS }];
+      setWidgets(final);
+      setHasInitialized(true);
+    } else {
+      setWidgets(DEFAULT_WIDGETS);
+      setHasInitialized(true);
     }
-    return DEFAULT_WIDGETS;
-  });
+  }, [userSettings?.startPageWidgets, hasInitialized]);
+
+  // Sync back to local and remote
+  useEffect(() => {
+    if (!hasInitialized) return;
+    
+    localStorage.setItem('start-page-widgets-v7', JSON.stringify(widgets));
+    
+    // Only update remote if different to avoid noise
+    if (JSON.stringify(userSettings?.startPageWidgets) !== JSON.stringify(widgets)) {
+      updateUserSettings('startPageWidgets', widgets);
+    }
+  }, [widgets, hasInitialized, userSettings?.startPageWidgets, updateUserSettings]);
 
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [editingClock, setEditingClock] = useState<WidgetItem | null>(null);
@@ -195,10 +222,6 @@ export function StartPage() {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-
-  useEffect(() => {
-    localStorage.setItem('start-page-widgets-v7', JSON.stringify(widgets));
-  }, [widgets]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -258,10 +281,6 @@ export function StartPage() {
         </div>
 
         <div className="flex items-center gap-8">
-          <div className="text-right">
-            <p className="text-4xl font-black text-text-main tracking-tighter leading-none">{format(now, 'HH:mm:ss')}</p>
-            <p className="text-[9px] text-indigo-400 font-black uppercase tracking-[0.3em] mt-2">{format(now, 'EEEE, LLLL do')}</p>
-          </div>
           <button 
             onClick={() => setShowAddMenu(true)}
             className="px-6 py-3 glass-effect border-indigo-500/30 text-indigo-500 hover:text-text-main rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 transition-all hover:bg-indigo-500/10"

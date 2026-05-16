@@ -21,6 +21,12 @@ export const CameraGrid: React.FC = React.memo(() => {
   const [globalAiEnabled, setGlobalAiEnabled] = useState(() => {
     return localStorage.getItem('globalAiEnabled') === 'true';
   });
+  const [contextMenu, setContextMenu] = useState<{ camId: string, x: number, y: number, index: number } | null>(null);
+
+  const handleContextMenu = (e: React.MouseEvent, camId: string, index: number) => {
+    e.preventDefault();
+    setContextMenu({ camId, x: e.clientX, y: e.clientY, index });
+  };
 
   React.useEffect(() => {
     localStorage.setItem('globalAiEnabled', String(globalAiEnabled));
@@ -152,7 +158,11 @@ export const CameraGrid: React.FC = React.memo(() => {
       {/* Grid Container */}
       <main className={`flex-1 grid gap-6 p-8 z-10 overflow-y-auto custom-scrollbar ${gridSize === 4 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
         {activeCameras.slice(0, gridSize).map((camera, idx) => (
-          <div key={`${idx}-${camera.id}`} className="relative tactical-card p-1 overflow-hidden group">
+          <div 
+            key={`${idx}-${camera.id}`} 
+            className="relative tactical-card p-1 overflow-hidden group"
+            onContextMenu={(e) => handleContextMenu(e, camera.id, idx)}
+          >
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative h-full rounded-[1.5rem] overflow-hidden">
                <CameraPlayer 
@@ -167,6 +177,66 @@ export const CameraGrid: React.FC = React.memo(() => {
           </div>
         ))}
       </main>
+
+      {/* Global Context Menu */}
+      <AnimatePresence>
+        {contextMenu && (
+          <div className="fixed inset-0 z-[9999]" onClick={() => setContextMenu(null)}>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed bg-[#0d0d10] border-2 border-indigo-500/30 shadow-[0_40px_100px_rgba(0,0,0,0.9)] z-[10000] min-w-[280px] overflow-hidden backdrop-blur-3xl rounded-3xl"
+              style={{ 
+                top: contextMenu.y + 400 > window.innerHeight ? Math.max(10, window.innerHeight - 410) : contextMenu.y,
+                left: contextMenu.x + 300 > window.innerWidth ? Math.max(10, window.innerWidth - 310) : contextMenu.x
+              }}
+              onClick={(e) => e.stopPropagation()}
+              onContextMenu={(e) => e.preventDefault()}
+            >
+              <div className="bg-indigo-500/5 px-5 py-4 border-b border-indigo-500/20 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                  <span className="text-[11px] text-white font-black tracking-[0.3em] uppercase">Sensor Selection</span>
+                </div>
+                <button 
+                  onClick={() => setContextMenu(null)}
+                  className="text-[10px] text-slate-400 hover:text-white font-black transition-colors"
+                >
+                  CLOSE [×]
+                </button>
+              </div>
+              
+              <div className="max-h-[350px] overflow-y-auto custom-scrollbar p-2">
+                {ALL_CAMERAS.map(cam => (
+                  <button
+                    key={cam.id}
+                    onClick={() => {
+                      handleSwitchCamera(contextMenu.index, cam);
+                      setContextMenu(null);
+                    }}
+                    className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between transition-all rounded-2xl mb-1 group/item ${
+                      cam.id === contextMenu.camId 
+                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' 
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex flex-col">
+                      <span className={`font-black tracking-tight ${cam.id === contextMenu.camId ? 'text-white' : ''}`}>{cam.name}</span>
+                      <span className={`text-[9px] uppercase tracking-[0.1em] truncate max-w-[180px] mt-0.5 ${cam.id === contextMenu.camId ? 'text-white/60' : 'text-slate-600'}`}>
+                        {cam.description}
+                      </span>
+                    </div>
+                    {cam.id === contextMenu.camId && (
+                      <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Footer Bar */}
       <footer className="h-12 bg-black/60 backdrop-blur-xl border-t border-white/5 px-8 flex items-center justify-between z-50 shrink-0">
