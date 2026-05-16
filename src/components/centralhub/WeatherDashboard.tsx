@@ -32,6 +32,10 @@ interface WeatherSettings {
   fontWeight: string;
   animatedIcons: boolean;
   hideAlertsIfEmpty: boolean;
+  showPressure?: boolean;
+  showTimeline?: boolean;
+  showTomorrow?: boolean;
+  showCurrent?: boolean;
 }
 
 interface WeatherData {
@@ -72,10 +76,18 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [zipInput, setZipInput] = useState('');
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
-  const [activeModules, setActiveModules] = useState(DEFAULT_MODULES);
+  const [globalModules, setGlobalModules] = useState(DEFAULT_MODULES);
   
   const notifiedAlerts = useRef<Set<string>>(new Set());
   const forecastDays = settings?.forecastDays || 5;
+
+  // Derrive active modules from local settings if available, otherwise global
+  const activeModules = {
+    showCurrent: settings?.showCurrent ?? globalModules.showCurrent,
+    showPressure: settings?.showPressure ?? globalModules.showPressure,
+    showTimeline: settings?.showTimeline ?? globalModules.showTimeline,
+    showTomorrow: settings?.showTomorrow ?? globalModules.showTomorrow,
+  };
 
   // Sync Global Weather Modules settings
   useEffect(() => {
@@ -83,7 +95,7 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
       if (s.exists()) {
         const data = s.data();
         if (data.weatherModules) {
-          setActiveModules(data.weatherModules);
+          setGlobalModules(data.weatherModules);
         }
       }
     });
@@ -289,16 +301,18 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
   if (compact) {
     return (
       <div className={cn("w-full h-full flex flex-col justify-center p-6 gap-4", settings?.fontFamily)}>
-         <div className="flex items-center gap-4">
-            <div className="text-4xl font-black text-white glow-number">
-              {weather?.temperature}<span className="text-sm text-slate-500">°</span>
-            </div>
-            {weather && <AnimatedWeatherIcon condition={weather.condition} size={32} />}
-            <div className="flex-1">
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{weather?.condition}</p>
-              <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em]">{weather?.location}</p>
-            </div>
-         </div>
+         {activeModules.showCurrent && (
+           <div className="flex items-center gap-4">
+              <div className="text-4xl font-black text-white glow-number">
+                {weather?.temperature}<span className="text-sm text-slate-500">°</span>
+              </div>
+              {weather && <AnimatedWeatherIcon condition={weather.condition} size={32} />}
+              <div className="flex-1">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{weather?.condition}</p>
+                <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em]">{weather?.location}</p>
+              </div>
+           </div>
+         )}
          {activeModules.showTimeline && (
            <div className="flex gap-2 overflow-hidden opacity-40 grayscale group-hover:opacity-100 group-hover:grayscale-0 transition-all">
              {weather?.hourly.slice(0, 6).map((hour, idx) => (
@@ -316,36 +330,42 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
   return (
     <div className={cn("w-full h-full bg-black/40 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] p-8 lg:p-12 space-y-12 overflow-y-auto custom-scrollbar", settings?.fontFamily)}>
       {/* HEADER SECTION */}
-      <div className="flex flex-wrap items-end justify-between gap-8 pb-10 border-b border-white/5">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3 text-slate-500 text-[10px] uppercase font-black tracking-[0.3em]">
-            <MapPin className="w-4 h-4 text-indigo-500" />
-            Sector {weather?.location} Matrix
-          </div>
-          <div className="flex items-center gap-8">
-            <div className="text-8xl font-black text-white tracking-tighter glow-number flex items-start">
-              {weather?.temperature}
-              <span className="text-3xl mt-4 text-slate-600 ml-2">°{weather?.unit}</span>
+      {(activeModules.showCurrent || !compact) && (
+        <div className="flex flex-wrap items-end justify-between gap-8 pb-10 border-b border-white/5">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 text-slate-500 text-[10px] uppercase font-black tracking-[0.3em]">
+              <MapPin className="w-4 h-4 text-indigo-500" />
+              Sector {weather?.location} Matrix
             </div>
-            {weather && <AnimatedWeatherIcon condition={weather.condition} size={80} className="drop-shadow-[0_0_30px_rgba(234,179,8,0.3)]" />}
-          </div>
-          <div className="flex items-center gap-6">
-            <p className="text-2xl font-black text-text-dim uppercase tracking-tight italic">{weather?.condition}</p>
-            {weather?.windSpeed && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                <Wind className="w-3 h-3" />
-                {weather.windSpeed} {weather.windDirection}
-              </div>
+            {activeModules.showCurrent && (
+              <>
+                <div className="flex items-center gap-8">
+                  <div className="text-8xl font-black text-white tracking-tighter glow-number flex items-start">
+                    {weather?.temperature}
+                    <span className="text-3xl mt-4 text-slate-600 ml-2">°{weather?.unit}</span>
+                  </div>
+                  {weather && <AnimatedWeatherIcon condition={weather.condition} size={80} className="drop-shadow-[0_0_30px_rgba(234,179,8,0.3)]" />}
+                </div>
+                <div className="flex items-center gap-6">
+                  <p className="text-2xl font-black text-text-dim uppercase tracking-tight italic">{weather?.condition}</p>
+                  {weather?.windSpeed && (
+                    <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      <Wind className="w-3 h-3" />
+                      {weather.windSpeed} {weather.windDirection}
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </div>
-        </div>
 
-        <div className="flex items-center gap-4">
-          <button onClick={() => setIsModalOpen(true)} className="p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all group">
-            <Settings className="w-6 h-6 group-hover:rotate-45 transition-transform" />
-          </button>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setIsModalOpen(true)} className="p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all group">
+              <Settings className="w-6 h-6 group-hover:rotate-45 transition-transform" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* MODULES GRID */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">

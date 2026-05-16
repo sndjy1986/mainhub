@@ -79,6 +79,10 @@ interface WeatherSettings {
   fontWeight: string;
   animatedIcons: boolean;
   hideAlertsIfEmpty: boolean;
+  showPressure?: boolean;
+  showTimeline?: boolean;
+  showTomorrow?: boolean;
+  showCurrent?: boolean;
 }
 
 interface NewsSettings {
@@ -114,6 +118,10 @@ const DEFAULT_WEATHER_SETTINGS: WeatherSettings = {
   fontWeight: 'font-black',
   animatedIcons: true,
   hideAlertsIfEmpty: false,
+  showPressure: true,
+  showTimeline: true,
+  showTomorrow: true,
+  showCurrent: true,
 };
 
 const DEFAULT_NEWS_SETTINGS: NewsSettings = {
@@ -317,6 +325,22 @@ export function StartPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
+              {[
+                { key: 'showPressure', label: 'InHg Pressure' },
+                { key: 'showTimeline', label: '24H Timeline' },
+                { key: 'showTomorrow', label: 'T+24H Outlook' },
+                { key: 'showCurrent', label: 'Surface Metrics' },
+              ].map((module) => (
+                <button
+                  key={module.key}
+                  onClick={() => updateWeatherSettings(editingWeather.id, { ...editingWeather.weatherSettings!, [module.key]: !editingWeather.weatherSettings?.[module.key as keyof WeatherSettings] })}
+                  className={`p-4 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                    editingWeather.weatherSettings?.[module.key as keyof WeatherSettings] !== false ? 'bg-indigo-500 text-white border-indigo-400 shadow-lg shadow-indigo-500/20' : 'bg-black/40 border-white/5 text-slate-500'
+                  }`}
+                >
+                  {module.label}: {editingWeather.weatherSettings?.[module.key as keyof WeatherSettings] !== false ? 'ON' : 'OFF'}
+                </button>
+              ))}
               <button
                 onClick={() => updateWeatherSettings(editingWeather.id, { ...editingWeather.weatherSettings!, animatedIcons: !editingWeather.weatherSettings?.animatedIcons })}
                 className={`p-4 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
