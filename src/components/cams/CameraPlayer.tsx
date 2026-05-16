@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Hls from 'hls.js';
 import { motion, AnimatePresence } from 'motion/react';
 import { Camera, AiAnalysisResult } from '../../lib/camsTypes';
@@ -232,11 +233,12 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
       <div 
         className="absolute inset-0 cursor-pointer z-0" 
         onClick={() => setShowMenu(false)} 
+        onContextMenu={handleContextMenu}
       />
       
       <video
         ref={videoRef}
-        className="w-full h-full object-cover pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity duration-700"
+        className="w-full h-full object-cover pointer-events-none transition-opacity duration-700"
         muted
         autoPlay
         playsInline
@@ -300,6 +302,21 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
         </div>
       </div>
 
+      {/* Right-click instruction toast (temporary hint) */}
+      <AnimatePresence>
+        {isHovered && !showMenu && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 px-4 py-2 bg-black/60 backdrop-blur-md border border-white/10 rounded-full flex items-center gap-2 pointer-events-none"
+          >
+            <div className="w-1 h-1 bg-indigo-500 rounded-full animate-pulse" />
+            <span className="text-[8px] font-black uppercase text-slate-300 tracking-[0.2em]">Right-Click to Swap Sensor</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Bottom Summary Bar */}
       {globalAiEnabled && analysis && showOverlay && (
         <div className="absolute bottom-5 left-5 right-5 flex justify-between items-end z-30 pointer-events-none">
@@ -360,80 +377,75 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
         >
           <Maximize2 size={16} />
         </button>
-
-        <div className="relative">
-          <button 
-            onClick={() => setShowMenu(!showMenu)}
-            className="p-3 bg-bg-surface/60 border border-white/10 text-slate-400 hover:text-white hover:border-indigo-500/50 transition-all rounded-2xl backdrop-blur-xl shadow-xl duration-500"
-            title="Switch Camera"
-          >
-            <MoreVertical size={16} />
-          </button>
-
-          {/* Floating Context Menu */}
-          <AnimatePresence>
-            {showMenu && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="fixed bg-bg-surface/90 border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.5)] z-[9999] min-w-[280px] overflow-hidden backdrop-blur-2xl rounded-3xl transition-colors duration-500"
-                style={{ 
-                  top: Math.min(menuPos.y, window.innerHeight - 400),
-                  left: Math.min(menuPos.x, window.innerWidth - 300)
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="bg-white/5 px-5 py-4 border-b border-white/5 flex items-center justify-between">
-                  <span className="text-[11px] text-indigo-400 font-black tracking-[0.3em] uppercase">Sensor Selection</span>
-                  <button 
-                    onClick={() => setShowMenu(false)}
-                    className="text-[10px] text-slate-500 hover:text-white font-black"
-                  >
-                    CLOSE
-                  </button>
-                </div>
-                
-                <div className="max-h-[350px] overflow-y-auto custom-scrollbar p-2">
-                  {availableCameras.map(cam => (
-                    <button
-                      key={cam.id}
-                      onClick={() => handleSwitch(cam)}
-                      className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between transition-all rounded-2xl mb-1 ${
-                        cam.id === camera.id 
-                        ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
-                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                      }`}
-                    >
-                      <div className="flex flex-col">
-                        <span className={`font-black tracking-tight ${cam.id === camera.id ? 'text-white' : ''}`}>{cam.name}</span>
-                        <span className="text-[9px] opacity-60 uppercase tracking-[0.1em] truncate max-w-[180px] mt-0.5">{cam.description}</span>
-                      </div>
-                      {cam.id === camera.id && <div className="w-2 h-2 rounded-full bg-white animate-pulse" />}
-                    </button>
-                  ))}
-                </div>
-                
-                <div className="bg-black/20 px-5 py-3 flex flex-col gap-1 border-t border-white/5">
-                  <button 
-                    onClick={() => { setShowOverlay(!showOverlay); setShowMenu(false); }}
-                    className="w-full text-left text-[10px] font-black tracking-widest text-slate-500 hover:text-white uppercase flex items-center gap-3 py-2 transition-colors"
-                  >
-                    {showOverlay ? <Eye size={12} /> : <EyeOff size={12} />}
-                    {showOverlay ? 'Deactivate HUD' : 'Activate HUD'}
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
       </div>
 
-      {/* Decorative Accents */}
-      <div className="absolute top-4 left-4 w-12 h-12 border-t border-l border-indigo-500/20 pointer-events-none rounded-tl-2xl" />
-      <div className="absolute top-4 right-4 w-12 h-12 border-t border-r border-indigo-500/20 pointer-events-none rounded-tr-2xl" />
-      <div className="absolute bottom-4 left-4 w-12 h-12 border-b border-l border-indigo-500/20 pointer-events-none rounded-bl-2xl" />
-      <div className="absolute bottom-4 right-4 w-12 h-12 border-b border-r border-indigo-500/20 pointer-events-none rounded-br-2xl" />
+      {/* Floating Context Menu - Using Portal for global overlay */}
+      {showMenu && createPortal(
+        <AnimatePresence mode="wait">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed bg-[#0d0d10] border-2 border-indigo-500/30 shadow-[0_40px_100px_rgba(0,0,0,0.9)] z-[10000] min-w-[280px] overflow-hidden backdrop-blur-3xl rounded-3xl"
+            style={{ 
+              top: menuPos.y + 400 > window.innerHeight ? Math.max(10, window.innerHeight - 410) : menuPos.y,
+              left: menuPos.x + 300 > window.innerWidth ? Math.max(10, window.innerWidth - 310) : menuPos.x
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            <div className="bg-indigo-500/5 px-5 py-4 border-b border-indigo-500/20 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                <span className="text-[11px] text-white font-black tracking-[0.3em] uppercase">Sensor Selection</span>
+              </div>
+              <button 
+                onClick={() => setShowMenu(false)}
+                className="text-[10px] text-slate-400 hover:text-white font-black transition-colors"
+              >
+                CLOSE [×]
+              </button>
+            </div>
+            
+            <div className="max-h-[350px] overflow-y-auto custom-scrollbar p-2">
+              {availableCameras.map(cam => (
+                <button
+                  key={cam.id}
+                  onClick={() => handleSwitch(cam)}
+                  className={`w-full text-left px-4 py-3 text-xs flex items-center justify-between transition-all rounded-2xl mb-1 group/item ${
+                    cam.id === camera.id 
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' 
+                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <div className="flex flex-col">
+                    <span className={`font-black tracking-tight ${cam.id === camera.id ? 'text-white' : ''}`}>{cam.name}</span>
+                    <span className={`text-[9px] uppercase tracking-[0.1em] truncate max-w-[180px] mt-0.5 ${cam.id === camera.id ? 'text-white/60' : 'text-slate-600'}`}>
+                      {cam.description}
+                    </span>
+                  </div>
+                  {cam.id === camera.id ? (
+                    <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                  ) : (
+                    <RefreshCw className="w-3 h-3 opacity-0 group-hover/item:opacity-40 transition-opacity" />
+                  )}
+                </button>
+              ))}
+            </div>
+            
+            <div className="bg-black/40 px-5 py-3 flex flex-col gap-1 border-t border-white/5">
+              <button 
+                onClick={() => { setShowOverlay(!showOverlay); setShowMenu(false); }}
+                className="w-full text-left text-[10px] font-black tracking-widest text-slate-500 hover:text-white uppercase flex items-center gap-3 py-2 transition-colors"
+              >
+                {showOverlay ? <Eye size={12} /> : <EyeOff size={12} />}
+                {showOverlay ? 'Deactivate HUD' : 'Activate HUD'}
+              </button>
+            </div>
+          </motion.div>
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }

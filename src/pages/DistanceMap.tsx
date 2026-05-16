@@ -336,7 +336,7 @@ export default function DistanceMap() {
               <div className="pt-8 border-t border-brand-border mt-4"> 
                 <div className="text-center bg-brand-bg/50 rounded-[2rem] p-8 border border-brand-border relative group overflow-hidden shadow-inner"> 
                   <div className="absolute inset-0 bg-brand-indigo/[0.02] group-hover:bg-brand-indigo/[0.05] transition-all" />
-                  <span className="block text-6xl font-black text-text-main mb-2 glow-number leading-none">
+                  <span className="block text-6xl font-black text-text-main mb-2 leading-none">
                     {primeResponse ? primeResponse.distance?.toFixed(2) : '--'}
                     <span className="text-sm font-black text-text-dim ml-1 uppercase tracking-widest">mi</span>
                   </span> 

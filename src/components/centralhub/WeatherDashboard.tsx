@@ -251,8 +251,11 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
     if (c.includes('thunder') || c.includes('storm')) {
       return (
         <motion.div 
-          animate={{ y: [0, -5, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          animate={{ 
+            scale: [1, 1.02, 1],
+            filter: ["brightness(1)", "brightness(1.5)", "brightness(1)"]
+          }}
+          transition={{ duration: 0.1, repeat: Infinity, repeatDelay: Math.random() * 5 + 2 }}
           className={cn("text-yellow-400", className)}
         >
           <CloudLightning size={size} />
@@ -262,8 +265,8 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
     if (c.includes('rain') || c.includes('shower')) {
       return (
         <motion.div 
-          animate={{ y: [0, -4, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          animate={{ y: [0, 2, 0] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
           className={cn("text-blue-400", className)}
         >
           <CloudRain size={size} />
@@ -273,8 +276,14 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
     if (c.includes('snow') || c.includes('ice')) {
       return (
         <motion.div 
-          animate={{ rotate: [0, 360] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+          animate={{ 
+            rotate: 360,
+            y: [-1, 1, -1]
+          }}
+          transition={{ 
+            rotate: { duration: 15, repeat: Infinity, ease: "linear" },
+            y: { duration: 3, repeat: Infinity, ease: "easeInOut" }
+          }}
           className={cn("text-sky-200", className)}
         >
           <Snowflake size={size} />
@@ -284,8 +293,8 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
     if (c.includes('cloud')) {
       return (
         <motion.div 
-          animate={{ x: [-5, 5, -5] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          animate={{ x: [-3, 3, -3], opacity: [0.7, 1, 0.7] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
           className={cn("text-slate-400", className)}
         >
           <Cloud size={size} />
@@ -294,8 +303,8 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
     }
     return (
       <motion.div 
-        animate={{ rotate: [0, 90, 0], scale: [1, 1.1, 1] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
         className={cn("text-yellow-500", className)}
       >
         <Sun size={size} />
@@ -401,7 +410,7 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
               >
                 <div className="space-y-6">
                   <div className="flex items-center gap-6">
-                    <div className="text-7xl font-black text-white tracking-tighter glow-number flex items-start">
+                    <div className="text-7xl font-black text-white tracking-tighter flex items-start">
                       {weather?.temperature}<span className="text-2xl text-slate-500 mt-2 ml-1">°</span>
                     </div>
                     {weather && <AnimatedWeatherIcon condition={weather.condition} size={64} />}
@@ -534,17 +543,17 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
               <MapPin className="w-4 h-4 text-indigo-500" />
               Sector {weather?.location} Matrix
             </div>
-            {activeModules.showCurrent && (
+            {(activeModules.showCurrent || !compact) && (
               <>
                 <div className="flex items-center gap-8">
-                  <div className="text-8xl font-black text-white tracking-tighter glow-number flex items-start">
+                  <div className="text-8xl font-black text-white tracking-tighter flex items-start">
                     {weather?.temperature}
                     <span className="text-3xl mt-4 text-slate-600 ml-2">°{weather?.unit}</span>
                   </div>
-                  {weather && <AnimatedWeatherIcon condition={weather.condition} size={80} className="drop-shadow-[0_0_30px_rgba(234,179,8,0.3)]" />}
+                  {weather && <AnimatedWeatherIcon condition={weather.condition} size={80} />}
                 </div>
                 <div className="flex items-center gap-6">
-                  <p className="text-2xl font-black text-text-dim uppercase tracking-tight italic">{weather?.condition}</p>
+                  <p className="text-2xl font-black text-slate-400 uppercase tracking-tight italic opacity-80">{weather?.condition}</p>
                   {weather?.windSpeed && (
                     <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                       <Wind className="w-3 h-3" />
@@ -636,7 +645,7 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
               </h3>
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <p className="text-4xl font-black text-white glow-number">{weather?.pressure || '---'}</p>
+                  <p className="text-4xl font-black text-white">{weather?.pressure || '---'}</p>
                   <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Inches of Mercury (inHg)</p>
                 </div>
                 <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">

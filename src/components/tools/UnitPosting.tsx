@@ -152,7 +152,7 @@ export function UnitPosting() {
                   key={systemLevel}
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  className="text-6xl font-black text-white glow-number leading-none transition-all"
+                  className="text-6xl font-black text-white leading-none transition-all"
                 >
                   {systemLevel}
                 </motion.span>

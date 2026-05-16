@@ -22,6 +22,7 @@ import {
   Newspaper
 } from 'lucide-react';
 import { WeatherDashboard } from '../../components/centralhub/WeatherDashboard';
+import { ScannerVFD } from '../../components/centralhub/ScannerVFD';
 import { NewsWidget } from '../../components/centralhub/NewsWidget';
 import { WotdWidget } from '../../components/centralhub/WotdWidget';
 import { useTerminal } from '../../context/TerminalContext';
@@ -97,7 +98,7 @@ interface NewsSettings {
 
 interface WidgetItem {
   id: string;
-  type: 'time' | 'weather' | 'personnel' | 'calendar' | 'shift_report' | 'custom_new' | 'news' | 'wotd';
+  type: 'time' | 'weather' | 'personnel' | 'calendar' | 'shift_report' | 'custom_new' | 'news' | 'wotd' | 'scanner';
   title: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   isVisible: boolean;
@@ -136,6 +137,7 @@ const DEFAULT_NEWS_SETTINGS: NewsSettings = {
 
 const DEFAULT_WIDGETS: WidgetItem[] = [
   { id: 'widget-time', type: 'time', title: 'Operational Clock', size: 'sm', isVisible: true, clockSettings: DEFAULT_CLOCK_SETTINGS },
+  { id: 'widget-scanner', type: 'scanner', title: 'Tactical Radio Uplink', size: 'md', isVisible: true },
   { id: 'widget-weather', type: 'weather', title: 'Environment Monitor', size: 'md', isVisible: true, weatherSettings: DEFAULT_WEATHER_SETTINGS },
   { id: 'widget-personnel', type: 'personnel', title: 'Personnel Deployment', size: 'xl', isVisible: true },
   { id: 'widget-calendar', type: 'calendar', title: 'Operations Calendar', size: 'xl', isVisible: true },
@@ -257,7 +259,7 @@ export function StartPage() {
 
         <div className="flex items-center gap-8">
           <div className="text-right">
-            <p className="text-4xl font-black text-text-main glow-number tracking-tighter leading-none">{format(now, 'HH:mm:ss')}</p>
+            <p className="text-4xl font-black text-text-main tracking-tighter leading-none">{format(now, 'HH:mm:ss')}</p>
             <p className="text-[9px] text-indigo-400 font-black uppercase tracking-[0.3em] mt-2">{format(now, 'EEEE, LLLL do')}</p>
           </div>
           <button 
@@ -557,6 +559,7 @@ export function StartPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[
             { type: 'time', title: 'Local Time', size: 'sm', desc: 'Chronometer node' },
+            { type: 'scanner', title: 'VFD Scanner', size: 'md', desc: 'SNDJY Tactical Uplink' },
             { type: 'weather', title: 'Tactical Weather', size: 'lg', desc: 'Atmospheric monitor' },
             { type: 'news', title: 'Intel Feed', size: 'lg', desc: 'External news stream' },
             { type: 'wotd', title: 'Word of the Day', size: 'md', desc: 'Linguistic analysis' },
@@ -640,6 +643,8 @@ function SortableWidget({
         return <PersonnelModalContent />;
       case 'calendar':
         return <OpsCalendar />;
+      case 'scanner':
+        return <ScannerVFD />;
       case 'shift_report':
         return <ShiftReportAddContent onClose={() => {}} />;
       default:
@@ -800,7 +805,7 @@ function TimeWidgetContent({ settings = DEFAULT_CLOCK_SETTINGS }: { settings?: C
           settings.fontWeight, 
           settings.color, 
           settings.fontFamily, 
-          "glow-number tracking-tighter leading-none hover:scale-105 transition-all duration-700 cursor-default flex items-baseline"
+          "tracking-tighter leading-none hover:scale-105 transition-all duration-700 cursor-default flex items-baseline"
         )}>
           {format(now, settings.is24Hour ? 'HH:mm' : 'hh:mm')}
           <span className="text-[0.4em] opacity-30 ml-2 animate-pulse font-thin w-[1.5ch]">

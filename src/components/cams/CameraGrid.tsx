@@ -193,10 +193,6 @@ export const CameraGrid: React.FC = React.memo(() => {
           </div>
         </div>
       </footer>
-
-      {/* Global Hud Detail Overlay */}
-      <div className="scanlines" />
-      <div className="radar-sweep !opacity-[0.03]" />
     </div>
   );
 });

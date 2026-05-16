@@ -47,11 +47,11 @@ export default function Dashboard() {
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-3">Deployment Capacity</p>
             <div className="space-y-2">
               <div className="flex items-end gap-3">
-                <span className="text-3xl font-black text-white glow-number">14</span>
+                <span className="text-3xl font-black text-white">14</span>
                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest pb-1.5">Alpha Phase</span>
               </div>
               <div className="flex items-end gap-3">
-                <span className="text-3xl font-black text-white glow-number text-indigo-400">17</span>
+                <span className="text-3xl font-black text-white text-indigo-400">17</span>
                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest pb-1.5">Zeta Phase</span>
               </div>
             </div>

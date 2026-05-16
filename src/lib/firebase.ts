@@ -124,6 +124,7 @@ export type ThemeOverrides = {
   brandBg?: string;
   brandField?: string;
   brandAccent?: string;
+  headerLogoColor?: string;
   bgMain?: string;
   bgSurface?: string;
   textMain?: string;

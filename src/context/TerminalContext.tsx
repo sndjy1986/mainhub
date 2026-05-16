@@ -216,6 +216,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
               '--brand-bg': overrides.brandBg,
               '--brand-field': overrides.brandField,
               '--brand-accent': overrides.brandAccent,
+              '--header-logo-color': overrides.headerLogoColor,
               '--bg-main': overrides.bgMain,
               '--bg-surface': overrides.bgSurface,
               '--text-main': overrides.textMain,

@@ -14,6 +14,7 @@ const DotCameras = lazy(() => import('./pages/DotCameras'));
 const AdminPage = lazy(() => import('./pages/centralhub/AdminPage'));
 const TimeClock = lazy(() => import('./pages/TimeClock'));
 const Directory = lazy(() => import('./pages/Directory'));
+const Timers = lazy(() => import('./pages/Timers'));
 
 export default function App() {
   const { terminalUser, firebaseUser } = useTerminal();
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="/cameras" element={<PageWrapper fullWidth className="overflow-hidden"><DotCameras /></PageWrapper>} />
             <Route path="/shift-report" element={<PageWrapper className="overflow-y-auto"><ShiftReport /></PageWrapper>} />
             <Route path="/time-clock" element={<PageWrapper fullWidth className="overflow-hidden"><TimeClock /></PageWrapper>} />
+            <Route path="/timers" element={<PageWrapper className="overflow-y-auto"><Timers /></PageWrapper>} />
             <Route path="/directory" element={<PageWrapper className="overflow-y-auto"><Directory /></PageWrapper>} />
             <Route path="/admin/settings" element={<PageWrapper className="overflow-y-auto"><AdminPage /></PageWrapper>} />
           </Routes>

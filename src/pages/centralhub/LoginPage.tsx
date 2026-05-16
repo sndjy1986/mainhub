@@ -27,18 +27,24 @@ export function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
 
       // Phase 2: Retrieve role from Firestore
-      const userRef = doc(db, 'terminal_users', username.toLowerCase());
+      const userRef = doc(db, 'terminal_users', username.toLowerCase().trim());
       const userSnap = await getDoc(userRef);
       
       if (userSnap.exists()) {
         const role = userSnap.data().role || 'dispatcher';
         setStatus('success');
         setTimeout(() => {
-          loginTerminalUser(username.toLowerCase(), role);
+          loginTerminalUser(username.toLowerCase().trim(), role);
         }, 800);
       } else {
-        setStatus('error');
-        setErrorMsg('IDENTITY_CORE_MISSING // ACCESS_VOID');
+        // If Auth succeeds but no Firestore record exists, check if it's the root user or a Google user
+        // For now, if no record exists, fall back to dispatcher but log it
+        console.warn('AUTH_SUCCESS_BUT_NO_RECORD', username);
+        const role = 'dispatcher';
+        setStatus('success');
+        setTimeout(() => {
+          loginTerminalUser(username.toLowerCase().trim(), role);
+        }, 800);
       }
     } catch (err: any) {
       console.error(err);

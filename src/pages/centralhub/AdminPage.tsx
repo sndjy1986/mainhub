@@ -161,6 +161,24 @@ export function AdminPage() {
     return () => unsub();
   }, [user]);
 
+  // Login form for admin fallback
+  const [adminLoginForm, setAdminLoginForm] = useState({ username: '', password: '' });
+  const [adminLoginStatus, setAdminLoginStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminLoginForm.username || !adminLoginForm.password) return;
+    setAdminLoginStatus('loading');
+    try {
+      const { signInWithEmailAndPassword, auth } = await import('../../lib/firebase');
+      const email = `${adminLoginForm.username.toLowerCase().trim()}@dispatcher.terminal`;
+      await signInWithEmailAndPassword(auth, email, adminLoginForm.password);
+      setShowToast("ADMIN_UPLINK_ESTABLISHED");
+    } catch (err: any) {
+      setAdminLoginStatus('error');
+    }
+  };
+
   const createTerminalUser = async () => {
     if (!userForm.username || !userForm.password) return;
     try {
@@ -168,33 +186,36 @@ export function AdminPage() {
       const email = `${username}@dispatcher.terminal`;
       
       // We use a secondary auth instance to create the user without logging out the admin
-      const { initializeApp } = await import('firebase/app');
+      const { initializeApp, getApp, getApps, deleteApp } = await import('firebase/app');
       const { getAuth, createUserWithEmailAndPassword } = await import('firebase/auth');
+      
+      // Load config dynamically from a known location
       const firebaseConfig = (await import('../../../firebase-applet-config.json')).default;
       
-      const tempApp = initializeApp(firebaseConfig, 'AdminRegistration');
+      const appName = `AdminRegistration-${Date.now()}`;
+      const tempApp = initializeApp(firebaseConfig, appName);
       const tempAuth = getAuth(tempApp);
       
-      // Create in Firebase Auth
-      await createUserWithEmailAndPassword(tempAuth, email, userForm.password);
-      
-      // Record in Firestore
-      await setDoc(doc(db, 'terminal_users', username), {
-        username,
-        role: userForm.role,
-        createdAt: new Date().toISOString()
-      });
+      try {
+        // Create in Firebase Auth
+        await createUserWithEmailAndPassword(tempAuth, email, userForm.password);
+        
+        // Record in Firestore
+        await setDoc(doc(db, 'terminal_users', username), {
+          username,
+          role: userForm.role,
+          createdAt: new Date().toISOString()
+        });
 
-      // Cleanup temp app
-      const { deleteApp } = await import('firebase/app');
-      await deleteApp(tempApp);
-
-      setShowUserModal(false);
-      setUserForm({ username: '', password: '', role: 'dispatcher' });
-      setShowToast("USER_UPLINK_ESTABLISHED");
+        setShowUserModal(false);
+        setUserForm({ username: '', password: '', role: 'dispatcher' });
+        setShowToast("USER_UPLINK_ESTABLISHED");
+      } finally {
+        await deleteApp(tempApp);
+      }
     } catch (err: any) {
       console.error(err);
-      setShowToast(`UPLINK_FAILED: ${err.message}`);
+      setShowToast(`UPLINK_FAILED: ${err.message || 'Check Firebase Auth settings'}`);
     }
   };
 
@@ -345,6 +366,7 @@ export function AdminPage() {
       '--brand-bg': overrides.brandBg,
       '--brand-field': overrides.brandField,
       '--brand-accent': overrides.brandAccent,
+      '--header-logo-color': overrides.headerLogoColor,
       '--bg-main': overrides.bgMain,
       '--bg-surface': overrides.bgSurface,
       '--text-main': overrides.textMain,
@@ -441,7 +463,7 @@ export function AdminPage() {
       {!user && (
         <section className="tactical-card p-12 border-rose-500/20 bg-rose-500/[0.04] relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
+          <div className="flex flex-col xl:flex-row items-center justify-between gap-12 relative z-10">
             <div className="flex-1 space-y-4">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-rose-500/20 flex items-center justify-center border border-rose-500/30">
@@ -450,23 +472,67 @@ export function AdminPage() {
                 <h3 className="text-3xl font-black text-white uppercase tracking-tight italic">Access <span className="text-rose-500 not-italic">Restricted</span></h3>
               </div>
               <p className="text-slate-400 text-lg font-medium max-w-xl leading-relaxed">
-                Persistent orchestration nodes, personnel rosters, and system archives are secured behind mandatory tactical authentication.
+                Administrator protocols require a validated node identity. Log in with your assigned terminal credentials or use owner bootstrap access.
               </p>
+
+              <div className="pt-8 flex flex-col gap-4 max-w-sm">
+                <form onSubmit={handleAdminLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">Admin Identity</label>
+                    <input 
+                      type="text" 
+                      value={adminLoginForm.username}
+                      onChange={e => setAdminLoginForm({...adminLoginForm, username: e.target.value})}
+                      placeholder="USERNAME"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-mono text-sm focus:border-rose-500/50 outline-none"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">Key Phrase</label>
+                    <input 
+                      type="password" 
+                      value={adminLoginForm.password}
+                      onChange={e => setAdminLoginForm({...adminLoginForm, password: e.target.value})}
+                      placeholder="••••••••"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-mono text-sm focus:border-rose-500/50 outline-none"
+                    />
+                  </div>
+                  <button 
+                    type="submit"
+                    className="w-full py-5 bg-rose-600 hover:bg-rose-500 text-white font-black uppercase tracking-widest italic rounded-2xl shadow-xl shadow-rose-500/20 transition-all flex items-center justify-center gap-3"
+                  >
+                    {adminLoginStatus === 'loading' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
+                    INITIATE OVERRIDE
+                  </button>
+                  {adminLoginStatus === 'error' && (
+                    <p className="text-[10px] text-rose-500 font-black uppercase tracking-widest text-center italic">IDENTITY_REJECTED // CHECK_CREDENTIALS</p>
+                  )}
+                </form>
+              </div>
             </div>
-            <button 
-              onClick={async () => {
-                try {
-                  await signIn();
-                  setShowToast("AUTHENTICATED_ACCESS_GRANTED");
-                } catch (e: any) {
-                  setShowToast("AUTH_REJECTED");
-                }
-              }}
-              className="px-12 py-6 bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-[0.2em] rounded-[2rem] shadow-[0_0_40px_rgba(244,63,94,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center gap-4 group"
-            >
-              <Terminal className="w-6 h-6" />
-              Begin Authentication
-            </button>
+
+            <div className="flex flex-col items-center gap-6">
+              <div className="h-px w-32 bg-white/5 hidden xl:block" />
+              <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">or</p>
+              <div className="h-px w-32 bg-white/5 hidden xl:block" />
+              
+              <button 
+                onClick={async () => {
+                  try {
+                    await signIn();
+                    setShowToast("AUTHENTICATED_ACCESS_GRANTED");
+                  } catch (e: any) {
+                    setShowToast("AUTH_REJECTED");
+                  }
+                }}
+                className="px-12 py-6 bg-white/[0.03] hover:bg-white/10 text-slate-400 font-black uppercase tracking-[0.2em] rounded-[2rem] border border-white/5 hover:border-indigo-500/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-4 group"
+              >
+                <div className="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center">
+                  <Terminal className="w-4 h-4 text-indigo-400" />
+                </div>
+                Google Bootstrap
+              </button>
+            </div>
           </div>
         </section>
       )}
@@ -599,7 +665,10 @@ export function AdminPage() {
               </h3>
               <p className="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black mt-2">Granular UI color and transparency controls</p>
             </div>
-            <button 
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
               onClick={() => {
                 setThemeOverrides({});
                 updateGlobalSettings({ themeOverrides: {} });
@@ -608,7 +677,7 @@ export function AdminPage() {
               className="px-6 py-2 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-rose-500 hover:text-white transition-all"
             >
               Reset to Defaults
-            </button>
+            </motion.button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
@@ -621,6 +690,7 @@ export function AdminPage() {
                   { label: 'Brand Blue', key: 'brandBlue' },
                   { label: 'Brand Emerald', key: 'brandEmerald' },
                   { label: 'Brand Accent', key: 'brandAccent' },
+                  { label: 'Header Logo', key: 'headerLogoColor' },
                   { label: 'Panel BG', key: 'brandPanel' },
                   { label: 'Border', key: 'brandBorder' },
                   { label: 'Main BG', key: 'bgMain' },
@@ -639,19 +709,32 @@ export function AdminPage() {
                           setThemeOverrides(prev => ({ ...prev, [item.key]: val }));
                         }}
                         onBlur={() => handleUpdateSettings({ themeOverrides: themeRef.current })}
-                        className="w-14 h-14 rounded-xl bg-transparent border-2 border-white/10 cursor-pointer p-0 hover:scale-110 transition-transform"
+                        className="w-20 h-20 rounded-2xl bg-transparent border-2 border-white/10 cursor-pointer p-0 hover:scale-105 active:scale-95 transition-all shadow-lg overflow-hidden"
                       />
-                      <input 
-                        type="text"
-                        value={themeOverrides[item.key as keyof typeof themeOverrides] as string || ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setThemeOverrides(prev => ({ ...prev, [item.key]: val }));
-                        }}
-                        onBlur={() => handleUpdateSettings({ themeOverrides: themeRef.current })}
-                        placeholder="HEX/RGB"
-                        className="flex-1 bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-mono uppercase focus:border-indigo-500 outline-none"
-                      />
+                      <div className="flex-1 space-y-2">
+                        <input 
+                          type="text"
+                          value={themeOverrides[item.key as keyof typeof themeOverrides] as string || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setThemeOverrides(prev => ({ ...prev, [item.key]: val }));
+                          }}
+                          onBlur={() => handleUpdateSettings({ themeOverrides: themeRef.current })}
+                          placeholder="HEX/RGB"
+                          className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-mono uppercase focus:border-indigo-500 outline-none"
+                        />
+                        <button 
+                          onClick={() => {
+                            const newTheme = { ...themeOverrides };
+                            delete newTheme[item.key as keyof typeof themeOverrides];
+                            setThemeOverrides(newTheme);
+                            handleUpdateSettings({ themeOverrides: newTheme });
+                          }}
+                          className="text-[8px] font-black text-rose-500 uppercase tracking-widest hover:text-rose-400"
+                        >
+                          Clear
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -712,12 +795,15 @@ export function AdminPage() {
                   <p className="text-[10px] text-slate-500 leading-relaxed uppercase tracking-tight">
                     Manual overrides will persist across all active terminal sessions and bypass standard theme defaults.
                   </p>
-                  <button 
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
                     onClick={() => handleUpdateSettings({ themeOverrides })}
                     className="w-full py-4 bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95 transition-all"
                   >
                     Commit Vector Update
-                  </button>
+                  </motion.button>
                </div>
             </div>
           </div>
@@ -789,14 +875,28 @@ export function AdminPage() {
                 </h3>
                 <p className="text-[9px] text-slate-500 uppercase tracking-[0.3em] font-black mt-2">Access Credentials & Privileges</p>
               </div>
-              <button 
-                disabled={!user}
-                onClick={() => setShowUserModal(true)}
-                className="tactical-btn-indigo px-5 py-2 text-[10px] shadow-indigo-500/10 disabled:opacity-30 flex items-center gap-2"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Add Node
-              </button>
+              <div className="flex gap-3">
+                <button 
+                  disabled={!user}
+                  onClick={() => {
+                    alert("TO ADD A LOGIN:\n1. Choose a unique Operator ID (e.g. 'dispatcher1')\n2. Set a secure Access Key (Password)\n3. Click 'Confirm Registration'\n\nThe user can then log in using just that Operator ID and Access Key.");
+                  }}
+                  className="px-4 py-2 border border-indigo-500/30 text-indigo-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-500/10 transition-all"
+                >
+                  <Info className="w-3 h-3 inline mr-1" /> Help
+                </button>
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  disabled={!user}
+                  onClick={() => setShowUserModal(true)}
+                  className="tactical-btn-indigo px-5 py-2 text-[10px] shadow-indigo-500/10 disabled:opacity-30 flex items-center gap-2"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Node
+                </motion.button>
+              </div>
             </div>
 
             <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 scrollbar-thin">
@@ -817,6 +917,22 @@ export function AdminPage() {
                       </div>
                     </div>
                     <div className="flex gap-2">
+                       <button 
+                        onClick={() => {
+                          const newPass = window.prompt(`SET NEW ACCESS KEY FOR ${u.username.toUpperCase()}:`);
+                          if (newPass && newPass.length >= 6) {
+                            // This would ideally use a cloud function or different pattern to update auth
+                            // For now, we inform that they should delete and recreate the node as a shortcut
+                            alert("To change a password, please delete the node and re-create it with the same username. This ensures the authentication portal is synchronized.");
+                          } else if (newPass) {
+                            alert("KEY TOO SHORT (MIN 6 CHARS)");
+                          }
+                        }}
+                        className="p-2 text-slate-600 hover:text-indigo-400 transition-colors bg-white/5 rounded-lg opacity-0 group-hover:opacity-100"
+                        title="Key Rotation"
+                       >
+                         <Settings size={14} />
+                       </button>
                        <button 
                         onClick={() => deleteTerminalUser(u.username)}
                         className="p-2 text-slate-600 hover:text-rose-400 transition-colors bg-white/5 rounded-lg opacity-0 group-hover:opacity-100"

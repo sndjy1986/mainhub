@@ -323,11 +323,11 @@
   }
 
   .glow-number {
-    text-shadow: 0 0 15px rgba(99, 102, 241, 0.4), 0 0 30px rgba(99, 102, 241, 0.2);
+    /* Glowing effect removed as per user request */
   }
 
   .glow-text-indigo {
-    text-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+    /* Glowing effect removed as per user request */
   }
 
   .scanner-line {
@@ -383,5 +383,39 @@
       radial-gradient(circle at 2px 2px, var(--brand-indigo) 1px, transparent 0);
     background-size: calc(24px * var(--global-scale, 1)) calc(24px * var(--global-scale, 1));
     background-color: var(--bg-main);
+  }
+
+  /* Custom VFD effect */
+  .vfd-panel {
+    background: #001a1a;
+    border: 4px solid #1a1a1a;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.05), inset 0 0 25px rgba(0, 0, 0, 0.9);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .vfd-text {
+    font-family: 'JetBrains Mono', monospace;
+    color: #00ffd0;
+    letter-spacing: 2px;
+  }
+
+  .vfd-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background-size: 100% 3px, 3px 100%;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  @keyframes vfd-glow-pulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.1); }
+  }
+
+  .vfd-glow-anim {
+    animation: vfd-glow-pulse 4s ease-in-out infinite;
   }
 }
