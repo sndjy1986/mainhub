@@ -639,7 +639,7 @@ export function AdminPage() {
                           setThemeOverrides(prev => ({ ...prev, [item.key]: val }));
                         }}
                         onBlur={() => handleUpdateSettings({ themeOverrides: themeRef.current })}
-                        className="w-10 h-10 rounded-lg bg-transparent border-white/10 cursor-pointer p-0"
+                        className="w-14 h-14 rounded-xl bg-transparent border-2 border-white/10 cursor-pointer p-0 hover:scale-110 transition-transform"
                       />
                       <input 
                         type="text"

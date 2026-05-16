@@ -19,15 +19,18 @@ export function WotdWidget({ compact = false }: WotdWidgetProps) {
   const fetchWotd = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/wotd');
+      const response = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.merriam-webster.com/wotd/feed/rss2'));
       if (!response.ok) throw new Error('Failed to fetch data');
       
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('text/html')) {
-        throw new Error('Backend out of date. Please re-share/re-deploy to update the server.');
-      }
+      const resData = await response.json();
+      const item = resData.items[0];
+      const wotd = {
+        title: item.title,
+        link: item.link,
+        pubDate: item.pubDate,
+        contentSnippet: item.description ? item.description.replace(/<[^>]*>?/gm, '').replace(/\n\s*\n/g, '\n').trim() : ''
+      };
       
-      const wotd = await response.json();
       setData(wotd);
       setError(null);
     } catch (err: any) {

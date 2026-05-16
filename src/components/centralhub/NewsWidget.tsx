@@ -21,6 +21,15 @@ interface NewsWidgetProps {
   compact?: boolean;
 }
 
+const NEWS_FEEDS: Record<string, string> = {
+  cnn: 'http://rss.cnn.com/rss/cnn_topstories.rss',
+  fox: 'http://feeds.foxnews.com/foxnews/latest',
+  tech: 'https://feeds.feedburner.com/TechCrunch/',
+  google: 'https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en',
+  reuters: 'https://www.reutersagency.com/feed/',
+  associated_press: 'https://news.google.com/rss/search?q=associated+press&hl=en-US&gl=US&ceid=US:en'
+};
+
 export function NewsWidget({ settings, compact = false }: NewsWidgetProps) {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,16 +43,19 @@ export function NewsWidget({ settings, compact = false }: NewsWidgetProps) {
   const fetchNews = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/news?source=${source}`);
+      const feedUrl = NEWS_FEEDS[source] || NEWS_FEEDS.google;
+      const response = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feedUrl));
       if (!response.ok) throw new Error('News broadcast interrupted');
       
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('text/html')) {
-        throw new Error('Backend out of date. Please re-share/re-deploy to update the server.');
-      }
-      
-      const data = await response.json();
-      setNews(data.items.slice(0, articleCount));
+      const resData = await response.json();
+      const items = resData.items.map((item: any) => ({
+        title: item.title,
+        link: item.link,
+        pubDate: item.pubDate,
+        contentSnippet: item.description ? item.description.replace(/<[^>]*>?/gm, '').replace(/\n\s*\n/g, '\n').trim() : '',
+        source: resData.feed.title || source
+      }));
+      setNews(items.slice(0, articleCount));
       setError(null);
       setLastRefreshed(new Date());
     } catch (err: any) {

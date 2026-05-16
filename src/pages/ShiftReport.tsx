@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTerminal } from '../context/TerminalContext';
 import { 
   Clipboard, 
   Mail, 
@@ -34,7 +35,8 @@ import {
   Lock,
   AlertCircle,
   Plus,
-  ArrowRight
+  ArrowRight,
+  EyeOff
 } from 'lucide-react';
 
 // Sub-component for the high-intensity emergency background
@@ -114,6 +116,7 @@ export default function ShiftReport() {
   const handlePasteReport = () => setShowPasteModal(true);
   
   // New States for History and Lights
+  const { terminalUser } = useTerminal();
   const [user, setUser] = useState(auth.currentUser);
   const [backgroundStyle, setBackgroundStyle] = useState<'glow' | 'emergency'>('glow');
   const [lightIntensity, setLightIntensity] = useState<number>(0.5);
@@ -687,6 +690,9 @@ export default function ShiftReport() {
                   <Field label="Zulu Primary" icon={Zap}>
                     <input type="text" name="zuluPrimary" value={data.zuluPrimary} onChange={handleChange} placeholder="UNIT_ID" />
                   </Field>
+                  <Field label="Zulu Secondary" icon={Zap}>
+                    <input type="text" name="zuluSecondary" value={data.zuluSecondary} onChange={handleChange} placeholder="UNIT_ID" />
+                  </Field>
                   <Field label="ALS Transport" icon={Shield}>
                     <input type="text" name="truckALS" value={data.truckALS} onChange={handleChange} placeholder="UNIT_IDS" />
                   </Field>
@@ -736,56 +742,70 @@ export default function ShiftReport() {
             </div>
 
             {/* Row 3: Log */}
-            <section className="tactical-card p-8 space-y-6 group">
-              <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                 <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 flex items-center gap-3">
-                    <FileText className="w-4 h-4" /> Operational Log
-                 </h2>
-                 <div className="flex items-center gap-4">
-                   <button 
-                      type="button" 
-                      onClick={() => setShowPasteModal(true)}
-                      className="text-[9px] text-indigo-500 hover:text-indigo-400 flex items-center gap-2 uppercase font-black tracking-[0.2em] transition-colors"
-                   >
-                     <Maximize2 className="w-3 h-3" /> System Fullscreen
-                   </button>
-                   <div className="w-24 h-[1px] bg-gradient-to-r from-indigo-500/30 to-transparent" />
-                 </div>
-              </div>
-              <textarea 
-                name="issues" 
-                value={data.issues} 
-                onChange={handleChange} 
-                rows={10} 
-                className="w-full tactical-input p-6 text-sm font-mono leading-relaxed"
-                placeholder="RECORD ALL SIGNIFICANT ACTIONS, FAILURES, AND RECOVERY STEPS..." 
-              />
-              <div className="pt-4 mt-4 border-t border-white/5">
-                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600 block mb-3">Buffer Data / Roster Sync</label>
-                <textarea 
-                  name="pasteNotes" 
-                  value={data.pasteNotes} 
-                  onChange={handleChange} 
-                  rows={4} 
-                  className="w-full tactical-input p-4 text-xs font-mono"
-                  placeholder="LOAD ROSTER DATA / TIME UP LOGS..." 
-                />
-              </div>
-              <div className="pt-4 mt-4 border-t border-white/5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600 block">Other Events</label>
-                  <PendingUpdatesSync onAppend={(text) => setData(prev => ({ ...prev, otherEvents: prev.otherEvents ? `${prev.otherEvents}\n${text}` : text }))} />
+            {(terminalUser?.role === 'admin' || terminalUser?.role === 'root') ? (
+              <section className="tactical-card p-8 space-y-6 group">
+                <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                   <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 flex items-center gap-3">
+                      <FileText className="w-4 h-4" /> Operational Log
+                   </h2>
+                   <div className="flex items-center gap-4">
+                     <button 
+                        type="button" 
+                        onClick={() => setShowPasteModal(true)}
+                        className="text-[9px] text-indigo-500 hover:text-indigo-400 flex items-center gap-2 uppercase font-black tracking-[0.2em] transition-colors"
+                     >
+                       <Maximize2 className="w-3 h-3" /> System Fullscreen
+                     </button>
+                     <div className="w-24 h-[1px] bg-gradient-to-r from-indigo-500/30 to-transparent" />
+                   </div>
                 </div>
                 <textarea 
-                  name="otherEvents" 
-                  value={data.otherEvents} 
+                  name="issues" 
+                  value={data.issues} 
                   onChange={handleChange} 
-                  rows={6} 
-                  className="w-full tactical-input p-4 text-xs font-mono"
-                  placeholder="MISCELLANEOUS EVENTS, NOTIFICATIONS, AND EXTERNAL UPDATES..." 
+                  rows={10} 
+                  className="w-full tactical-input p-6 text-sm font-mono leading-relaxed"
+                  placeholder="RECORD ALL SIGNIFICANT ACTIONS, FAILURES, AND RECOVERY STEPS..." 
                 />
-              </div>
-            </section>
+                <div className="pt-4 mt-4 border-t border-white/5">
+                  <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600 block mb-3">Buffer Data / Roster Sync</label>
+                  <textarea 
+                    name="pasteNotes" 
+                    value={data.pasteNotes} 
+                    onChange={handleChange} 
+                    rows={4} 
+                    className="w-full tactical-input p-4 text-xs font-mono"
+                    placeholder="LOAD ROSTER DATA / TIME UP LOGS..." 
+                  />
+                </div>
+                <div className="pt-4 mt-4 border-t border-white/5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600 block">Other Events</label>
+                    <PendingUpdatesSync onAppend={(text) => setData(prev => ({ ...prev, otherEvents: prev.otherEvents ? `${prev.otherEvents}\n${text}` : text }))} />
+                  </div>
+                  <textarea 
+                    name="otherEvents" 
+                    value={data.otherEvents} 
+                    onChange={handleChange} 
+                    rows={6} 
+                    className="w-full tactical-input p-4 text-xs font-mono"
+                    placeholder="MISCELLANEOUS EVENTS, NOTIFICATIONS, AND EXTERNAL UPDATES..." 
+                  />
+                </div>
+              </section>
+            ) : (
+              <section className="tactical-card p-12 flex flex-col items-center justify-center text-center gap-6 border-white/5 bg-white/[0.02]">
+                <div className="w-16 h-16 rounded-full bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 shadow-lg shadow-indigo-500/10">
+                  <EyeOff className="w-8 h-8 text-indigo-500 animate-pulse" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black text-white uppercase italic tracking-tight">Access Restricted</h3>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black leading-relaxed max-w-sm">
+                    The operational log is reserved for shift supervisors and administrative nodes. Please contact system admin for elevated clearance.
+                  </p>
+                </div>
+              </section>
+            )}
 
             {/* Actions */}
             <div className="mt-8 p-8 tactical-card flex flex-wrap items-center justify-between gap-6 shadow-2xl relative overflow-hidden">

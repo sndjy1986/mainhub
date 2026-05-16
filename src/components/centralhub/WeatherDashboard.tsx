@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Wind, 
@@ -19,7 +19,10 @@ import {
   Cloud,
   CloudLightning,
   Snowflake,
-  Gauge
+  Gauge,
+  Maximize2,
+  CalendarDays,
+  Layers
 } from 'lucide-react';
 import { useTerminal } from '../../context/TerminalContext';
 import { onSnapshot, doc, db } from '../../lib/firebase';
@@ -51,6 +54,8 @@ interface WeatherData {
   windSpeed?: string;
   windDirection?: string;
   daily: any[];
+  lat?: number;
+  lon?: number;
 }
 
 const DEFAULT_MODULES = {
@@ -66,8 +71,6 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
     weatherZip, 
     setWeatherZip, 
     addNotification, 
-    requestNotificationPermission, 
-    notificationPermission 
   } = useTerminal();
   
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -78,9 +81,18 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
   const [zipInput, setZipInput] = useState('');
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
   const [globalModules, setGlobalModules] = useState(DEFAULT_MODULES);
+  const [activeTab, setActiveTab] = useState<'now' | 'today' | 'forecast' | 'radar'>('now');
+  const [isRadarExpanded, setIsRadarExpanded] = useState(false);
   
   const notifiedAlerts = useRef<Set<string>>(new Set());
-  const forecastDays = settings?.forecastDays || 5;
+  const forecastDays = settings?.forecastDays || 7;
+
+  const radarUrl = useMemo(() => {
+    if (!weather) return null;
+    const lat = weather.lat || 34.8526;
+    const lon = weather.lon || -82.394;
+    return `https://www.rainviewer.com/map.html?loc=${lat},${lon},6&control=1&head=1&foot=1&v=1`;
+  }, [weather]);
 
   // Derrive active modules from local settings if available, otherwise global
   const activeModules = {
@@ -216,7 +228,9 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
           humidity: obsData?.properties?.relativeHumidity?.value,
           windSpeed: currentPeriod.windSpeed,
           windDirection: currentPeriod.windDirection,
-          daily: daily
+          daily: daily,
+          lat: latitude,
+          lon: longitude
         });
       } catch (err: any) {
         console.error(err);
@@ -319,98 +333,193 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
 
   if (compact) {
     return (
-      <div className={cn("w-full h-full flex flex-col p-6 gap-6 overflow-hidden", settings?.fontFamily)}>
-         {activeModules.showCurrent && (
-           <div className="flex items-center gap-6 shrink-0">
-              <div className="text-6xl font-black text-white glow-number leading-none flex items-start">
-                {weather?.temperature}<span className="text-xl text-slate-500 mt-1">°</span>
-              </div>
-              {weather && <AnimatedWeatherIcon condition={weather.condition} size={56} />}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] truncate leading-tight mb-1">{weather?.condition}</p>
-                <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] truncate italic">{weather?.location}</p>
-              </div>
-              {activeModules.showPressure && weather?.pressure && (
-                <div className="hidden xl:flex flex-col items-end gap-1 px-4 py-2 bg-white/5 border border-white/5 rounded-xl">
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Barometric</span>
-                  <span className="text-sm font-black text-indigo-400 font-mono italic">{weather.pressure} INHG</span>
+      <div className={cn("w-full h-full flex flex-col p-6 gap-6 overflow-hidden relative", settings?.fontFamily)}>
+        {/* Radar Overlay */}
+        <AnimatePresence>
+          {isRadarExpanded && (
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="fixed inset-4 z-[200] bg-black/90 backdrop-blur-2xl border border-white/10 rounded-[3rem] overflow-hidden flex flex-col shadow-2xl"
+            >
+              <div className="p-6 border-b border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <Layers className="w-6 h-6 text-indigo-500" />
+                  <h3 className="text-2xl font-black text-white uppercase italic">Live Radar <span className="text-slate-500 not-italic">Nexus</span></h3>
                 </div>
-              )}
-              <div className="hidden sm:flex flex-col items-end gap-1 opacity-40">
-                <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Telemetry Sync</span>
-                <span className="text-[10px] font-black text-slate-400 font-mono italic">{format(new Date(), 'HH:mm')}</span>
+                <button 
+                  onClick={() => setIsRadarExpanded(false)}
+                  className="p-3 bg-white/5 rounded-2xl text-slate-500 hover:text-white transition-all"
+                >
+                  <X size={24} />
+                </button>
               </div>
-           </div>
-         )}
-         
-         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
-           {activeModules.showCurrent && (
-             <div className="flex flex-col gap-2 min-h-0 lg:border-r lg:border-white/5 pr-4">
-               <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
-                 <Wind className="w-3 h-3" /> Vector Dynamics
-               </h4>
-               <div className="flex flex-col gap-2 px-5 py-3 bg-white/[0.02] border border-white/5 rounded-xl flex-1 justify-center">
-                 <div className="flex justify-between items-center">
-                   <span className="text-[9px] font-bold text-slate-500 uppercase">Wind Velocity</span>
-                   <span className="text-[11px] font-black text-white">{weather?.windSpeed} {weather?.windDirection}</span>
-                 </div>
-                 <div className="flex justify-between items-center">
-                   <span className="text-[9px] font-bold text-slate-500 uppercase">Humidity Matrix</span>
-                   <span className="text-[11px] font-black text-white">{weather?.humidity}%</span>
-                 </div>
-               </div>
-             </div>
-           )}
+              <div className="flex-1 bg-black">
+                <iframe 
+                  src={radarUrl || ""} 
+                  className="w-full h-full border-none"
+                  title="Expanded Radar"
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-           {activeModules.showTimeline && (
-             <div className="flex flex-col gap-2 min-h-0">
-               <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
-                 <Clock className="w-3 h-3" /> 24H Forecast
-               </h4>
-               <div className="flex justify-between items-center gap-2 px-4 py-3 bg-white/[0.03] border border-white/5 rounded-xl flex-1 overflow-hidden">
-                 {weather?.hourly.slice(0, 5).map((hour, idx) => (
-                   <div key={idx} className="flex flex-col items-center gap-1.5 min-w-[32px]">
-                     <span className="text-[9px] font-black text-slate-500">{format(new Date(hour.startTime), 'HH')}</span>
-                     <span className="text-xs font-black text-white">{hour.temperature}°</span>
-                   </div>
-                 ))}
-               </div>
-             </div>
-           )}
+        <div className="flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2">
+            {['now', 'today', 'forecast', 'radar'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as any)}
+                className={cn(
+                  "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                  activeTab === tab 
+                    ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
+                    : "bg-white/5 text-slate-500 hover:bg-white/10"
+                )}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          <div className="hidden sm:flex flex-col items-end gap-0.5 opacity-40">
+            <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Telemetry</span>
+            <span className="text-[9px] font-black text-slate-400 font-mono italic">{format(new Date(), 'HH:mm')}</span>
+          </div>
+        </div>
 
-           {activeModules.showTomorrow && weather?.daily && weather.daily.length > 1 && (
-             <div className="flex flex-col gap-2 min-h-0">
-               <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
-                 <Shield className="w-3 h-3" /> T+24H Outlook
-               </h4>
-               <div className="flex items-center justify-between px-5 py-3 bg-indigo-500/5 border border-indigo-500/10 rounded-xl flex-1">
-                 <div className="flex items-center gap-3">
-                   <AnimatedWeatherIcon condition={weather.daily[1].condition} size={28} />
-                   <div className="flex flex-col">
-                     <span className="text-[10px] font-black text-white uppercase tracking-wider">{weather.daily[1].condition}</span>
-                     <span className="text-[9px] font-bold text-slate-500 uppercase leading-none">Trend</span>
-                   </div>
-                 </div>
-                 <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black text-white">{weather.daily[1].high}°</span>
-                    <span className="text-xs font-black text-slate-500">/ {weather.daily[1].low}°</span>
-                 </div>
-               </div>
-             </div>
-           )}
-
-           {activeModules.showPressure && weather?.pressure && (
-             <div className="xl:hidden flex flex-col gap-2">
-                <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
-                  <Gauge className="w-3 h-3" /> Pressure Analytics
-                </h4>
-                <div className="px-5 py-3 bg-white/5 border border-white/5 rounded-xl flex items-center justify-between flex-1">
-                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Steady State</span>
-                   <span className="text-base font-black text-indigo-400 font-mono italic">{weather.pressure} INHG</span>
+        <div className="flex-1 min-h-0 overflow-hidden relative">
+          <AnimatePresence mode="wait">
+            {activeTab === 'now' && (
+              <motion.div 
+                key="now"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="grid grid-cols-1 xl:grid-cols-2 gap-6 h-full items-center"
+              >
+                <div className="space-y-6">
+                  <div className="flex items-center gap-6">
+                    <div className="text-7xl font-black text-white tracking-tighter glow-number flex items-start">
+                      {weather?.temperature}<span className="text-2xl text-slate-500 mt-2 ml-1">°</span>
+                    </div>
+                    {weather && <AnimatedWeatherIcon condition={weather.condition} size={64} />}
+                    <div>
+                      <p className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] truncate leading-tight mb-1">{weather?.condition}</p>
+                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] truncate italic">{weather?.location}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-white/5 border border-white/5 rounded-2xl flex flex-col gap-1">
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Wind Vector</span>
+                      <span className="text-xs font-black text-white">{weather?.windSpeed} {weather?.windDirection}</span>
+                    </div>
+                    <div className="p-4 bg-white/5 border border-white/5 rounded-2xl flex flex-col gap-1">
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Barometric</span>
+                      <span className="text-xs font-black text-indigo-400 font-mono">{weather?.pressure || '---'} INHG</span>
+                    </div>
+                  </div>
                 </div>
-             </div>
-           )}
-         </div>
+                {/* Mini Radar */}
+                <div className="hidden xl:block h-full relative group cursor-pointer" onClick={() => setIsRadarExpanded(true)}>
+                  <div className="absolute inset-0 bg-indigo-500/10 opacity-40 rounded-3xl" />
+                  <div className="absolute inset-0 border border-white/5 rounded-3xl overflow-hidden">
+                    <iframe 
+                      src={radarUrl || ""} 
+                      className="w-full h-full border-none pointer-events-none scale-150 origin-center opacity-70"
+                      title="Mini Radar"
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
+                    <div className="flex items-center justify-between w-full">
+                       <span className="text-[10px] font-black text-white uppercase tracking-widest">Live Feed</span>
+                       <Maximize2 className="w-4 h-4 text-indigo-500 group-hover:scale-125 transition-transform" />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'today' && (
+              <motion.div 
+                key="today"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="h-full flex gap-4 overflow-x-auto pb-4 custom-scrollbar-h"
+              >
+                {weather?.hourly.map((hour, idx) => (
+                  <div key={idx} className="flex-shrink-0 w-28 p-6 rounded-3xl bg-white/[0.03] border border-white/5 flex flex-col items-center gap-4 hover:border-indigo-500/30 transition-all">
+                    <span className="text-[10px] font-black text-slate-500 uppercase">{format(new Date(hour.startTime), 'HH:mm')}</span>
+                    <AnimatedWeatherIcon condition={hour.shortForecast} size={28} />
+                    <span className="text-xl font-black text-white">{hour.temperature}°</span>
+                    <div className="w-full space-y-1.5">
+                       <div className="flex justify-between items-center text-[8px] font-black text-slate-600 uppercase tracking-tighter">
+                          <span>POP</span>
+                          <span>{hour.probabilityOfPrecipitation?.value || 0}%</span>
+                       </div>
+                       <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                         <div 
+                          className="h-full bg-blue-500 transition-all duration-1000" 
+                          style={{ width: `${hour.probabilityOfPrecipitation?.value || 0}%` }}
+                         />
+                       </div>
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+
+            {activeTab === 'forecast' && (
+              <motion.div 
+                key="forecast"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="h-full flex flex-col gap-2 overflow-y-auto pr-2 scrollbar-thin"
+              >
+                {weather?.daily.map((day, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl hover:bg-white/[0.04] transition-all">
+                    <div className="flex items-center gap-6 w-1/3">
+                      <span className="text-xs font-black text-slate-400 uppercase tracking-widest italic w-16">{idx === 0 ? "Today" : day.name}</span>
+                      <AnimatedWeatherIcon condition={day.condition} size={24} />
+                    </div>
+                    <div className="w-1/3 text-center">
+                      <span className="text-[10px] font-black text-white uppercase tracking-widest truncate block">{day.condition}</span>
+                    </div>
+                    <div className="flex items-baseline gap-2 w-1/3 justify-end">
+                      <span className="text-lg font-black text-white">{day.high}°</span>
+                      <span className="text-[10px] font-black text-slate-500">/ {day.low}°</span>
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+
+            {activeTab === 'radar' && (
+              <motion.div 
+                key="radar"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="h-full rounded-[2rem] overflow-hidden bg-black/40 border border-white/5 relative"
+              >
+                <iframe 
+                  src={radarUrl || ""} 
+                  className="w-full h-full border-none"
+                  title="Tab Radar"
+                />
+                <button 
+                  onClick={() => setIsRadarExpanded(true)}
+                  className="absolute bottom-6 right-6 p-4 bg-indigo-500 text-white rounded-2xl shadow-xl shadow-indigo-500/30 hover:scale-110 active:scale-95 transition-all"
+                >
+                  <Maximize2 size={20} />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     );
   }
