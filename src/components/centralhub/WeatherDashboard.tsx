@@ -342,7 +342,7 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
 
   if (compact) {
     return (
-      <div className={cn("w-full h-full flex flex-col p-6 gap-6 overflow-hidden relative", settings?.fontFamily)}>
+      <div className={cn("w-full h-full flex flex-col p-0 overflow-hidden relative", settings?.fontFamily)}>
         {/* Radar Overlay */}
         <AnimatePresence>
           {isRadarExpanded && (
@@ -375,39 +375,38 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
           )}
         </AnimatePresence>
 
-        <div className="flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-2">
-            {['now', 'today', 'forecast', 'radar'].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab as any)}
-                className={cn(
-                  "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                  activeTab === tab 
-                    ? "bg-indigo-500 text-white shadow-lg shadow-indigo-500/20" 
-                    : "bg-white/5 text-slate-500 hover:bg-white/10"
-                )}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex-1 min-h-0 overflow-hidden relative">
+        <div className="flex-1 min-h-0 relative">
           <AnimatePresence mode="wait">
             {activeTab === 'now' && (
               <motion.div 
                 key="now"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="grid grid-cols-1 xl:grid-cols-12 gap-6 h-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex h-full"
               >
-                <div className="xl:col-span-4 space-y-6 flex flex-col justify-center">
+                {/* Left Side: Stats (Fixed width) */}
+                <div className="w-[45%] p-8 space-y-8 flex flex-col justify-center relative z-10 bg-gradient-to-r from-black/60 to-transparent">
+                  <div className="flex items-center gap-2 mb-2">
+                    {['now', 'today', 'forecast', 'radar'].map(tab => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab as any)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all",
+                          activeTab === tab 
+                            ? "bg-white text-black font-black" 
+                            : "text-slate-500 hover:text-white"
+                        )}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
                   <div className="flex items-center gap-6">
-                    <div className="text-7xl font-black text-white tracking-tighter flex items-start">
-                      {weather?.temperature}<span className="text-2xl text-slate-500 mt-2 ml-1">°</span>
+                    <div className="text-8xl font-black text-white tracking-tighter flex items-start">
+                      {weather?.temperature}<span className="text-3xl text-slate-500 mt-2 ml-1">°</span>
                     </div>
                     {weather && <AnimatedWeatherIcon condition={weather.condition} size={64} />}
                     <div className="min-w-0">
@@ -426,20 +425,22 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
                     </div>
                   </div>
                 </div>
-                {/* Mini Radar */}
-                <div className="hidden xl:block xl:col-span-8 h-full relative group cursor-pointer" onClick={() => setIsRadarExpanded(true)}>
-                  <div className="absolute inset-0 bg-indigo-500/10 opacity-30 rounded-3xl" />
-                  <div className="absolute inset-0 border border-white/10 rounded-3xl overflow-hidden">
-                    <iframe 
-                      src={radarUrl || ""} 
-                      className="w-full h-full border-none pointer-events-none scale-150 origin-center opacity-70 group-hover:opacity-90 transition-opacity"
-                      title="Mini Radar"
-                    />
+
+                {/* Right Side: Full-height Radar bleed */}
+                <div className="flex-1 h-full relative group cursor-pointer overflow-hidden" onClick={() => setIsRadarExpanded(true)}>
+                  <div className="absolute inset-0 bg-indigo-500/10 opacity-20" />
+                  <iframe 
+                    src={radarUrl || ""} 
+                    className="w-full h-full border-none pointer-events-none scale-[2.2] origin-center opacity-80 group-hover:opacity-100 transition-opacity duration-1000"
+                    title="Mini Radar"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-black/80 pointer-events-none" />
+                  <div className="absolute top-8 right-8 flex flex-col items-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-[8px] font-black text-white bg-indigo-600 px-3 py-1 rounded-full uppercase tracking-[0.3em]">Live Feed Active</span>
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
-                    <div className="flex items-center justify-between w-full">
-                       <span className="text-[10px] font-black text-white uppercase tracking-widest">Live Feed</span>
-                       <Maximize2 className="w-4 h-4 text-indigo-500 group-hover:scale-125 transition-transform" />
+                  <div className="absolute bottom-8 right-8">
+                    <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-indigo-600 transition-all">
+                      <Maximize2 size={18} />
                     </div>
                   </div>
                 </div>
@@ -449,66 +450,102 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
             {activeTab === 'today' && (
               <motion.div 
                 key="today"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="h-full flex gap-4 overflow-x-auto pb-4 custom-scrollbar-h"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="h-full flex flex-col p-8"
               >
-                {weather?.hourly.map((hour, idx) => (
-                  <div key={idx} className="flex-shrink-0 w-28 p-6 rounded-3xl bg-white/[0.03] border border-white/5 flex flex-col items-center gap-4 hover:border-indigo-500/30 transition-all">
-                    <span className="text-[10px] font-black text-slate-500 uppercase">{format(new Date(hour.startTime), 'HH:mm')}</span>
-                    <AnimatedWeatherIcon condition={hour.shortForecast} size={28} />
-                    <span className="text-xl font-black text-white">{hour.temperature}°</span>
-                    <div className="w-full space-y-1.5">
-                       <div className="flex justify-between items-center text-[8px] font-black text-slate-600 uppercase tracking-tighter">
-                          <span>POP</span>
-                          <span>{hour.probabilityOfPrecipitation?.value || 0}%</span>
-                       </div>
-                       <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                         <div 
-                          className="h-full bg-blue-500 transition-all duration-1000" 
-                          style={{ width: `${hour.probabilityOfPrecipitation?.value || 0}%` }}
-                         />
-                       </div>
+                <div className="flex items-center gap-2 mb-8 shrink-0">
+                  {['now', 'today', 'forecast', 'radar'].map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab as any)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all",
+                        activeTab === tab 
+                          ? "bg-white text-black font-black" 
+                          : "text-slate-500 hover:text-white"
+                      )}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex-1 flex gap-4 overflow-x-auto pb-4 custom-scrollbar-h">
+                  {weather?.hourly.map((hour, idx) => (
+                    <div key={idx} className="flex-shrink-0 w-28 p-6 rounded-3xl bg-white/[0.03] border border-white/5 flex flex-col items-center gap-4 hover:border-indigo-500/30 transition-all">
+                      <span className="text-[10px] font-black text-slate-500 uppercase">{format(new Date(hour.startTime), 'HH:mm')}</span>
+                      <AnimatedWeatherIcon condition={hour.shortForecast} size={28} />
+                      <span className="text-xl font-black text-white">{hour.temperature}°</span>
+                      <div className="w-full space-y-1.5">
+                         <div className="flex justify-between items-center text-[8px] font-black text-slate-600 uppercase tracking-tighter">
+                            <span>POP</span>
+                            <span>{hour.probabilityOfPrecipitation?.value || 0}%</span>
+                         </div>
+                         <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                           <div 
+                            className="h-full bg-blue-500 transition-all duration-1000" 
+                            style={{ width: `${hour.probabilityOfPrecipitation?.value || 0}%` }}
+                           />
+                         </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </motion.div>
             )}
 
             {activeTab === 'forecast' && (
               <motion.div 
                 key="forecast"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="h-full flex flex-col gap-2 overflow-y-auto pr-2 scrollbar-thin"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="h-full flex flex-col p-8"
               >
-                {weather?.daily.map((day, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl hover:bg-white/[0.04] transition-all">
-                    <div className="flex items-center gap-6 w-1/3">
-                      <span className="text-xs font-black text-slate-400 uppercase tracking-widest italic w-16">{idx === 0 ? "Today" : day.name}</span>
-                      <AnimatedWeatherIcon condition={day.condition} size={24} />
+                <div className="flex items-center gap-2 mb-8 shrink-0">
+                  {['now', 'today', 'forecast', 'radar'].map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab as any)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all",
+                        activeTab === tab 
+                          ? "bg-white text-black font-black" 
+                          : "text-slate-500 hover:text-white"
+                      )}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex-1 flex flex-col gap-2 overflow-y-auto pr-2 scrollbar-thin">
+                  {weather?.daily.map((day, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl hover:bg-white/[0.04] transition-all">
+                      <div className="flex items-center gap-6 w-1/3">
+                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest italic w-16">{idx === 0 ? "Today" : day.name}</span>
+                        <AnimatedWeatherIcon condition={day.condition} size={24} />
+                      </div>
+                      <div className="w-1/3 text-center">
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest truncate block">{day.condition}</span>
+                      </div>
+                      <div className="flex items-baseline gap-2 w-1/3 justify-end">
+                        <span className="text-lg font-black text-white">{day.high}°</span>
+                        <span className="text-[10px] font-black text-slate-500">/ {day.low}°</span>
+                      </div>
                     </div>
-                    <div className="w-1/3 text-center">
-                      <span className="text-[10px] font-black text-white uppercase tracking-widest truncate block">{day.condition}</span>
-                    </div>
-                    <div className="flex items-baseline gap-2 w-1/3 justify-end">
-                      <span className="text-lg font-black text-white">{day.high}°</span>
-                      <span className="text-[10px] font-black text-slate-500">/ {day.low}°</span>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </motion.div>
             )}
 
             {activeTab === 'radar' && (
               <motion.div 
                 key="radar"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="h-full rounded-[2rem] overflow-hidden bg-black/40 border border-white/5 relative"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="h-full relative"
               >
                 <iframe 
                   src={radarUrl || ""} 
@@ -517,10 +554,26 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
                 />
                 <button 
                   onClick={() => setIsRadarExpanded(true)}
-                  className="absolute bottom-6 right-6 p-4 bg-indigo-500 text-white rounded-2xl shadow-xl shadow-indigo-500/30 hover:scale-110 active:scale-95 transition-all"
+                  className="absolute bottom-8 right-8 p-4 bg-indigo-500 text-white rounded-2xl shadow-xl shadow-indigo-500/30 hover:scale-110 active:scale-95 transition-all"
                 >
                   <Maximize2 size={20} />
                 </button>
+                <div className="absolute top-8 left-8 flex items-center gap-2">
+                  {['now', 'today', 'forecast', 'radar'].map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab as any)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest transition-all bg-black/60 backdrop-blur-md",
+                        activeTab === tab 
+                          ? "bg-white text-black font-black" 
+                          : "text-slate-300 hover:text-white"
+                      )}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
