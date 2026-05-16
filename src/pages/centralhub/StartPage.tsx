@@ -18,9 +18,11 @@ import {
   Wind,
   Settings,
   FileText,
-  ArrowUp
+  ArrowUp,
+  Newspaper
 } from 'lucide-react';
 import { WeatherDashboard } from '../../components/centralhub/WeatherDashboard';
+import { NewsWidget } from '../../components/centralhub/NewsWidget';
 import { useTerminal } from '../../context/TerminalContext';
 import { onSnapshot, collection, addDoc, deleteDoc, doc, serverTimestamp, query, orderBy, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError } from '../../lib/firebase';
@@ -79,14 +81,22 @@ interface WeatherSettings {
   hideAlertsIfEmpty: boolean;
 }
 
+interface NewsSettings {
+  source: string;
+  articleCount: number;
+  fontFamily: string;
+  refreshInterval: number;
+}
+
 interface WidgetItem {
   id: string;
-  type: 'time' | 'weather' | 'personnel' | 'calendar' | 'shift_report' | 'custom_new';
+  type: 'time' | 'weather' | 'personnel' | 'calendar' | 'shift_report' | 'custom_new' | 'news';
   title: string;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   isVisible: boolean;
   clockSettings?: ClockSettings;
   weatherSettings?: WeatherSettings;
+  newsSettings?: NewsSettings;
 }
 
 const DEFAULT_CLOCK_SETTINGS: ClockSettings = {
@@ -106,12 +116,20 @@ const DEFAULT_WEATHER_SETTINGS: WeatherSettings = {
   hideAlertsIfEmpty: false,
 };
 
+const DEFAULT_NEWS_SETTINGS: NewsSettings = {
+  source: 'google',
+  articleCount: 10,
+  fontFamily: 'font-sans',
+  refreshInterval: 15,
+};
+
 const DEFAULT_WIDGETS: WidgetItem[] = [
   { id: 'widget-time', type: 'time', title: 'Operational Clock', size: 'sm', isVisible: true, clockSettings: DEFAULT_CLOCK_SETTINGS },
   { id: 'widget-weather', type: 'weather', title: 'Environment Monitor', size: 'md', isVisible: true, weatherSettings: DEFAULT_WEATHER_SETTINGS },
   { id: 'widget-personnel', type: 'personnel', title: 'Personnel Deployment', size: 'xl', isVisible: true },
   { id: 'widget-calendar', type: 'calendar', title: 'Operations Calendar', size: 'xl', isVisible: true },
   { id: 'widget-shift-report', type: 'shift_report', title: 'Shift Report Entry', size: 'md', isVisible: true },
+  { id: 'widget-news', type: 'news', title: 'Global Intel Feed', size: 'lg', isVisible: false, newsSettings: DEFAULT_NEWS_SETTINGS },
 ];
 
 export function StartPage() {
@@ -124,6 +142,7 @@ export function StartPage() {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [editingClock, setEditingClock] = useState<WidgetItem | null>(null);
   const [editingWeather, setEditingWeather] = useState<WidgetItem | null>(null);
+  const [editingNews, setEditingNews] = useState<WidgetItem | null>(null);
   const [showFullWeather, setShowFullWeather] = useState(false);
 
   const updateWidgetSize = (id: string, size: 'sm' | 'md' | 'lg' | 'xl') => {
@@ -138,6 +157,11 @@ export function StartPage() {
   const updateWeatherSettings = (id: string, settings: WeatherSettings) => {
     setWidgets(prev => prev.map(w => w.id === id ? { ...w, weatherSettings: settings } : w));
     setEditingWeather(null);
+  };
+
+  const updateNewsSettings = (id: string, settings: NewsSettings) => {
+    setWidgets(prev => prev.map(w => w.id === id ? { ...w, newsSettings: settings } : w));
+    setEditingNews(null);
   };
 
   const sensors = useSensors(
@@ -234,6 +258,7 @@ export function StartPage() {
                 onResize={(size) => updateWidgetSize(widget.id, size)}
                 onEditClock={() => setEditingClock(widget)}
                 onEditWeather={() => setEditingWeather(widget)}
+                onEditNews={() => setEditingNews(widget)}
                 onExpandWeather={() => setShowFullWeather(true)}
               />
             ))}
@@ -308,6 +333,73 @@ export function StartPage() {
               >
                 Hide NOAA Box if Empty: {editingWeather.weatherSettings?.hideAlertsIfEmpty ? 'YES' : 'NO'}
               </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        isOpen={!!editingNews}
+        onClose={() => setEditingNews(null)}
+        title="Intel Feed Configuration"
+        icon={<Newspaper className="w-6 h-6" />}
+      >
+        {editingNews && (
+          <div className="space-y-8 p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Intel Source</label>
+                <select 
+                  value={editingNews.newsSettings?.source}
+                  onChange={(e) => updateNewsSettings(editingNews.id, { ...editingNews.newsSettings!, source: e.target.value })}
+                  className="w-full tactical-input px-4 h-12 text-white text-xs font-black uppercase"
+                >
+                  <option value="cnn">CNN Tactical</option>
+                  <option value="fox">Fox Division</option>
+                  <option value="tech">Tech Matrix</option>
+                  <option value="google">Google Signal</option>
+                  <option value="reuters">Reuters Agency</option>
+                  <option value="associated_press">AP Dispatch</option>
+                </select>
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Intel Depth (Articles)</label>
+                <select 
+                  value={editingNews.newsSettings?.articleCount}
+                  onChange={(e) => updateNewsSettings(editingNews.id, { ...editingNews.newsSettings!, articleCount: parseInt(e.target.value) })}
+                  className="w-full tactical-input px-4 h-12 text-white text-xs font-black uppercase"
+                >
+                  <option value="3">3 Packets</option>
+                  <option value="5">5 Packets</option>
+                  <option value="10">10 Packets</option>
+                  <option value="20">20 Packets</option>
+                </select>
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Typography</label>
+                <select 
+                  value={editingNews.newsSettings?.fontFamily}
+                  onChange={(e) => updateNewsSettings(editingNews.id, { ...editingNews.newsSettings!, fontFamily: e.target.value })}
+                  className="w-full tactical-input px-4 h-12 text-white text-xs font-black uppercase"
+                >
+                  <option value="font-sans">Inter Sans</option>
+                  <option value="font-mono">JetBrains Mono</option>
+                  <option value="font-serif">Editorial Serif</option>
+                </select>
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-4">Sync Frequency</label>
+                <select 
+                  value={editingNews.newsSettings?.refreshInterval}
+                  onChange={(e) => updateNewsSettings(editingNews.id, { ...editingNews.newsSettings!, refreshInterval: parseInt(e.target.value) })}
+                  className="w-full tactical-input px-4 h-12 text-white text-xs font-black uppercase"
+                >
+                  <option value="5">5 Miutes</option>
+                  <option value="15">15 Minutes</option>
+                  <option value="30">30 Minutes</option>
+                  <option value="60">60 Minutes</option>
+                </select>
+              </div>
             </div>
           </div>
         )}
@@ -450,6 +542,7 @@ function SortableWidget({
   onResize,
   onEditClock,
   onEditWeather,
+  onEditNews,
   onExpandWeather
 }: { 
   widget: WidgetItem; 
@@ -457,6 +550,7 @@ function SortableWidget({
   onResize: (size: 'sm' | 'md' | 'lg' | 'xl') => void;
   onEditClock?: () => void;
   onEditWeather?: () => void;
+  onEditNews?: () => void;
   onExpandWeather?: () => void;
 }) {
   const {
@@ -490,6 +584,8 @@ function SortableWidget({
         return <TimeWidgetContent settings={widget.clockSettings} />;
       case 'weather':
         return <div className="h-full"><WeatherDashboard settings={widget.weatherSettings} compact={true} /></div>;
+      case 'news':
+        return <div className="h-full"><NewsWidget settings={widget.newsSettings} compact={widget.size === 'sm' || widget.size === 'md'} /></div>;
       case 'personnel':
         return <PersonnelModalContent />;
       case 'calendar':
@@ -542,6 +638,14 @@ function SortableWidget({
                 <Settings className="w-4 h-4" />
               </button>
             </div>
+          )}
+          {widget.type === 'news' && (
+            <button 
+              onClick={onEditNews}
+              className="p-1.5 text-text-dim hover:text-indigo-500 hover:bg-indigo-500/10 rounded-lg transition-all mr-1"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
           )}
           <div className="flex bg-black/5 rounded-lg p-0.5 border border-white/5 mr-2">
             {(['sm', 'md', 'lg', 'xl'] as const).map((s) => (
