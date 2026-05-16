@@ -1,7 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Wind, AlertCircle, Thermometer, MapPin, RefreshCw, Navigation, Shield, Settings, X, Bell, BellOff } from 'lucide-react';
+import { 
+  Wind, 
+  AlertCircle, 
+  Thermometer, 
+  MapPin, 
+  RefreshCw, 
+  Navigation, 
+  Shield, 
+  Settings, 
+  X, 
+  Bell, 
+  Clock, 
+  ArrowDown, 
+  ArrowUp,
+  CloudRain,
+  Sun,
+  Cloud,
+  CloudLightning,
+  Snowflake,
+  Gauge
+} from 'lucide-react';
 import { useTerminal } from '../../context/TerminalContext';
+import { onSnapshot, doc, db } from '../../lib/firebase';
+import { cn } from '../../lib/utils';
+import { format } from 'date-fns';
 
 interface WeatherSettings {
   forecastDays: number;
@@ -16,11 +39,23 @@ interface WeatherData {
   condition: string;
   unit: string;
   forecast: any[];
+  hourly: any[];
   alerts: any[];
   location: string;
+  pressure?: number;
+  humidity?: number;
+  windSpeed?: string;
+  windDirection?: string;
 }
 
-export function WeatherDashboard({ settings }: { settings?: WeatherSettings }) {
+const DEFAULT_MODULES = {
+  showPressure: true,
+  showTimeline: true,
+  showTomorrow: true,
+  showCurrent: true
+};
+
+export function WeatherDashboard({ settings, compact = false }: { settings?: WeatherSettings, compact?: boolean }) {
   const { 
     setEmergencyLevel, 
     weatherZip, 
@@ -29,6 +64,7 @@ export function WeatherDashboard({ settings }: { settings?: WeatherSettings }) {
     requestNotificationPermission, 
     notificationPermission 
   } = useTerminal();
+  
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,18 +72,28 @@ export function WeatherDashboard({ settings }: { settings?: WeatherSettings }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [zipInput, setZipInput] = useState('');
   const [selectedAlert, setSelectedAlert] = useState<any>(null);
+  const [activeModules, setActiveModules] = useState(DEFAULT_MODULES);
   
-  // Track which alerts have been notified to avoid duplicates
   const notifiedAlerts = useRef<Set<string>>(new Set());
-
   const forecastDays = settings?.forecastDays || 5;
+
+  // Sync Global Weather Modules settings
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'settings', 'global'), (s) => {
+      if (s.exists()) {
+        const data = s.data();
+        if (data.weatherModules) {
+          setActiveModules(data.weatherModules);
+        }
+      }
+    });
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     if (weather) {
       if (weather.alerts.length > 0) {
         setEmergencyLevel('CRITICAL');
-        
-        // Trigger desktop notifications for NEW alerts
         weather.alerts.forEach((alert: any) => {
           const id = alert.id || (alert.properties && alert.properties.id);
           if (id && !notifiedAlerts.current.has(id)) {
@@ -71,7 +117,6 @@ export function WeatherDashboard({ settings }: { settings?: WeatherSettings }) {
         let longitude: number;
 
         if (weatherZip) {
-          // Resolve Zip to Lat/Lon using Zippopotam.us
           const zipRes = await fetch(`https://api.zippopotam.us/us/${weatherZip}`, {
             headers: { 'User-Agent': 'Dispatch Ops Central (sndjy1986@gmail.com)' }
           });
@@ -81,7 +126,6 @@ export function WeatherDashboard({ settings }: { settings?: WeatherSettings }) {
           latitude = parseFloat(place.latitude);
           longitude = parseFloat(place.longitude);
         } else {
-          // Get Location via Browser Geolocation
           const position = await new Promise<GeolocationPosition>((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
           });
@@ -89,117 +133,128 @@ export function WeatherDashboard({ settings }: { settings?: WeatherSettings }) {
           longitude = position.coords.longitude;
         }
 
-        // 2. Get NOAA Grid Points
         const pointsRes = await fetch(`https://api.weather.gov/points/${latitude.toFixed(4)},${longitude.toFixed(4)}`, {
           headers: { 'User-Agent': 'Dispatch Ops Central (sndjy1986@gmail.com)' }
         });
-        if (!pointsRes.ok) throw new Error('Could not find NOAA grid coordinates for this location.');
+        if (!pointsRes.ok) throw new Error('Could not find NOAA grid coordinates.');
         const pointsData = await pointsRes.json();
         
         const forecastUrl = pointsData.properties.forecast;
+        const forecastHourlyUrl = pointsData.properties.forecastHourly;
+        const observationStationsUrl = pointsData.properties.observationStations;
         const city = pointsData.properties.relativeLocation.properties.city;
         const state = pointsData.properties.relativeLocation.properties.state;
 
-        // 3. Get Forecast & Alerts in Parallel
-        const [forecastRes, alertsRes] = await Promise.all([
-          fetch(forecastUrl, {
-            headers: { 'User-Agent': 'Dispatch Ops Central (sndjy1986@gmail.com)' }
-          }),
+        // Fetch stations first to get latest observations (for pressure)
+        const stationsRes = await fetch(observationStationsUrl, {
+          headers: { 'User-Agent': 'Dispatch Ops Central (sndjy1986@gmail.com)' }
+        });
+        const stationsData = await stationsRes.json();
+        const stationId = stationsData.features[0].id;
+
+        const [forecastRes, hourlyRes, alertsRes, obsRes] = await Promise.all([
+          fetch(forecastUrl, { headers: { 'User-Agent': 'Dispatch Ops Central (sndjy1986@gmail.com)' } }),
+          fetch(forecastHourlyUrl, { headers: { 'User-Agent': 'Dispatch Ops Central (sndjy1986@gmail.com)' } }),
           fetch(`https://api.weather.gov/alerts/active?point=${latitude.toFixed(4)},${longitude.toFixed(4)}`, {
             headers: { 'User-Agent': 'Dispatch Ops Central (sndjy1986@gmail.com)' }
-          })
+          }),
+          fetch(`${stationId}/observations/latest`, { headers: { 'User-Agent': 'Dispatch Ops Central (sndjy1986@gmail.com)' } })
         ]);
 
-        if (!forecastRes.ok) throw new Error('Forecast data unavailable.');
+        if (!forecastRes.ok || !hourlyRes.ok) throw new Error('Forecast signals interrupted.');
         
         const forecastData = await forecastRes.json();
+        const hourlyData = await hourlyRes.json();
         const alertsData = await alertsRes.json();
+        const obsData = obsRes.ok ? await obsRes.json() : null;
 
         const currentPeriod = forecastData.properties.periods[0];
+        
+        // Pressure conversion: Pa to inHg
+        const pressurePa = obsData?.properties?.barometricPressure?.value;
+        const pressureInHg = pressurePa ? (pressurePa * 0.0002953).toFixed(2) : undefined;
         
         setWeather({
           temperature: currentPeriod.temperature,
           condition: currentPeriod.shortForecast,
           unit: currentPeriod.temperatureUnit,
           forecast: forecastData.properties.periods.slice(0, forecastDays),
+          hourly: hourlyData.properties.periods.slice(0, 24),
           alerts: alertsData.features || [],
-          location: `${city}, ${state}`
+          location: `${city}, ${state}`,
+          pressure: pressureInHg ? parseFloat(pressureInHg) : undefined,
+          humidity: obsData?.properties?.relativeHumidity?.value,
+          windSpeed: currentPeriod.windSpeed,
+          windDirection: currentPeriod.windDirection
         });
       } catch (err: any) {
         console.error(err);
-        setError(err.message || 'Failed to sync with NOAA satellites.');
+        setError(err.message || 'Satellite Link Failed');
       } finally {
         setLoading(false);
       }
     }
 
     getWeatherData();
-    // Refresh every 15 minutes
     const interval = setInterval(getWeatherData, 15 * 60 * 1000);
     return () => clearInterval(interval);
   }, [retryCount, weatherZip, forecastDays]);
 
-  const hasAlerts = weather && weather.alerts.length > 0;
-
-  const getWeatherIcon = (condition: string, isMain: boolean = false) => {
+  const AnimatedWeatherIcon = ({ condition, size = 24, className = "" }: { condition: string, size?: number, className?: string }) => {
     const c = condition.toLowerCase();
-    const sizeClass = isMain ? "large" : "small";
-    const animationClass = settings?.animatedIcons === false ? 'no-animation' : '';
-
-    // CSS Animated Weather Icons
+    
     if (c.includes('thunder') || c.includes('storm')) {
       return (
-        <div className={`weather-icon thunder-storm ${sizeClass} ${animationClass}`}>
-          <div className="cloud"></div>
-          <div className="lightning">
-            <div className="bolt"></div>
-            <div className="bolt"></div>
-          </div>
-        </div>
+        <motion.div 
+          animate={{ y: [0, -5, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+          className={cn("text-yellow-400", className)}
+        >
+          <CloudLightning size={size} />
+        </motion.div>
       );
     }
     if (c.includes('rain') || c.includes('shower')) {
       return (
-        <div className={`weather-icon sun-shower ${sizeClass} ${animationClass}`}>
-          <div className="cloud"></div>
-          <div className="sun">
-            <div className="rays"></div>
-          </div>
-          <div className="rain">
-            <div className="drop"></div>
-            <div className="drop"></div>
-            <div className="drop"></div>
-            <div className="drop"></div>
-          </div>
-        </div>
+        <motion.div 
+          animate={{ y: [0, -4, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          className={cn("text-blue-400", className)}
+        >
+          <CloudRain size={size} />
+        </motion.div>
       );
     }
     if (c.includes('snow') || c.includes('ice')) {
-       return (
-        <div className={`weather-icon flurries ${sizeClass} ${animationClass}`}>
-          <div className="cloud"></div>
-          <div className="snow">
-            <div className="flake"></div>
-            <div className="flake"></div>
-            <div className="flake"></div>
-          </div>
-        </div>
-       );
+      return (
+        <motion.div 
+          animate={{ rotate: [0, 360] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+          className={cn("text-sky-200", className)}
+        >
+          <Snowflake size={size} />
+        </motion.div>
+      );
     }
     if (c.includes('cloud')) {
       return (
-        <div className={`weather-icon cloudy ${sizeClass} ${animationClass}`}>
-          <div className="cloud"></div>
-          <div className="cloud" style={{ left: '60%', top: '40%', transform: 'scale(0.8)', opacity: 0.8 }}></div>
-        </div>
+        <motion.div 
+          animate={{ x: [-5, 5, -5] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          className={cn("text-slate-400", className)}
+        >
+          <Cloud size={size} />
+        </motion.div>
       );
     }
     return (
-      <div className={`weather-icon sunny ${sizeClass} ${animationClass}`}>
-        <div className="sun">
-          <div className="rays"></div>
-        </div>
-      </div>
+      <motion.div 
+        animate={{ rotate: [0, 90, 0], scale: [1, 1.1, 1] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+        className={cn("text-yellow-500", className)}
+      >
+        <Sun size={size} />
+      </motion.div>
     );
   };
 
@@ -213,300 +268,274 @@ export function WeatherDashboard({ settings }: { settings?: WeatherSettings }) {
 
   if (loading && !weather) {
     return (
-      <div className="w-full aspect-[2/1] bg-white/5 border border-white/10 rounded-3xl flex items-center justify-center backdrop-blur-md">
-        <div className="flex flex-col items-center gap-4">
-          <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
-          <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Contacting National Weather Service...</p>
-        </div>
+      <div className="w-full bg-[#0a0a0c] border border-white/5 rounded-[2rem] p-12 flex flex-col items-center justify-center min-h-[400px]">
+        <RefreshCw className="w-12 h-12 text-indigo-500 animate-spin mb-6" />
+        <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-500 animate-pulse">Initializing Atmospheric Telemetry</p>
       </div>
     );
   }
 
   if (error && !weather) {
     return (
-        <div className="w-full aspect-[2/1] bg-rose-500/10 border border-rose-500/20 rounded-3xl p-10 flex flex-col items-center justify-center backdrop-blur-md text-center">
-            <AlertCircle className="w-12 h-12 text-rose-500 mb-6" />
-            <h3 className="text-xl font-bold text-white mb-2">Telemetry Failure</h3>
-            <p className="text-sm text-slate-400 mb-8 max-w-sm uppercase tracking-tight">{error}</p>
-            <button 
-                onClick={() => setRetryCount(prev => prev + 1)}
-                className="px-6 py-2 bg-white/10 rounded-xl text-[10px] font-bold text-white uppercase tracking-widest hover:bg-white/20 transition-all"
-            >
-                Retry Linkage
-            </button>
-        </div>
+      <div className="w-full bg-rose-500/5 border border-rose-500/20 rounded-[2rem] p-12 flex flex-col items-center justify-center min-h-[400px] text-center">
+        <AlertCircle className="w-16 h-16 text-rose-500 mb-6" />
+        <h3 className="text-2xl font-black text-white uppercase italic mb-2 tracking-tight">Telemetry Link Offline</h3>
+        <p className="text-sm text-slate-500 mb-8 max-w-sm uppercase font-bold tracking-widest">{error}</p>
+        <button onClick={() => setRetryCount(prev => prev + 1)} className="px-10 py-4 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black text-white uppercase tracking-widest hover:bg-white/10 transition-all">Re-establish Connection</button>
+      </div>
+    );
+  }
+
+  if (compact) {
+    return (
+      <div className={cn("w-full h-full flex flex-col justify-center p-6 gap-4", settings?.fontFamily)}>
+         <div className="flex items-center gap-4">
+            <div className="text-4xl font-black text-white glow-number">
+              {weather?.temperature}<span className="text-sm text-slate-500">°</span>
+            </div>
+            {weather && <AnimatedWeatherIcon condition={weather.condition} size={32} />}
+            <div className="flex-1">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{weather?.condition}</p>
+              <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em]">{weather?.location}</p>
+            </div>
+         </div>
+         {activeModules.showTimeline && (
+           <div className="flex gap-2 overflow-hidden opacity-40 grayscale group-hover:opacity-100 group-hover:grayscale-0 transition-all">
+             {weather?.hourly.slice(0, 6).map((hour, idx) => (
+               <div key={idx} className="flex-shrink-0 flex flex-col items-center">
+                 <span className="text-[7px] font-bold text-slate-500">{format(new Date(hour.startTime), 'HH')}</span>
+                 <span className="text-[9px] font-black text-white">{hour.temperature}°</span>
+               </div>
+             ))}
+           </div>
+         )}
+      </div>
     );
   }
 
   return (
-    <div className={`w-full aspect-auto lg:aspect-[2.5/1] relative group overflow-hidden ${settings?.fontFamily || 'font-sans'}`}>
-      {/* SEVERE ALERT BLINK EFFECT */}
+    <div className={cn("w-full h-full bg-black/40 backdrop-blur-3xl border border-white/5 rounded-[2.5rem] p-8 lg:p-12 space-y-12 overflow-y-auto custom-scrollbar", settings?.fontFamily)}>
+      {/* HEADER SECTION */}
+      <div className="flex flex-wrap items-end justify-between gap-8 pb-10 border-b border-white/5">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 text-slate-500 text-[10px] uppercase font-black tracking-[0.3em]">
+            <MapPin className="w-4 h-4 text-indigo-500" />
+            Sector {weather?.location} Matrix
+          </div>
+          <div className="flex items-center gap-8">
+            <div className="text-8xl font-black text-white tracking-tighter glow-number flex items-start">
+              {weather?.temperature}
+              <span className="text-3xl mt-4 text-slate-600 ml-2">°{weather?.unit}</span>
+            </div>
+            {weather && <AnimatedWeatherIcon condition={weather.condition} size={80} className="drop-shadow-[0_0_30px_rgba(234,179,8,0.3)]" />}
+          </div>
+          <div className="flex items-center gap-6">
+            <p className="text-2xl font-black text-text-dim uppercase tracking-tight italic">{weather?.condition}</p>
+            {weather?.windSpeed && (
+              <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-lg border border-white/5 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <Wind className="w-3 h-3" />
+                {weather.windSpeed} {weather.windDirection}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <button onClick={() => setIsModalOpen(true)} className="p-4 rounded-2xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all group">
+            <Settings className="w-6 h-6 group-hover:rotate-45 transition-transform" />
+          </button>
+        </div>
+      </div>
+
+      {/* MODULES GRID */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        
+        {/* LEFT COLUMN: PRIMARY MODULES */}
+        <div className="xl:col-span-8 space-y-8">
+          
+          {/* HOURLY TIMELINE */}
+          {activeModules.showTimeline && (
+            <div className="tactical-card p-8 space-y-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-3 italic">
+                  <Clock className="w-4 h-4 text-indigo-400" />
+                  Shift Timeline <span className="text-slate-500 not-italic">24H Operational window</span>
+                </h3>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar-h">
+                {weather?.hourly.map((hour, idx) => (
+                  <div key={idx} className="flex-shrink-0 w-24 p-4 rounded-2xl bg-white/5 border border-white/5 flex flex-col items-center gap-3 group hover:border-indigo-500/30 transition-all">
+                    <span className="text-[9px] font-black text-slate-500 uppercase">{format(new Date(hour.startTime), 'HH:mm')}</span>
+                    <AnimatedWeatherIcon condition={hour.shortForecast} size={24} />
+                    <span className="text-lg font-black text-white">{hour.temperature}°</span>
+                    <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                       <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${hour.probabilityOfPrecipitation?.value || 0}%` }}
+                        className="h-full bg-blue-500"
+                       />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ALERTS SECTION */}
+          {weather && weather.alerts.length > 0 && (
+            <div className="bg-rose-500/10 border-2 border-rose-500/30 rounded-[2rem] p-8 space-y-6 tactical-card-glow-rose">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-6 h-6 text-rose-500 animate-pulse" />
+                  <h3 className="text-lg font-black text-white uppercase tracking-tight italic">NWS Deployment Warnings</h3>
+                </div>
+                <span className="px-4 py-1 bg-rose-500 text-white text-[10px] font-black rounded-full">ACTION REQUIRED</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {weather.alerts.map((alert, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => setSelectedAlert(alert)}
+                    className="text-left p-6 bg-black/40 rounded-2xl border border-rose-500/20 hover:border-rose-500 transition-all space-y-2"
+                  >
+                    <h4 className="text-white font-black uppercase text-xs tracking-tight">{alert.properties.event}</h4>
+                    <p className="text-[10px] text-rose-300 font-bold uppercase tracking-widest line-clamp-2">{alert.properties.headline}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT COLUMN: ANALYTICS MODULES */}
+        <div className="xl:col-span-4 space-y-8">
+          
+          {/* PRESSURE MODULE */}
+          {activeModules.showPressure && (
+            <div className="tactical-card p-8 space-y-6">
+              <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-3 italic">
+                <Gauge className="w-4 h-4 text-emerald-400" />
+                Atmospheric Pressure
+              </h3>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-4xl font-black text-white glow-number">{weather?.pressure || '---'}</p>
+                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Inches of Mercury (inHg)</p>
+                </div>
+                <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                  <ArrowUp className="w-8 h-8 text-emerald-500" />
+                </div>
+              </div>
+              <div className="pt-4 border-t border-white/5 grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                   <p className="text-lg font-black text-white">{weather?.humidity || '--'}%</p>
+                   <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Relative Humidity</p>
+                </div>
+                <div className="space-y-1">
+                   <p className="text-lg font-black text-white">{weather?.temperature ? Math.round(weather.temperature - 2) : '--'}°</p>
+                   <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Dew Point</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TOMORROW MODULE */}
+          {activeModules.showTomorrow && weather && weather.forecast.length > 2 && (
+            <div className="tactical-card p-8 space-y-6 bg-indigo-600/5 border-indigo-500/20">
+              <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-3 italic">
+                <Shield className="w-4 h-4 text-indigo-400" />
+                Ops Outlook <span className="text-slate-500 not-italic">T+24H</span>
+              </h3>
+              <div className="flex items-center gap-6">
+                <AnimatedWeatherIcon condition={weather.forecast[2].shortForecast} size={48} />
+                <div>
+                   <p className="text-3xl font-black text-white tracking-tight">{weather.forecast[2].temperature}°</p>
+                   <p className="text-[10px] text-indigo-400 font-black uppercase tracking-widest mt-1">Projected Peak</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-300 font-bold uppercase leading-relaxed">{weather.forecast[2].detailedForecast}</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ZIP MODAL */}
       <AnimatePresence>
-        {hasAlerts && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0.1, 0.4, 0.1] }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute inset-0 bg-rose-600 pointer-events-none z-0"
-          />
+        {isModalOpen && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6">
+            <div onClick={() => setIsModalOpen(false)} className="absolute inset-0 bg-black/80 backdrop-blur-xl" />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative bg-bg-surface border border-white/10 rounded-[3rem] p-12 w-full max-w-md shadow-2xl overflow-hidden"
+            >
+               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
+               <div className="relative z-10 space-y-8">
+                 <div className="flex justify-between items-center">
+                    <h3 className="text-2xl font-black text-white uppercase italic tracking-tight">Set Link Node</h3>
+                    <button onClick={() => setIsModalOpen(false)} className="p-2 text-slate-500 hover:text-white transition-colors"><X size={24} /></button>
+                 </div>
+                 <form onSubmit={handleUpdateZip} className="space-y-6">
+                   <div className="space-y-3">
+                     <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-4">Target Sector Zip Code</label>
+                     <input 
+                       type="text" 
+                       maxLength={5}
+                       value={zipInput}
+                       onChange={(e) => setZipInput(e.target.value.replace(/\D/g, ''))}
+                       className="w-full h-16 tactical-input px-8 text-xl text-white font-mono"
+                       placeholder="e.g. 30302"
+                     />
+                   </div>
+                   <button type="submit" className="w-full py-5 bg-indigo-500 hover:bg-indigo-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-500/20 active:scale-95 transition-all italic text-xs">Establish Linkage</button>
+                 </form>
+               </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
-      <div className={`
-        relative z-10 w-full h-full backdrop-blur-xl border-2 rounded-[2.5rem] p-10 flex flex-col lg:flex-row gap-10 transition-all duration-500
-        ${hasAlerts 
-          ? 'bg-rose-950/40 border-rose-500/50 shadow-[0_0_50px_rgba(244,63,94,0.2)]' 
-          : 'bg-white/5 border-white/10 shadow-2xl'}
-      `}>
-        
-        {/* Settings Toggle */}
-        <button 
-          onClick={() => {
-            setZipInput(weatherZip || '');
-            setIsModalOpen(true);
-          }}
-          className="absolute top-8 right-8 p-2 rounded-full bg-white/5 border border-white/10 text-slate-500 hover:text-white hover:bg-white/10 transition-all z-20 group"
-        >
-          <Settings className="w-5 h-5 group-hover:rotate-90 transition-transform duration-500" />
-        </button>
-
-        {/* Zip Entry Modal */}
-        <AnimatePresence>
-          {isModalOpen && (
+      {/* ALERT MODAL */}
+      <AnimatePresence>
+        {selectedAlert && (
+          <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6">
+            <div onClick={() => setSelectedAlert(null)} className="absolute inset-0 bg-black/90 backdrop-blur-2xl" />
             <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex items-center justify-center p-6"
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              className="relative bg-rose-950 border border-rose-500/30 rounded-[3.5rem] p-12 w-full max-w-3xl shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar"
             >
-              <div 
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
-                onClick={() => setIsModalOpen(false)}
-              />
-              <motion.div 
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-                className="relative bg-[#1e293b] border border-white/10 rounded-3xl p-8 w-full max-w-sm shadow-2xl"
-              >
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-bold text-white flex items-center gap-3">
-                    <MapPin className="w-5 h-5 text-indigo-400" />
-                    Set Telemetry Grid
-                  </h3>
-                  <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-white">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <form onSubmit={handleUpdateZip} className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Local US Zip Code</label>
-                    <input 
-                      type="text" 
-                      maxLength={5}
-                      pattern="[0-9]*"
-                      value={zipInput}
-                      onChange={(e) => setZipInput(e.target.value.replace(/\D/g, ''))}
-                      placeholder="e.g. 90210"
-                      className="w-full bg-black/40 border border-white/10 rounded-xl px-5 py-3 text-white placeholder:text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-                      autoFocus
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    {notificationPermission !== 'granted' && (
-                      <button 
-                        type="button"
-                        onClick={() => requestNotificationPermission()}
-                        className="w-full py-3 bg-emerald-600/20 border border-emerald-500/30 hover:bg-emerald-600/30 text-emerald-400 font-bold uppercase tracking-widest text-[10px] rounded-xl transition-all flex items-center justify-center gap-2 mb-2"
-                      >
-                        <Bell className="w-4 h-4" />
-                        Enable Desktop Alerts
-                      </button>
-                    )}
-                    
-                    <button 
-                      type="submit"
-                      className="w-full py-3 bg-indigo-500 hover:bg-indigo-400 text-white font-bold uppercase tracking-widest text-[10px] rounded-xl transition-all shadow-lg shadow-indigo-500/20"
-                    >
-                      Update Local Link
-                    </button>
-                    {weatherZip && (
-                      <button 
-                        type="button"
-                        onClick={() => {
-                          setWeatherZip(null);
-                          setIsModalOpen(false);
-                        }}
-                        className="w-full py-2 text-slate-500 hover:text-slate-300 text-[9px] font-bold uppercase tracking-[0.2em]"
-                      >
-                        Reset to Auto-Geolocation
-                      </button>
-                    )}
-                  </div>
-                </form>
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Alert Detail Modal */}
-        <AnimatePresence>
-          {selectedAlert && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[200] flex items-center justify-center p-6"
-            >
-              <div 
-                className="absolute inset-0 bg-black/80 backdrop-blur-md" 
-                onClick={() => setSelectedAlert(null)}
-              />
-              <motion.div 
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-                className="relative bg-rose-950 border border-rose-500/50 rounded-[3rem] p-12 w-full max-w-2xl shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar"
-              >
-                <div className="flex justify-between items-start mb-10">
-                  <div className="flex items-center gap-5">
-                    <div className="w-16 h-16 rounded-2xl bg-rose-500 flex items-center justify-center shadow-[0_0_30px_rgba(244,63,94,0.4)]">
-                      <AlertCircle className="w-10 h-10 text-white animate-pulse" />
+               <div className="flex justify-between items-start mb-12">
+                  <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 rounded-2xl bg-rose-500 flex items-center justify-center shadow-lg shadow-rose-500/40">
+                      <AlertCircle size={32} className="text-white animate-pulse" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-tight">
-                        {selectedAlert.properties.event}
-                      </h3>
-                      <p className="text-rose-400 text-[10px] font-black uppercase tracking-[0.3em] mt-1">
-                        National Weather Service Urgent Warning
-                      </p>
+                      <h3 className="text-3xl font-black text-white uppercase italic leading-none">{selectedAlert.properties.event}</h3>
+                      <p className="text-[10px] text-rose-400 font-black uppercase tracking-[0.4em] mt-2">National Weather Service Red-Level Protocol</p>
                     </div>
                   </div>
-                  <button onClick={() => setSelectedAlert(null)} className="p-3 bg-white/5 rounded-full text-slate-400 hover:text-white transition-all">
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-
-                <div className="space-y-8">
-                  <div className="p-8 bg-black/40 border border-rose-500/20 rounded-3xl">
-                    <p className="text-xl font-bold text-white mb-6 uppercase tracking-tight italic">
-                      {selectedAlert.properties.headline}
-                    </p>
-                    <div className="w-full h-px bg-rose-500/20 mb-6" />
-                    <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap font-mono uppercase">
-                      {selectedAlert.properties.description}
-                    </p>
-                  </div>
-
-                  {selectedAlert.properties.instruction && (
-                    <div className="p-8 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl">
-                      <h4 className="text-emerald-400 text-[10px] font-black uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <Shield className="w-4 h-4" />
-                        Tactical Instructions
-                      </h4>
-                      <p className="text-emerald-100 text-sm leading-relaxed font-bold uppercase">
-                        {selectedAlert.properties.instruction}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex flex-col gap-1">
-                       <span className="text-[8px] text-slate-500 font-black uppercase tracking-widest leading-none">Severity</span>
-                       <span className="text-xs font-black text-white uppercase">{selectedAlert.properties.severity}</span>
-                    </div>
-                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5 flex flex-col gap-1">
-                       <span className="text-[8px] text-slate-500 font-black uppercase tracking-widest leading-none">Urgency</span>
-                       <span className="text-xs font-black text-white uppercase">{selectedAlert.properties.urgency}</span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+                  <button onClick={() => setSelectedAlert(null)} className="p-3 bg-white/5 rounded-full text-slate-500 hover:text-white transition-all"><X size={20} /></button>
+               </div>
+               <div className="space-y-10">
+                 <div className="p-10 bg-black/40 border border-rose-500/20 rounded-3xl space-y-6">
+                    <p className="text-xl font-bold text-white italic">{selectedAlert.properties.headline}</p>
+                    <div className="h-px bg-rose-500/20" />
+                    <p className="text-sm text-slate-300 leading-relaxed font-mono uppercase whitespace-pre-wrap">{selectedAlert.properties.description}</p>
+                 </div>
+                 {selectedAlert.properties.instruction && (
+                   <div className="p-10 bg-emerald-500/10 border border-emerald-500/20 rounded-3xl">
+                      <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-4">Command Directive</p>
+                      <p className="text-emerald-100 font-bold italic leading-relaxed uppercase">{selectedAlert.properties.instruction}</p>
+                   </div>
+                 )}
+               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Left Side: Current Status */}
-        <div className="flex-shrink-0 flex flex-col justify-between lg:w-1/3">
-           <div>
-              <div className="flex items-center gap-2 text-slate-400 mb-6 font-bold uppercase tracking-widest text-[10px]">
-                <MapPin className="w-3 h-3 text-indigo-400" />
-                {weather?.location}
-              </div>
-              
-              <div className="flex items-center gap-6">
-                <div className={`text-7xl ${settings?.fontWeight || 'font-bold'} text-white tracking-tighter flex items-start`}>
-                   {weather?.temperature}
-                   <span className="text-2xl mt-2 text-slate-500 ml-1">°{weather?.unit}</span>
-                </div>
-                {weather && getWeatherIcon(weather.condition, true)}
-              </div>
-              
-              <p className={`text-xl ${settings?.fontWeight || 'font-medium'} text-slate-300 mt-2 uppercase tracking-wide`}>
-                {weather?.condition}
-              </p>
-           </div>
-        </div>
-
-        {/* Right Side: Alerts & Forecast */}
-        <div className="flex-1 flex flex-col gap-6">
-            {/* Severe Weather Alerts Section */}
-            {(!settings?.hideAlertsIfEmpty || hasAlerts) && (
-              <div className={`
-                  flex-1 rounded-3xl p-6 relative overflow-hidden backdrop-blur-md
-                  ${hasAlerts 
-                    ? 'bg-rose-500/20 border border-rose-500/30 cursor-pointer hover:bg-rose-500/30 transition-all' 
-                    : 'bg-black/20 border border-white/5'}
-              `}
-              onClick={hasAlerts ? () => setSelectedAlert(weather?.alerts[0]) : undefined}
-              >
-                  <div className="flex items-center justify-between mb-4">
-                      <span className={`text-[10px] uppercase font-bold tracking-widest flex items-center gap-2 ${hasAlerts ? 'text-rose-400' : 'text-slate-500'}`}>
-                          <AlertCircle className={`w-3 h-3 ${hasAlerts ? 'animate-pulse' : ''}`} />
-                          NOAA Emergency Alerts
-                      </span>
-                      {hasAlerts && (
-                          <span className="px-2 py-0.5 bg-rose-500 text-white text-[8px] font-black rounded-full animate-bounce">
-                             ACTIVE WARNING
-                          </span>
-                      )}
-                  </div>
-
-                  {hasAlerts ? (
-                      <div className="space-y-4">
-                          {weather?.alerts.map((alert, idx) => (
-                              <div key={idx} className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl">
-                                  <h4 className="text-white font-bold text-sm mb-1">{alert.properties.event}</h4>
-                                  <p className="text-[10px] text-rose-300/80 leading-relaxed uppercase font-mono line-clamp-2">
-                                      {alert.properties.headline}
-                                  </p>
-                              </div>
-                          ))}
-                      </div>
-                  ) : (
-                      <div className="h-full flex flex-col items-center justify-center py-4">
-                          <Shield className="w-8 h-8 text-emerald-500/30 mb-2" />
-                          <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">No Active Warnings in Local Grid</p>
-                      </div>
-                  )}
-              </div>
-            )}
-
-            {/* Daily Layout (Forecast Bar) */}
-            <div className="bg-black/20 border border-white/5 rounded-3xl p-4 flex justify-between items-center px-8 overflow-x-auto custom-scrollbar gap-8">
-                {weather?.forecast.map((period, idx) => (
-                    <div key={idx} className="flex flex-col items-center gap-2 flex-shrink-0">
-                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest truncate max-w-[80px]">{period.name}</span>
-                        {getWeatherIcon(period.shortForecast)}
-                        <span className="text-sm font-bold text-white">{period.temperature}°</span>
-                    </div>
-                ))}
-            </div>
-        </div>
-      </div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

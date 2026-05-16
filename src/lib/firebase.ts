@@ -141,6 +141,12 @@ export type GlobalSettings = {
   defaultCameraIds?: string[];
   fleetConfigs?: UnitConfig[];
   sidebarLinks?: SidebarLink[];
+  weatherModules?: {
+    showPressure: boolean;
+    showTimeline: boolean;
+    showTomorrow: boolean;
+    showCurrent: boolean;
+  };
   themeOverrides?: ThemeOverrides;
   updatedAt?: any;
   updatedBy?: string | null;

@@ -9,9 +9,11 @@ interface ModalProps {
   icon?: React.ReactNode;
   children: React.ReactNode;
   maxWidth?: string;
+  fullWidth?: boolean;
 }
 
-export function Modal({ isOpen, onClose, title, icon, children, maxWidth = 'max-w-4xl' }: ModalProps) {
+export function Modal({ isOpen, onClose, title, icon, children, maxWidth = 'max-w-4xl', fullWidth = false }: ModalProps) {
+  const actualMaxWidth = fullWidth ? 'max-w-[95vw]' : maxWidth;
   return (
     <AnimatePresence>
       {isOpen && (
@@ -20,7 +22,7 @@ export function Modal({ isOpen, onClose, title, icon, children, maxWidth = 'max-
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className={`bg-bg-surface border border-white/10 rounded-[2rem] w-full ${maxWidth} max-h-[90vh] shadow-2xl flex flex-col overflow-hidden relative`}
+            className={`bg-bg-surface border border-white/10 rounded-[2.5rem] w-full ${actualMaxWidth} max-h-[95vh] shadow-2xl flex flex-col overflow-hidden relative`}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-emerald-500/5 pointer-events-none" />
             

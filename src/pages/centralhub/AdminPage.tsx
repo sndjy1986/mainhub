@@ -27,7 +27,10 @@ import {
   Search,
   Bell,
   Cpu,
-  Zap
+  Zap,
+  Wind,
+  Thermometer,
+  Gauge
 } from 'lucide-react';
 import { useTerminal, AppTheme } from '../../context/TerminalContext';
 import { 
@@ -87,6 +90,8 @@ export function AdminPage() {
   const [fleetConfigs, setFleetConfigs] = useState<import('../../lib/firebase').UnitConfig[]>([]);
   const [sidebarLinks, setSidebarLinks] = useState<import('../../lib/firebase').SidebarLink[]>([]);
   const [themeOverrides, setThemeOverrides] = useState<import('../../lib/firebase').ThemeOverrides>({});
+  const [globalSettings, setGlobalSettings] = useState<import('../../lib/firebase').GlobalSettings | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const themeRef = React.useRef(themeOverrides);
 
   // Sync ref with state
@@ -122,21 +127,28 @@ export function AdminPage() {
     const settingsRef = doc(db, 'settings', 'global');
     const unsubscribe = onSnapshot(settingsRef, (snapshot) => {
       if (snapshot.exists()) {
-        const data = snapshot.data();
+        const data = snapshot.data() as import('../../lib/firebase').GlobalSettings;
+        setGlobalSettings(data);
         if (data.personnel) setPersonnel(data.personnel);
         if (data.supervisors) setSupervisors(data.supervisors);
         if (data.defaultCameraIds) setDefaultCameraIds(data.defaultCameraIds);
         if (data.fleetConfigs) setFleetConfigs(data.fleetConfigs);
         if (data.sidebarLinks) setSidebarLinks(data.sidebarLinks);
-        // Only set theme overrides if they are different from current local state to avoid race conditions
-        if (data.themeOverrides && JSON.stringify(data.themeOverrides) !== JSON.stringify(themeRef.current)) {
-          setThemeOverrides(data.themeOverrides);
+        
+        // Only set theme overrides if they are different from current local state 
+        // and we aren't currently saving to prevent bounce-back
+        if (data.themeOverrides && !isSaving) {
+          const currentStr = JSON.stringify(themeRef.current);
+          const incomingStr = JSON.stringify(data.themeOverrides);
+          if (currentStr !== incomingStr) {
+            setThemeOverrides(data.themeOverrides);
+          }
         }
       }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isSaving]);
 
   // Sync Terminal Users
   useEffect(() => {
@@ -209,7 +221,7 @@ export function AdminPage() {
     }
     
     setPersonnel(newPersonnel);
-    if (user) await updateGlobalSettings({ personnel: newPersonnel });
+    if (user) await handleUpdateSettings({ personnel: newPersonnel });
     setShowPersonnelModal(false);
     setEditingPerson(null);
     setPersonForm({ name: '', shift: 'A', phone: '', certifications: [] });
@@ -220,7 +232,7 @@ export function AdminPage() {
     if (!window.confirm("Remove this member?")) return;
     const newPersonnel = personnel.filter(p => p.id !== id);
     setPersonnel(newPersonnel);
-    if (user) await updateGlobalSettings({ personnel: newPersonnel });
+    if (user) await handleUpdateSettings({ personnel: newPersonnel });
   };
 
   const toggleCamera = async (camId: string) => {
@@ -231,7 +243,7 @@ export function AdminPage() {
       newIds.push(camId);
     }
     setDefaultCameraIds(newIds);
-    if (user) await updateGlobalSettings({ defaultCameraIds: newIds });
+    if (user) await handleUpdateSettings({ defaultCameraIds: newIds });
   };
 
   const seedPersonnel = async () => {
@@ -261,7 +273,7 @@ export function AdminPage() {
     });
 
     setPersonnel(merged);
-    await updateGlobalSettings({ personnel: merged });
+    await handleUpdateSettings({ personnel: merged });
     setShowToast("Shift Personnel Synchronized");
   };
 
@@ -289,14 +301,14 @@ export function AdminPage() {
 
     const fullFleet = [...transportFleet, ...qrvFleet];
     setFleetConfigs(fullFleet);
-    await updateGlobalSettings({ fleetConfigs: fullFleet });
+    await handleUpdateSettings({ fleetConfigs: fullFleet });
     setShowToast("FLEET_MATRIX_INITIALIZED");
   };
 
   const updateFleetUnit = async (id: string, updates: Partial<import('../../lib/firebase').UnitConfig>) => {
     const newFleet = fleetConfigs.map(u => u.id === id ? { ...u, ...updates } : u);
     setFleetConfigs(newFleet);
-    await updateGlobalSettings({ fleetConfigs: newFleet });
+    await handleUpdateSettings({ fleetConfigs: newFleet });
   };
 
   const loadHistory = useCallback(async () => {
@@ -357,6 +369,16 @@ export function AdminPage() {
     }
   }, [showToast]);
 
+  const handleUpdateSettings = async (updates: Partial<import('../../lib/firebase').GlobalSettings>) => {
+    try {
+      setIsSaving(true);
+      await updateGlobalSettings(updates);
+    } finally {
+      // Stay in saving mode for a moment to ignore the immediate snapshot echo
+      setTimeout(() => setIsSaving(false), 1500);
+    }
+  };
+
   const updateSidebarLink = (id: string, updates: Partial<import('../../lib/firebase').SidebarLink>) => {
     const newLinks = sidebarLinks.length > 0 ? [...sidebarLinks] : [
       { icon: 'LayoutDashboard', label: 'Start Page', path: '/', external: false, id: 'start' },
@@ -374,7 +396,7 @@ export function AdminPage() {
 
     const updated = newLinks.map(l => l.id === id ? { ...l, ...updates } : l);
     setSidebarLinks(updated as any);
-    updateGlobalSettings({ sidebarLinks: updated as any });
+    handleUpdateSettings({ sidebarLinks: updated as any });
   };
 
   const addSidebarLink = () => {
@@ -387,14 +409,14 @@ export function AdminPage() {
     };
     const updated = [...(sidebarLinks.length > 0 ? sidebarLinks : []), newLink];
     setSidebarLinks(updated as any);
-    updateGlobalSettings({ sidebarLinks: updated as any });
+    handleUpdateSettings({ sidebarLinks: updated as any });
   };
 
   const removeSidebarLink = (id: string) => {
     if (!window.confirm("Remove this link?")) return;
     const updated = sidebarLinks.filter(l => l.id !== id);
     setSidebarLinks(updated);
-    updateGlobalSettings({ sidebarLinks: updated });
+    handleUpdateSettings({ sidebarLinks: updated });
   };
 
   return (
@@ -619,7 +641,7 @@ export function AdminPage() {
                           const val = e.target.value;
                           setThemeOverrides(prev => ({ ...prev, [item.key]: val }));
                         }}
-                        onBlur={() => updateGlobalSettings({ themeOverrides: themeRef.current })}
+                        onBlur={() => handleUpdateSettings({ themeOverrides: themeRef.current })}
                         className="w-10 h-10 rounded-lg bg-transparent border-white/10 cursor-pointer p-0"
                       />
                       <input 
@@ -629,7 +651,7 @@ export function AdminPage() {
                           const val = e.target.value;
                           setThemeOverrides(prev => ({ ...prev, [item.key]: val }));
                         }}
-                        onBlur={() => updateGlobalSettings({ themeOverrides: themeRef.current })}
+                        onBlur={() => handleUpdateSettings({ themeOverrides: themeRef.current })}
                         placeholder="HEX/RGB"
                         className="flex-1 bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-mono uppercase focus:border-indigo-500 outline-none"
                       />
@@ -656,7 +678,7 @@ export function AdminPage() {
                     const val = parseFloat(e.target.value);
                     setThemeOverrides(prev => ({ ...prev, panelOpacity: val }));
                   }}
-                  onMouseUp={() => updateGlobalSettings({ themeOverrides: themeRef.current })}
+                  onMouseUp={() => handleUpdateSettings({ themeOverrides: themeRef.current })}
                   className="w-full h-1.5 bg-black/40 rounded-full appearance-none cursor-pointer accent-indigo-500"
                 />
                 <p className="text-[8px] text-slate-600 uppercase tracking-widest italic">Controls glass effect transparency level</p>
@@ -675,7 +697,7 @@ export function AdminPage() {
                     const val = parseFloat(e.target.value);
                     setThemeOverrides(prev => ({ ...prev, globalScale: val }));
                   }}
-                  onMouseUp={() => updateGlobalSettings({ themeOverrides: themeRef.current })}
+                  onMouseUp={() => handleUpdateSettings({ themeOverrides: themeRef.current })}
                   className="w-full h-1.5 bg-black/40 rounded-full appearance-none cursor-pointer accent-indigo-500"
                 />
                 <p className="text-[8px] text-slate-600 uppercase tracking-widest italic">Scales entire interface typography and grid</p>
@@ -694,13 +716,64 @@ export function AdminPage() {
                     Manual overrides will persist across all active terminal sessions and bypass standard theme defaults.
                   </p>
                   <button 
-                    onClick={() => updateGlobalSettings({ themeOverrides })}
+                    onClick={() => handleUpdateSettings({ themeOverrides })}
                     className="w-full py-4 bg-indigo-500 text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-lg shadow-indigo-500/20 active:scale-95 transition-all"
                   >
                     Commit Vector Update
                   </button>
                </div>
             </div>
+          </div>
+        </section>
+
+        {/* Level 1.7: Weather Optics */}
+        <section className="tactical-card p-10 space-y-10 bg-indigo-500/[0.03]">
+          <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/5">
+            <div>
+              <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic">
+                <Wind className="w-6 h-6 text-indigo-400" />
+                Weather <span className="text-indigo-400 not-italic">Optics</span>
+              </h3>
+              <p className="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black mt-2">Modular environment monitoring controls</p>
+            </div>
+            <div className="flex gap-2">
+               <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(79,70,229,0.5)]" />
+               <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { key: 'showCurrent', label: 'Primary Metrics', icon: <Thermometer className="w-4 h-4" />, desc: 'Current temperature & condition' },
+              { key: 'showPressure', label: 'Pressure Analytics', icon: <Gauge className="w-4 h-4" />, desc: 'Barometric tracking' },
+              { key: 'showTimeline', label: 'Shift Timeline', icon: <Clock className="w-4 h-4" />, desc: '24H Hourly forecast' },
+              { key: 'showTomorrow', label: 'Extended Outlook', icon: <Shield className="w-4 h-4" />, desc: 'T+24H projected trends' },
+            ].map((module) => (
+              <div 
+                key={module.key}
+                className="p-6 bg-black/40 border border-white/5 rounded-2xl flex flex-col gap-4 group hover:border-indigo-500/30 transition-all"
+              >
+                <div className="flex items-center justify-between">
+                   <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                      {module.icon}
+                   </div>
+                   <div 
+                    onClick={() => {
+                      const current = globalSettings?.weatherModules || { showCurrent: true, showPressure: true, showTimeline: true, showTomorrow: true };
+                      const updated = { ...current, [module.key]: !current[module.key as keyof typeof current] };
+                      handleUpdateSettings({ weatherModules: updated });
+                    }}
+                    className={`w-12 h-6 rounded-full p-1 transition-colors cursor-pointer relative ${globalSettings?.weatherModules?.[module.key as keyof typeof module.key] !== false ? 'bg-indigo-500' : 'bg-slate-700'}`}
+                   >
+                     <div className={`w-4 h-4 bg-white rounded-full transition-all shadow-sm ${globalSettings?.weatherModules?.[module.key as keyof typeof module.key] !== false ? 'translate-x-6' : 'translate-x-0'}`} />
+                   </div>
+                </div>
+                <div>
+                   <h4 className="text-[11px] font-black text-white uppercase tracking-widest">{module.label}</h4>
+                   <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-1 italic">{module.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </section>
 

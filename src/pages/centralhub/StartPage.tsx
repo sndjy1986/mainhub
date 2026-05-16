@@ -17,7 +17,8 @@ import {
   GripVertical,
   Wind,
   Settings,
-  FileText
+  FileText,
+  ArrowUp
 } from 'lucide-react';
 import { WeatherDashboard } from '../../components/centralhub/WeatherDashboard';
 import { useTerminal } from '../../context/TerminalContext';
@@ -123,6 +124,7 @@ export function StartPage() {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [editingClock, setEditingClock] = useState<WidgetItem | null>(null);
   const [editingWeather, setEditingWeather] = useState<WidgetItem | null>(null);
+  const [showFullWeather, setShowFullWeather] = useState(false);
 
   const updateWidgetSize = (id: string, size: 'sm' | 'md' | 'lg' | 'xl') => {
     setWidgets(prev => prev.map(w => w.id === id ? { ...w, size } : w));
@@ -232,6 +234,7 @@ export function StartPage() {
                 onResize={(size) => updateWidgetSize(widget.id, size)}
                 onEditClock={() => setEditingClock(widget)}
                 onEditWeather={() => setEditingWeather(widget)}
+                onExpandWeather={() => setShowFullWeather(true)}
               />
             ))}
           </div>
@@ -394,6 +397,18 @@ export function StartPage() {
           </div>
         )}
       </Modal>
+      
+      <Modal
+        isOpen={showFullWeather}
+        onClose={() => setShowFullWeather(false)}
+        title="Atmospheric Command Center"
+        icon={<Wind className="w-6 h-6" />}
+        fullWidth
+      >
+        <div className="h-[80vh]">
+          <WeatherDashboard />
+        </div>
+      </Modal>
 
       <Modal 
         isOpen={showAddMenu} 
@@ -434,13 +449,15 @@ function SortableWidget({
   onRemove, 
   onResize,
   onEditClock,
-  onEditWeather
+  onEditWeather,
+  onExpandWeather
 }: { 
   widget: WidgetItem; 
   onRemove: () => void; 
   onResize: (size: 'sm' | 'md' | 'lg' | 'xl') => void;
   onEditClock?: () => void;
   onEditWeather?: () => void;
+  onExpandWeather?: () => void;
 }) {
   const {
     attributes,
@@ -472,7 +489,7 @@ function SortableWidget({
       case 'time':
         return <TimeWidgetContent settings={widget.clockSettings} />;
       case 'weather':
-        return <div className="h-full"><WeatherDashboard settings={widget.weatherSettings} /></div>;
+        return <div className="h-full"><WeatherDashboard settings={widget.weatherSettings} compact={true} /></div>;
       case 'personnel':
         return <PersonnelModalContent />;
       case 'calendar':
@@ -510,12 +527,21 @@ function SortableWidget({
             </button>
           )}
           {widget.type === 'weather' && (
-            <button 
-              onClick={onEditWeather}
-              className="p-1.5 text-text-dim hover:text-indigo-500 hover:bg-indigo-500/10 rounded-lg transition-all mr-1"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button 
+                onClick={onExpandWeather}
+                className="p-1.5 text-text-dim hover:text-indigo-500 hover:bg-indigo-500/10 rounded-lg transition-all mr-1"
+                title="Expand Weather Dashboard"
+              >
+                <ArrowUp className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={onEditWeather}
+                className="p-1.5 text-text-dim hover:text-indigo-500 hover:bg-indigo-500/10 rounded-lg transition-all mr-1"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            </div>
           )}
           <div className="flex bg-black/5 rounded-lg p-0.5 border border-white/5 mr-2">
             {(['sm', 'md', 'lg', 'xl'] as const).map((s) => (
