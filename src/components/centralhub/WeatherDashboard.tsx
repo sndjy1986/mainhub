@@ -322,23 +322,23 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
       <div className={cn("w-full h-full flex flex-col p-6 gap-6 overflow-hidden", settings?.fontFamily)}>
          {activeModules.showCurrent && (
            <div className="flex items-center gap-6 shrink-0">
-              <div className="text-5xl font-black text-white glow-number leading-none flex items-start">
-                {weather?.temperature}<span className="text-lg text-slate-500 mt-1">°</span>
+              <div className="text-6xl font-black text-white glow-number leading-none flex items-start">
+                {weather?.temperature}<span className="text-xl text-slate-500 mt-1">°</span>
               </div>
-              {weather && <AnimatedWeatherIcon condition={weather.condition} size={48} />}
+              {weather && <AnimatedWeatherIcon condition={weather.condition} size={56} />}
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] truncate leading-tight mb-1">{weather?.condition}</p>
-                <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] truncate italic">{weather?.location}</p>
+                <p className="text-sm font-black text-slate-400 uppercase tracking-[0.2em] truncate leading-tight mb-1">{weather?.condition}</p>
+                <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] truncate italic">{weather?.location}</p>
               </div>
               {activeModules.showPressure && weather?.pressure && (
                 <div className="hidden xl:flex flex-col items-end gap-1 px-4 py-2 bg-white/5 border border-white/5 rounded-xl">
-                  <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Barometric</span>
-                  <span className="text-xs font-black text-indigo-400 font-mono italic">{weather.pressure} INHG</span>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest leading-none">Barometric</span>
+                  <span className="text-sm font-black text-indigo-400 font-mono italic">{weather.pressure} INHG</span>
                 </div>
               )}
               <div className="hidden sm:flex flex-col items-end gap-1 opacity-40">
-                <span className="text-[7px] font-black text-slate-600 uppercase tracking-widest">Telemetry Sync</span>
-                <span className="text-[9px] font-black text-slate-400 font-mono italic">{format(new Date(), 'HH:mm')}</span>
+                <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Telemetry Sync</span>
+                <span className="text-[10px] font-black text-slate-400 font-mono italic">{format(new Date(), 'HH:mm')}</span>
               </div>
            </div>
          )}
@@ -346,17 +346,17 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
            {activeModules.showCurrent && (
              <div className="flex flex-col gap-2 min-h-0 lg:border-r lg:border-white/5 pr-4">
-               <h4 className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
+               <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
                  <Wind className="w-3 h-3" /> Vector Dynamics
                </h4>
-               <div className="flex flex-col gap-1 px-5 py-2 bg-white/[0.02] border border-white/5 rounded-xl flex-1 justify-center">
+               <div className="flex flex-col gap-2 px-5 py-3 bg-white/[0.02] border border-white/5 rounded-xl flex-1 justify-center">
                  <div className="flex justify-between items-center">
-                   <span className="text-[8px] font-bold text-slate-500 uppercase">Wind Velocity</span>
-                   <span className="text-[10px] font-black text-white">{weather?.windSpeed} {weather?.windDirection}</span>
+                   <span className="text-[9px] font-bold text-slate-500 uppercase">Wind Velocity</span>
+                   <span className="text-[11px] font-black text-white">{weather?.windSpeed} {weather?.windDirection}</span>
                  </div>
                  <div className="flex justify-between items-center">
-                   <span className="text-[8px] font-bold text-slate-500 uppercase">Humidity Matrix</span>
-                   <span className="text-[10px] font-black text-white">{weather?.humidity}%</span>
+                   <span className="text-[9px] font-bold text-slate-500 uppercase">Humidity Matrix</span>
+                   <span className="text-[11px] font-black text-white">{weather?.humidity}%</span>
                  </div>
                </div>
              </div>
@@ -364,14 +364,14 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
 
            {activeModules.showTimeline && (
              <div className="flex flex-col gap-2 min-h-0">
-               <h4 className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
+               <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
                  <Clock className="w-3 h-3" /> 24H Forecast
                </h4>
-               <div className="flex justify-between items-center gap-2 px-4 py-2 bg-white/[0.03] border border-white/5 rounded-xl flex-1 overflow-hidden">
+               <div className="flex justify-between items-center gap-2 px-4 py-3 bg-white/[0.03] border border-white/5 rounded-xl flex-1 overflow-hidden">
                  {weather?.hourly.slice(0, 5).map((hour, idx) => (
                    <div key={idx} className="flex flex-col items-center gap-1.5 min-w-[32px]">
-                     <span className="text-[8px] font-black text-slate-500">{format(new Date(hour.startTime), 'HH')}</span>
-                     <span className="text-[10px] font-black text-white">{hour.temperature}°</span>
+                     <span className="text-[9px] font-black text-slate-500">{format(new Date(hour.startTime), 'HH')}</span>
+                     <span className="text-xs font-black text-white">{hour.temperature}°</span>
                    </div>
                  ))}
                </div>
@@ -380,20 +380,20 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
 
            {activeModules.showTomorrow && weather?.daily && weather.daily.length > 1 && (
              <div className="flex flex-col gap-2 min-h-0">
-               <h4 className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
+               <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
                  <Shield className="w-3 h-3" /> T+24H Outlook
                </h4>
-               <div className="flex items-center justify-between px-5 py-2 bg-indigo-500/5 border border-indigo-500/10 rounded-xl flex-1">
+               <div className="flex items-center justify-between px-5 py-3 bg-indigo-500/5 border border-indigo-500/10 rounded-xl flex-1">
                  <div className="flex items-center gap-3">
-                   <AnimatedWeatherIcon condition={weather.daily[1].condition} size={24} />
+                   <AnimatedWeatherIcon condition={weather.daily[1].condition} size={28} />
                    <div className="flex flex-col">
-                     <span className="text-[9px] font-black text-white uppercase tracking-wider">{weather.daily[1].condition}</span>
-                     <span className="text-[8px] font-bold text-slate-500 uppercase leading-none">Trend</span>
+                     <span className="text-[10px] font-black text-white uppercase tracking-wider">{weather.daily[1].condition}</span>
+                     <span className="text-[9px] font-bold text-slate-500 uppercase leading-none">Trend</span>
                    </div>
                  </div>
                  <div className="flex items-baseline gap-1">
-                    <span className="text-xl font-black text-white">{weather.daily[1].high}°</span>
-                    <span className="text-[10px] font-black text-slate-500">/ {weather.daily[1].low}°</span>
+                    <span className="text-2xl font-black text-white">{weather.daily[1].high}°</span>
+                    <span className="text-xs font-black text-slate-500">/ {weather.daily[1].low}°</span>
                  </div>
                </div>
              </div>
@@ -401,12 +401,12 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
 
            {activeModules.showPressure && weather?.pressure && (
              <div className="xl:hidden flex flex-col gap-2">
-                <h4 className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
+                <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center gap-2">
                   <Gauge className="w-3 h-3" /> Pressure Analytics
                 </h4>
-                <div className="px-5 py-2 bg-white/5 border border-white/5 rounded-xl flex items-center justify-between flex-1">
-                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Steady State</span>
-                   <span className="text-sm font-black text-indigo-400 font-mono italic">{weather.pressure} INHG</span>
+                <div className="px-5 py-3 bg-white/5 border border-white/5 rounded-xl flex items-center justify-between flex-1">
+                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Steady State</span>
+                   <span className="text-base font-black text-indigo-400 font-mono italic">{weather.pressure} INHG</span>
                 </div>
              </div>
            )}

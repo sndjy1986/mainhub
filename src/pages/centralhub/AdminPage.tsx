@@ -117,6 +117,8 @@ export function AdminPage() {
     certifications: []
   });
 
+  const [activeTab, setActiveTab] = useState<'general' | 'personnel' | 'fleet' | 'links' | 'archive'>('general');
+
   // Track auth state
   useEffect(() => {
     return auth.onAuthStateChanged((u) => setUser(u));
@@ -469,44 +471,39 @@ export function AdminPage() {
         </section>
       )}
 
-      <div className="space-y-12">
-        {/* Level 1: Core System Controls (3-Column Row) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Fleet Controls */}
-          <section className="tactical-card p-8 space-y-6 bg-emerald-500/[0.02] flex flex-col h-full">
-            <div className="flex items-center justify-between border-b border-white/5 pb-4">
-              <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-4 italic">
-                <Radio className="w-5 h-5 text-emerald-400" />
-                Fleet <span className="text-emerald-400 not-italic">Logistics</span>
-              </h3>
-              <span className={`text-[8px] font-black px-2 py-1 rounded-md uppercase tracking-widest border ${toneTestMode ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-slate-500/10 border-slate-500/30 text-slate-400'}`}>
-                {toneTestMode ? 'ACTIVE' : 'INACTIVE'}
-              </span>
-            </div>
-            
-            <div className="flex-1 flex flex-col justify-center">
-              <div 
-                onClick={() => setToneTestMode(!toneTestMode)}
-                className={`p-6 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group ${toneTestMode ? 'bg-emerald-500/[0.03] border-emerald-500/20 shadow-lg shadow-emerald-500/5' : 'bg-black/40 border-white/5 opacity-60'}`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${toneTestMode ? 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]' : 'bg-slate-800 text-slate-500'}`}>
-                    <Activity className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-[11px] font-black text-white uppercase tracking-[0.2em] group-hover:text-emerald-400 transition-colors">Tone Test Filter</h4>
-                    <p className="text-[10px] text-slate-500 uppercase font-black mt-1 tracking-widest italic">{toneTestMode ? 'Units: UP ONLY' : 'Units: ALL ACTIVE'}</p>
-                  </div>
-                </div>
-                <div className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 relative ${toneTestMode ? 'bg-emerald-500' : 'bg-slate-700'}`}>
-                  <div className={`w-4 h-4 bg-white rounded-full transition-all duration-300 shadow-sm ${toneTestMode ? 'translate-x-6' : 'translate-x-0'}`} />
-                </div>
-              </div>
-            </div>
-          </section>
+      {user && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-white/5 pb-6">
+          {[
+            { id: 'general', label: 'System & Theme', icon: <Settings className="w-4 h-4" /> },
+            { id: 'fleet', label: 'Fleet Configuration', icon: <Truck className="w-4 h-4" /> },
+            { id: 'personnel', label: 'Personnel & Access', icon: <User className="w-4 h-4" /> },
+            { id: 'links', label: 'Nav & Feeds', icon: <Camera className="w-4 h-4" /> },
+            { id: 'archive', label: 'Archives', icon: <History className="w-4 h-4" /> },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              className={`
+                px-6 py-3 rounded-xl flex items-center gap-3 text-[10px] font-black uppercase tracking-widest transition-all
+                ${activeTab === tab.id 
+                  ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
+                  : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'}
+              `}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
-          {/* App Theme Settings */}
-          <section className="tactical-card p-8 space-y-6 bg-indigo-500/[0.02] flex flex-col h-full">
+      <div className="space-y-12">
+        {/* GENERAL TAB */}
+        {activeTab === 'general' && (
+          <div className="space-y-12 animate-in fade-in duration-500">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* App Theme Settings */}
+              <section className="tactical-card p-8 space-y-6 bg-indigo-500/[0.02] flex flex-col h-full">
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
               <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-4 italic">
                 <Settings className="w-5 h-5 text-indigo-400" />
@@ -590,11 +587,11 @@ export function AdminPage() {
               </div>
             </div>
           </section>
-        </div>
+          </div>
 
-        {/* Level 1.5: Advanced Theme Customization */}
-        <section className="tactical-card p-10 space-y-10 bg-brand-panel/30">
-          <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/5">
+          {/* Advanced Visuals */}
+          <section className="tactical-card p-10 space-y-10 bg-brand-panel/30">
+            <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/5">
             <div>
               <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic">
                 <Settings className="w-6 h-6 text-indigo-400" />
@@ -776,9 +773,12 @@ export function AdminPage() {
             ))}
           </div>
         </section>
+        </div>
+        )}
 
-        {/* Level 2: User Access & Fleet Personnel - Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        {/* PERSONNEL & ACCESS TAB */}
+        {activeTab === 'personnel' && (
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 animate-in fade-in duration-500">
           {/* User Access Management */}
           <section className="tactical-card p-10 space-y-10 xl:col-span-4 bg-indigo-500/[0.02]">
             <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/5">
@@ -928,8 +928,12 @@ export function AdminPage() {
             ))}
           </div>
         </section>
-      </div>
+        </div>
+        )}
 
+        {/* FLEET CONFIGURATION TAB */}
+        {activeTab === 'fleet' && (
+          <div className="space-y-12 animate-in fade-in duration-500">
         {/* Level 3: Fleet Configuration Management */}
         <section className="tactical-card p-10 space-y-10">
           <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-brand-border">
@@ -997,9 +1001,14 @@ export function AdminPage() {
             )}
           </div>
         </section>
+        </div>
+        )}
 
-        {/* Level 3.5: Sidebar Link Management */}
-        <section className="tactical-card p-10 space-y-10 bg-brand-panel/20">
+        {/* LINKS & FEEDS TAB */}
+        {activeTab === 'links' && (
+          <div className="space-y-12 animate-in fade-in duration-500">
+          {/* Sidebar Link Management */}
+          <section className="tactical-card p-10 space-y-10 bg-brand-panel/20">
           <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/5">
             <div>
               <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic">
@@ -1143,7 +1152,11 @@ export function AdminPage() {
            </div>
         </section>
       </div>
+      )}
 
+      {/* ARCHIVE TAB */}
+      {activeTab === 'archive' && (
+      <div className="animate-in fade-in duration-500">
       {/* History Feed */}
       <section className="tactical-card p-12 space-y-10">
         <div className="flex items-center justify-between border-b border-white/5 pb-8">
@@ -1206,6 +1219,9 @@ export function AdminPage() {
           )}
         </div>
       </section>
+      </div>
+      )}
+      </div>
 
       {/* Personnel Modal */}
       <AnimatePresence>

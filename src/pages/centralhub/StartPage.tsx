@@ -144,7 +144,15 @@ export function StartPage() {
   const [now, setNow] = useState(new Date());
   const [widgets, setWidgets] = useState<WidgetItem[]>(() => {
     const saved = localStorage.getItem('start-page-widgets-v7');
-    return saved ? JSON.parse(saved) : DEFAULT_WIDGETS;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const hasNews = parsed.some((w: WidgetItem) => w.type === 'news');
+      if (!hasNews) {
+        return [...parsed, { id: 'widget-news', type: 'news', title: 'Global Intel Feed', size: 'lg', isVisible: true, newsSettings: DEFAULT_NEWS_SETTINGS }];
+      }
+      return parsed;
+    }
+    return DEFAULT_WIDGETS;
   });
 
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -199,16 +207,27 @@ export function StartPage() {
   };
 
   const removeWidget = (id: string) => {
-    setWidgets(prev => prev.map(w => w.id === id ? { ...w, isVisible: false } : w));
+    setWidgets(prev => prev.filter(w => w.id !== id));
   };
 
-  const addWidget = (type: string) => {
-    setWidgets(prev => prev.map(w => w.type === type ? { ...w, isVisible: true } : w));
+  const addWidget = (type: string, titleStr: string, sizeStr: any) => {
+    const newId = `widget-${type}-${Date.now()}`;
+    let newWidget: WidgetItem = {
+      id: newId,
+      type,
+      title: titleStr,
+      size: sizeStr,
+      isVisible: true,
+    };
+    if (type === 'time') newWidget.clockSettings = DEFAULT_CLOCK_SETTINGS;
+    if (type === 'weather') newWidget.weatherSettings = DEFAULT_WEATHER_SETTINGS;
+    if (type === 'news') newWidget.newsSettings = DEFAULT_NEWS_SETTINGS;
+
+    setWidgets(prev => [...prev, newWidget]);
     setShowAddMenu(false);
   };
 
   const visibleWidgets = widgets.filter(w => w.isVisible);
-  const hiddenWidgets = widgets.filter(w => !w.isVisible);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -533,27 +552,28 @@ export function StartPage() {
         icon={<PlusCircle className="w-6 h-6" />}
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {hiddenWidgets.length === 0 ? (
-            <div className="col-span-full py-12 text-center text-slate-500 uppercase font-black text-xs tracking-widest bg-white/5 rounded-3xl border border-dashed border-white/10">
-              All tactical modules are currently deployed
-            </div>
-          ) : (
-            hiddenWidgets.map(widget => (
-              <button
-                key={widget.id}
-                onClick={() => addWidget(widget.type)}
-                className="p-8 tactical-card hover:border-indigo-500 transition-all text-left flex items-center justify-between group"
-              >
-                <div>
-                  <h4 className="text-lg font-black text-white uppercase italic mb-1">{widget.title}</h4>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Size: {widget.size?.toUpperCase()}</p>
-                </div>
-                <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all">
-                  <Plus className="w-5 h-5" />
-                </div>
-              </button>
-            ))
-          )}
+          {[
+            { type: 'time', title: 'Local Time', size: 'sm', desc: 'Chronometer node' },
+            { type: 'weather', title: 'Tactical Weather', size: 'lg', desc: 'Atmospheric monitor' },
+            { type: 'news', title: 'Intel Feed', size: 'lg', desc: 'External news stream' },
+            { type: 'personnel', title: 'Active Personnel', size: 'md', desc: 'Fleet dashboard' },
+            { type: 'calendar', title: 'Global Schedule', size: 'xl', desc: 'Operations calendar' },
+            { type: 'shift_report', title: 'Shift Uplink', size: 'sm', desc: 'Post operations' },
+          ].map(widget => (
+            <button
+              key={widget.type}
+              onClick={() => addWidget(widget.type, widget.title, widget.size)}
+              className="p-6 tactical-card hover:border-indigo-500 transition-all text-left flex items-center justify-between group"
+            >
+              <div>
+                <h4 className="text-sm font-black text-white uppercase italic mb-1">{widget.title}</h4>
+                <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">{widget.desc}</p>
+              </div>
+              <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all shadow-lg shadow-black/50">
+                <Plus className="w-5 h-5" />
+              </div>
+            </button>
+          ))}
         </div>
       </Modal>
     </div>
