@@ -100,12 +100,12 @@ export function Sidebar() {
 
   return (
     <div 
-      className="w-64 h-screen bg-bg-main border-r border-white/5 flex flex-col fixed left-0 top-0 z-50 overflow-y-auto overflow-x-hidden transition-colors duration-500 shadow-2xl"
+      className="w-64 h-screen bg-bg-main border-r border-white/5 flex flex-col fixed left-0 top-0 z-50 transition-colors duration-500 shadow-2xl"
       data-theme={appTheme}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/5 to-transparent pointer-events-none" />
       
-      <div className="p-8 relative">
+      <div className="p-8 relative flex-shrink-0">
         <motion.div 
           className="flex items-center gap-3 mb-4 group cursor-pointer"
           whileHover={{ scale: 1.05 }}
@@ -123,45 +123,49 @@ export function Sidebar() {
         </motion.div>
       </div>
       
-      <nav className="flex-1 px-4 space-y-4 relative">
-        {/* Core Commands Section */}
-        <div>
-          <div className="px-4 mb-2 flex items-center gap-2">
-            <div className="w-1 h-3 bg-indigo-500 rounded-full" />
-            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-400">Core Command</span>
+      <nav className="flex-1 min-h-0 px-4 py-2 relative flex flex-col">
+        <div className="flex-1 overflow-y-auto scrollbar-hide space-y-4 pr-1">
+          {/* Core Commands Section */}
+          <div>
+            <div className="px-4 mb-2 flex items-center gap-2">
+              <div className="w-1 h-3 bg-indigo-500 rounded-full" />
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-400">Core Command</span>
+            </div>
+            <div className="space-y-0.5">
+              {CORE_COMMANDS.map((item) => {
+                const IconComponent = iconMap[item.icon] || LinkIcon;
+                return (
+                  <motion.div key={item.path} {...bouncyProps}>
+                    <NavLink
+                      to={item.path}
+                      className={({ isActive }) => `
+                        flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-300 group relative
+                          ${isActive ? 'text-text-main font-black' : 'text-text-dim hover:text-text-main'}
+                      `}
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <IconComponent className={cn("w-4 h-4 flex-shrink-0 transition-colors relative z-10", isActive ? "text-indigo-500" : "group-hover:text-indigo-300")} />
+                          <span className="text-[11px] font-black uppercase tracking-widest relative z-10">{item.label}</span>
+                          {isActive && (
+                            <motion.div 
+                              layoutId="nav-active"
+                              className="absolute inset-0 bg-white/10 border border-white/5 rounded-xl shadow-inner shadow-indigo-500/10"
+                              initial={false}
+                              transition={{ type: "spring", bounce: 0.2, duration: 0.6 } as const}
+                            />
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
-          <div className="space-y-0.5">
-            {CORE_COMMANDS.map((item) => {
-              const IconComponent = iconMap[item.icon] || LinkIcon;
-              return (
-                <motion.div key={item.path} {...bouncyProps}>
-                  <NavLink
-                    to={item.path}
-                    className={({ isActive }) => `
-                      flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-300 group relative
-                        ${isActive ? 'text-text-main font-black' : 'text-text-dim hover:text-text-main'}
-                    `}
-                  >
-                    {({ isActive }) => (
-                      <>
-                        <IconComponent className={cn("w-4 h-4 flex-shrink-0 transition-colors relative z-10", isActive ? "text-indigo-500" : "group-hover:text-indigo-300")} />
-                        <span className="text-[11px] font-black uppercase tracking-widest relative z-10">{item.label}</span>
-                        {isActive && (
-                          <motion.div 
-                            layoutId="nav-active"
-                            className="absolute inset-0 bg-white/10 border border-white/5 rounded-xl shadow-inner shadow-indigo-500/10"
-                            initial={false}
-                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 } as const}
-                          />
-                        )}
-                      </>
-                    )}
-                  </NavLink>
-                </motion.div>
-              );
-            })}
-            
-            {/* Tools Slide Out */}
+
+          {/* Tools Trigger - MUST BE OUTSIDE CLIPPING CONTAINER IF POSSIBLE, BUT WE'LL USE A FLEX WRAPPER */}
+          <div className="relative">
             <div 
               className="relative"
               onMouseEnter={() => setIsToolsOpen(true)}
@@ -193,17 +197,26 @@ export function Sidebar() {
                   open: { 
                     opacity: 1, 
                     x: 0, 
+                    scale: 1,
                     display: "block",
                     transition: { type: "spring", stiffness: 300, damping: 30 } 
                   },
                   closed: { 
                     opacity: 0, 
                     x: -10, 
+                    scale: 0.95,
                     transitionEnd: { display: "none" } 
                   }
                 }}
-                className="absolute left-full top-0 ml-2 w-48 bg-bg-main border border-white/10 rounded-2xl shadow-2xl p-2 z-[60] backdrop-blur-xl"
+                className="fixed left-[240px] top-1/3 -translate-y-1/2 w-52 bg-bg-main border border-white/10 rounded-2xl shadow-[20px_0_50px_rgba(0,0,0,0.5)] p-2 z-[100] backdrop-blur-xl"
               >
+                {/* Visual Bridge */}
+                <div className="absolute -left-10 top-0 bottom-0 w-10" />
+                
+                <div className="px-3 py-2 mb-2 border-b border-white/5">
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em] text-rose-500">Resource Matrix</span>
+                </div>
+                
                 <div className="space-y-0.5">
                   {TOOLS_LINKS.map((item) => {
                     const IconComponent = iconMap[item.icon] || LinkIcon;
@@ -211,13 +224,18 @@ export function Sidebar() {
                       <NavLink
                         key={item.path}
                         to={item.path}
+                        onClick={() => setIsToolsOpen(false)}
                         className={({ isActive }) => cn(
-                          "flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 group",
+                          "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group/item",
                           isActive ? "bg-rose-500/10 text-rose-400 font-bold" : "text-text-dim hover:bg-white/5 hover:text-text-main"
                         )}
                       >
-                        <IconComponent className="w-3.5 h-3.5" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
+                        {({ isActive }) => (
+                          <>
+                            <IconComponent className={cn("w-3.5 h-3.5", isActive ? "text-rose-500" : "group-hover/item:text-rose-300")} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
+                          </>
+                        )}
                       </NavLink>
                     );
                   })}
@@ -225,32 +243,32 @@ export function Sidebar() {
               </motion.div>
             </div>
           </div>
-        </div>
 
-        {/* Links Section */}
-        <div>
-          <div className="px-4 mb-2 flex items-center gap-2">
-            <div className="w-1 h-3 bg-emerald-500 rounded-full" />
-            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-400">Portal Links</span>
-          </div>
-          <div className="space-y-0.5">
-            {PORTAL_LINKS.map((item) => {
-              const IconComponent = iconMap[item.icon] || LinkIcon;
-              return (
-                <motion.a
-                  key={item.path}
-                  href={item.path}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  {...bouncyProps}
-                  className="flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-200 text-text-dim hover:bg-white/5 hover:text-text-main border border-transparent group relative"
-                >
-                  <IconComponent className="w-4 h-4 flex-shrink-0 group-hover:text-emerald-400 transition-colors" />
-                  <span className="text-[11px] font-bold uppercase tracking-widest">{item.label}</span>
-                  <ExternalLink className="w-2.5 h-2.5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+          {/* Links Section */}
+          <div>
+            <div className="px-4 mb-2 flex items-center gap-2">
+              <div className="w-1 h-3 bg-emerald-500 rounded-full" />
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-400">Portal Links</span>
+            </div>
+            <div className="space-y-0.5">
+              {PORTAL_LINKS.map((item) => {
+                const IconComponent = iconMap[item.icon] || LinkIcon;
+                return (
+                  <motion.a
+                    key={item.path}
+                    href={item.path}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    {...bouncyProps}
+                    className="flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-200 text-text-dim hover:bg-white/5 hover:text-text-main border border-transparent group relative"
+                  >
+                    <IconComponent className="w-4 h-4 flex-shrink-0 group-hover:text-emerald-400 transition-colors" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest">{item.label}</span>
+                    <ExternalLink className="w-2.5 h-2.5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </motion.a>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </nav>
