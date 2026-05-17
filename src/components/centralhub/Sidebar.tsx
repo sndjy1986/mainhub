@@ -22,7 +22,11 @@ import {
   LogOut,
   ExternalLink,
   Link as LinkIcon,
-  Timer
+  Timer,
+  Hash,
+  Shield,
+  BookOpen,
+  ArrowRightLeft
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
@@ -33,7 +37,8 @@ import type { SidebarLink as SidebarLinkType } from '../../lib/firebase';
 const iconMap: Record<string, any> = {
   LayoutDashboard, Activity, Terminal, MapIcon, Camera, FileText, 
   AlertTriangle, Zap, Radio, Siren, Settings2, Table, Lock, 
-  UserCheck, ClockIcon, Phone, Calendar, CreditCard, ExternalLink, LinkIcon, Timer
+  UserCheck, ClockIcon, Phone, Calendar, CreditCard, ExternalLink, LinkIcon, Timer,
+  Hash, Shield, BookOpen, ArrowRightLeft
 };
 
 const CORE_COMMANDS = [
@@ -41,9 +46,14 @@ const CORE_COMMANDS = [
   { icon: 'Activity', label: 'Tone Test', path: '/tone-test', id: 'tone' },
   { icon: 'Terminal', label: 'Unit Posting', path: '/unit-posting', id: 'unit' },
   { icon: 'FileText', label: 'Shift Report', path: '/shift-report', id: 'report' },
-  { icon: 'MapIcon', label: 'Distance Map', path: '/distance-map', id: 'dist' },
   { icon: 'Camera', label: 'Cameras', path: '/cameras', id: 'cams' },
+];
+
+const TOOLS_LINKS = [
   { icon: 'Timer', label: 'Timers', path: '/timers', id: 'timers' },
+  { icon: 'Hash', label: 'Codes Reference', path: '/codes', id: 'codes' },
+  { icon: 'BookOpen', label: 'Guidelines', path: '/guidelines', id: 'guidelines' },
+  { icon: 'MapIcon', label: 'Distance Tracker', path: '/distance-map', id: 'dist' },
 ];
 
 const PORTAL_LINKS = [
@@ -52,6 +62,7 @@ const PORTAL_LINKS = [
   { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/1Lq3m5KIhkwP7zQZu9RTKlXRO18BPhx1A/view?usp=drive_link', external: true, id: 'coroner' },
   { icon: 'Table', label: 'Daily Worksheet', path: 'https://docs.google.com/spreadsheets/d/1-4Uwh00g4orCaOQoOrLIcRkamAhdxrBNhVVOt2IEOoY/edit?gid=534085027#gid=534085027', external: true, id: 'worksheet' },
   { icon: 'CreditCard', label: 'PayCom Online', path: 'https://www.paycomonline.net/v4/ee/web.php/app/login', external: true, id: 'paycom' },
+  { icon: 'Siren', label: 'Helicopter', path: 'https://andersoncounty911_sc.transport.net/#/login', external: true, id: 'helo' },
 ];
 
 export function Sidebar() {
@@ -66,6 +77,8 @@ export function Sidebar() {
     firebaseUser,
     appTheme
   } = useTerminal();
+
+  const [isToolsOpen, setIsToolsOpen] = React.useState(false);
 
   React.useEffect(() => {
     const unsub = onSnapshot(doc(db, 'settings', 'global'), (s) => {
@@ -110,14 +123,14 @@ export function Sidebar() {
         </motion.div>
       </div>
       
-      <nav className="flex-1 px-4 space-y-8 relative">
+      <nav className="flex-1 px-4 space-y-4 relative">
         {/* Core Commands Section */}
         <div>
-          <div className="px-4 mb-4 flex items-center gap-2">
+          <div className="px-4 mb-2 flex items-center gap-2">
             <div className="w-1 h-3 bg-indigo-500 rounded-full" />
             <span className="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-400">Core Command</span>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {CORE_COMMANDS.map((item) => {
               const IconComponent = iconMap[item.icon] || LinkIcon;
               return (
@@ -125,7 +138,7 @@ export function Sidebar() {
                   <NavLink
                     to={item.path}
                     className={({ isActive }) => `
-                      flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative
+                      flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-300 group relative
                         ${isActive ? 'text-text-main font-black' : 'text-text-dim hover:text-text-main'}
                     `}
                   >
@@ -147,56 +160,95 @@ export function Sidebar() {
                 </motion.div>
               );
             })}
+            
+            {/* Tools Slide Out */}
+            <div 
+              className="relative"
+              onMouseEnter={() => setIsToolsOpen(true)}
+              onMouseLeave={() => setIsToolsOpen(false)}
+            >
+              <button 
+                onClick={() => setIsToolsOpen(!isToolsOpen)}
+                className={cn(
+                  "flex items-center justify-between w-full gap-3 px-4 py-2 rounded-xl transition-all duration-300 group relative",
+                  isToolsOpen ? 'text-text-main font-black bg-white/5' : 'text-text-dim hover:text-text-main'
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <Settings2 className={cn("w-4 h-4 flex-shrink-0 transition-colors", isToolsOpen ? "text-rose-500" : "group-hover:text-rose-300")} />
+                  <span className="text-[11px] font-black uppercase tracking-widest">Tools</span>
+                </div>
+                <motion.div
+                  animate={{ rotate: isToolsOpen ? 90 : 0 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <ArrowRightLeft className="w-3 h-3 opacity-50" />
+                </motion.div>
+              </button>
+
+              <motion.div
+                initial={false}
+                animate={isToolsOpen ? "open" : "closed"}
+                variants={{
+                  open: { 
+                    opacity: 1, 
+                    x: 0, 
+                    display: "block",
+                    transition: { type: "spring", stiffness: 300, damping: 30 } 
+                  },
+                  closed: { 
+                    opacity: 0, 
+                    x: -10, 
+                    transitionEnd: { display: "none" } 
+                  }
+                }}
+                className="absolute left-full top-0 ml-2 w-48 bg-bg-main border border-white/10 rounded-2xl shadow-2xl p-2 z-[60] backdrop-blur-xl"
+              >
+                <div className="space-y-0.5">
+                  {TOOLS_LINKS.map((item) => {
+                    const IconComponent = iconMap[item.icon] || LinkIcon;
+                    return (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        className={({ isActive }) => cn(
+                          "flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 group",
+                          isActive ? "bg-rose-500/10 text-rose-400 font-bold" : "text-text-dim hover:bg-white/5 hover:text-text-main"
+                        )}
+                      >
+                        <IconComponent className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
 
         {/* Links Section */}
         <div>
-          <div className="px-4 mb-4 flex items-center gap-2">
+          <div className="px-4 mb-2 flex items-center gap-2">
             <div className="w-1 h-3 bg-emerald-500 rounded-full" />
             <span className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-400">Portal Links</span>
           </div>
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {PORTAL_LINKS.map((item) => {
               const IconComponent = iconMap[item.icon] || LinkIcon;
-              return item.external ? (
+              return (
                 <motion.a
                   key={item.path}
                   href={item.path}
                   target="_blank"
                   rel="noopener noreferrer"
                   {...bouncyProps}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-text-dim hover:bg-white/5 hover:text-text-main border border-transparent group relative"
+                  className="flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-200 text-text-dim hover:bg-white/5 hover:text-text-main border border-transparent group relative"
                 >
                   <IconComponent className="w-4 h-4 flex-shrink-0 group-hover:text-emerald-400 transition-colors" />
                   <span className="text-[11px] font-bold uppercase tracking-widest">{item.label}</span>
                   <ExternalLink className="w-2.5 h-2.5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </motion.a>
-              ) : (
-                <motion.div key={item.path} {...bouncyProps}>
-                  <NavLink
-                    to={item.path}
-                    className={({ isActive }) => `
-                      flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative
-                        ${isActive ? 'text-text-main font-black' : 'text-text-dim hover:text-text-main'}
-                    `}
-                  >
-                    {({ isActive }) => (
-                      <>
-                        <IconComponent className={cn("w-4 h-4 flex-shrink-0 transition-colors relative z-10", isActive ? "text-emerald-500" : "group-hover:text-emerald-300")} />
-                        <span className="text-[11px] font-black uppercase tracking-widest relative z-10">{item.label}</span>
-                        {isActive && (
-                          <motion.div 
-                            layoutId="nav-active-portal"
-                            className="absolute inset-0 bg-white/10 border border-white/5 rounded-xl shadow-inner shadow-emerald-500/10"
-                            initial={false}
-                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 } as const}
-                          />
-                        )}
-                      </>
-                    )}
-                  </NavLink>
-                </motion.div>
               );
             })}
           </div>

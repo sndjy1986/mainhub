@@ -24,11 +24,14 @@ interface ActiveTimer {
   isActive: boolean;
   type: 'standard' | 'oos' | 'custom';
   startTime: number | null;
+  unitNumber?: string;
 }
+
+const MED_UNITS = Array.from({ length: 20 }, (_, i) => `MED-${i}`);
 
 export default function Timers() {
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
-  const [history, setHistory] = useState<{label: string, finishedAt: number}[]>([]);
+  const [history, setHistory] = useState<{label: string, finishedAt: number, unitNumber?: string}[]>([]);
 
   // Timer Tick
   useEffect(() => {
@@ -55,7 +58,7 @@ export default function Timers() {
       audio.play();
     } catch (e) {}
     
-    setHistory(prev => [{ label: timer.label, finishedAt: Date.now() }, ...prev].slice(0, 5));
+    setHistory(prev => [{ label: timer.label, finishedAt: Date.now(), unitNumber: timer.unitNumber }, ...prev].slice(0, 5));
   };
 
   const startTimer = (durationMinutes: number, label: string, type: ActiveTimer['type'] = 'standard') => {
@@ -85,6 +88,12 @@ export default function Timers() {
 
   const deleteTimer = (id: string) => {
     setActiveTimers(prev => prev.filter(t => t.id !== id));
+  };
+
+  const setUnitNumber = (id: string, unitNumber: string) => {
+    setActiveTimers(prev => prev.map(t => 
+      t.id === id ? { ...t, unitNumber } : t
+    ));
   };
 
   const formatTime = (seconds: number) => {
@@ -171,17 +180,38 @@ export default function Timers() {
 
                 <div className="flex justify-between items-start mb-6">
                   <div>
-                    <h4 className="text-sm font-black text-white uppercase tracking-widest">{timer.label}</h4>
+                    <h4 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
+                      {timer.label}
+                      {timer.unitNumber && (
+                        <span className="bg-indigo-500 text-[10px] px-2 py-0.5 rounded text-white italic">
+                          {timer.unitNumber}
+                        </span>
+                      )}
+                    </h4>
                     <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">
                       {timer.type === 'oos' ? 'Maintenance Cycle' : 'Standard Watch'}
                     </p>
                   </div>
-                  <button 
-                    onClick={() => deleteTimer(timer.id)}
-                    className="p-2 text-slate-600 hover:text-rose-500 transition-colors bg-white/5 rounded-xl"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  <div className="flex gap-2">
+                    <select
+                      value={timer.unitNumber || ""}
+                      onChange={(e) => setUnitNumber(timer.id, e.target.value)}
+                      className="bg-white/5 border border-white/10 text-[10px] font-black text-slate-400 uppercase tracking-widest rounded-lg px-2 py-1 outline-none hover:border-indigo-500/50 transition-all cursor-pointer"
+                    >
+                      <option value="" className="bg-[#101014]">UNIT_ID</option>
+                      {MED_UNITS.map(unit => (
+                        <option key={unit} value={unit} className="bg-[#101014]">
+                          {unit}
+                        </option>
+                      ))}
+                    </select>
+                    <button 
+                      onClick={() => deleteTimer(timer.id)}
+                      className="p-2 text-slate-600 hover:text-rose-500 transition-colors bg-white/5 rounded-xl"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between gap-8 py-4">
@@ -245,7 +275,14 @@ export default function Timers() {
                 <div className="flex items-center gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 group-hover:shadow-[0_0_8px_rgba(99,102,241,0.5)] transition-all" />
                   <div>
-                    <p className="text-[10px] font-black text-white uppercase tracking-widest">{item.label}</p>
+                    <p className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                       {item.label}
+                       {item.unitNumber && (
+                         <span className="text-[8px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/30">
+                           {item.unitNumber}
+                         </span>
+                       )}
+                    </p>
                     <p className="text-[8px] text-slate-600 font-bold uppercase mt-1">{format(item.finishedAt, 'HH:mm:ss')}</p>
                   </div>
                 </div>

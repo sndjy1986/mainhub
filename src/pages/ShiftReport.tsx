@@ -89,6 +89,7 @@ import {
   updateDoc,
   serverTimestamp
 } from '../lib/firebase';
+import ShiftTurnover from './ShiftTurnover';
 
 const STORAGE_KEY = "shiftReportDraft_v2";
 
@@ -860,6 +861,7 @@ export default function ShiftReport() {
                </div>
             </div>
           </div>
+          <ShiftTurnover isEmbedded />
         </main>
       </div>
 

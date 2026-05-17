@@ -15,6 +15,10 @@ const AdminPage = lazy(() => import('./pages/centralhub/AdminPage'));
 const TimeClock = lazy(() => import('./pages/TimeClock'));
 const Directory = lazy(() => import('./pages/Directory'));
 const Timers = lazy(() => import('./pages/Timers'));
+const OperationalGuidelines = lazy(() => import('./pages/OperationalGuidelines'));
+const CodesReference = lazy(() => import('./pages/CodesReference'));
+const DispatchTools = lazy(() => import('./pages/DispatchTools'));
+const ShiftTurnover = lazy(() => import('./pages/ShiftTurnover'));
 
 export default function App() {
   const { terminalUser, firebaseUser } = useTerminal();
@@ -37,6 +41,10 @@ export default function App() {
             <Route path="/time-clock" element={<PageWrapper fullWidth className="overflow-hidden"><TimeClock /></PageWrapper>} />
             <Route path="/timers" element={<PageWrapper className="overflow-y-auto"><Timers /></PageWrapper>} />
             <Route path="/directory" element={<PageWrapper className="overflow-y-auto"><Directory /></PageWrapper>} />
+            <Route path="/guidelines" element={<PageWrapper className="overflow-y-auto"><OperationalGuidelines /></PageWrapper>} />
+            <Route path="/codes" element={<PageWrapper className="overflow-y-auto"><CodesReference /></PageWrapper>} />
+            <Route path="/tools" element={<PageWrapper className="overflow-y-auto"><DispatchTools /></PageWrapper>} />
+            <Route path="/turnover" element={<PageWrapper className="overflow-y-auto"><ShiftTurnover /></PageWrapper>} />
             <Route path="/admin/settings" element={<PageWrapper className="overflow-y-auto"><AdminPage /></PageWrapper>} />
           </Routes>
         </Suspense>
