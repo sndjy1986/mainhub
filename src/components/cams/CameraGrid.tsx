@@ -73,7 +73,7 @@ export const CameraGrid: React.FC = React.memo(() => {
     }
     
     if (activeCameras.length === 0) {
-      const defaultCamIds = ['cam2', 'cam3', 'cam4', 'cam8'];
+      const defaultCamIds = ['cam2', 'cam12', 'cam4', 'cam8'];
       setActiveCameras(defaultCamIds.map(id => ALL_CAMERAS.find(c => c.id === id) || ALL_CAMERAS[0]));
     }
   }, []);

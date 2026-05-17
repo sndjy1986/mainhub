@@ -99,5 +99,14 @@ export const ALL_CAMERAS: Camera[] = [
     lat: 34.850,
     lng: -82.310,
     direction: 'NB'
+  },
+  { 
+    id: 'cam12',
+    name: 'LAKE HARTWELL SENECA SC', 
+    url: 'https://s162.ipcamlive.com/streams/a25tffhlhkgyou8z0/stream.m3u8', 
+    description: 'Seneca, SC - Lake Hartwell View',
+    lat: 34.685,
+    lng: -82.950,
+    direction: 'STATIC'
   }
 ];
