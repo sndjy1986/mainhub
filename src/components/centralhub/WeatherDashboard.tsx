@@ -383,10 +383,72 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex h-full relative"
+                className="flex h-full p-4 gap-4"
               >
-                {/* Full-height Radar bleed */}
-                <div className="flex-1 h-full relative group cursor-pointer overflow-hidden border-2 border-indigo-500/20 rounded-[2rem] mx-2 my-2 shadow-[0_0_40px_rgba(79,70,229,0.1)]" onClick={() => setIsRadarExpanded(true)}>
+                {/* LEFT: METRICS & FORECAST */}
+                <div className="w-[38%] flex flex-col gap-4">
+                  {/* Current Section */}
+                  <div className="flex-1 bg-[#101014]/60 backdrop-blur-2xl border border-white/5 rounded-[2.5rem] p-8 flex flex-col justify-center relative overflow-hidden shadow-2xl group/card">
+                    <div className="absolute top-0 right-0 p-10 opacity-10 group-hover/card:opacity-20 transition-opacity translate-x-6 -translate-y-6">
+                       {weather && <AnimatedWeatherIcon condition={weather.condition} size={140} />}
+                    </div>
+                    
+                    <div className="space-y-1 mb-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em]">Live Telemetry</span>
+                      </div>
+                      <h2 className="text-xl font-black text-slate-500 uppercase tracking-widest italic opacity-60">
+                        Sector: {weather?.location?.split(',')[0]}
+                      </h2>
+                    </div>
+
+                    <div className="flex items-end gap-3">
+                      <div className="text-8xl font-black text-white tracking-tighter flex items-start drop-shadow-2xl">
+                        {weather?.temperature}<span className="text-3xl text-indigo-500 mt-4 ml-1">°</span>
+                      </div>
+                      <div className="mb-4">
+                        <p className="text-lg font-black text-white uppercase tracking-widest leading-none drop-shadow-lg">{weather?.condition}</p>
+                        <div className="flex items-center gap-3 mt-3">
+                           <div className="flex items-center gap-1 text-[10px] font-black text-rose-500">
+                             <ArrowUp size={10} />
+                             {weather?.daily[0]?.high}°
+                           </div>
+                           <div className="flex items-center gap-1 text-[10px] font-black text-sky-500">
+                             <ArrowDown size={10} />
+                             {weather?.daily[0]?.low}°
+                           </div>
+                           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] italic opacity-60 ml-2">
+                             {weather?.humidity}% HUM
+                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Today Mini Forecast */}
+                  <div className="h-[32%] bg-[#101014]/40 backdrop-blur-xl border border-white/5 rounded-[2.5rem] p-6 flex flex-col justify-between overflow-hidden shadow-xl">
+                    <div className="flex items-center justify-between mb-2">
+                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Operational Window</span>
+                       <Clock className="w-3 h-3 text-slate-700" />
+                    </div>
+                    <div className="flex justify-between items-center gap-2">
+                      {weather?.hourly.slice(0, 4).map((hour, idx) => (
+                        <div key={idx} className="flex flex-col items-center gap-2 flex-1 pt-1 group/item">
+                          <span className="text-[8px] font-black text-slate-600 uppercase group-hover/item:text-slate-400 transition-colors">{format(new Date(hour.startTime), 'HH:mm')}</span>
+                          <AnimatedWeatherIcon condition={hour.shortForecast} size={20} />
+                          <span className="text-xs font-black text-white">{hour.temperature}°</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* RIGHT: RADAR */}
+                <div 
+                  className="flex-1 h-full relative group cursor-pointer overflow-hidden border-2 border-indigo-500/20 rounded-[2.5rem] shadow-[0_30px_60px_rgba(0,0,0,0.5),0_0_40px_rgba(79,70,229,0.05)]" 
+                  onClick={() => setIsRadarExpanded(true)}
+                >
                   <div className="absolute inset-0 bg-indigo-500/10 opacity-20" />
                   <iframe 
                     src={radarUrl || ""} 
@@ -394,21 +456,7 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
                     title="Mini Radar"
                   />
                   
-                  {/* REDUCED METRICS OVERLAY - Removed Telemetry and Time as requested */}
-                  <div className="absolute inset-y-0 left-0 w-[35%] bg-gradient-to-r from-black/80 via-black/30 to-transparent p-6 flex flex-col justify-center gap-2 pointer-events-none">
-                     <div className="flex items-center gap-4">
-                        <div className="text-6xl font-black text-white tracking-tighter flex items-start drop-shadow-2xl">
-                          {weather?.temperature}<span className="text-xl text-indigo-400 mt-1 ml-0.5">°</span>
-                        </div>
-                        {weather && <AnimatedWeatherIcon condition={weather.condition} size={40} className="drop-shadow-2xl" />}
-                     </div>
-                     <div className="space-y-0.5">
-                        <p className="text-[10px] font-black text-white uppercase tracking-[0.2em] truncate leading-tight drop-shadow-md opacity-80">{weather?.condition}</p>
-                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em] truncate italic opacity-60">Sect: {weather?.location?.split(',')[0]}</p>
-                     </div>
-                  </div>
-
-                  <div className="absolute top-8 right-8 flex items-center gap-2">
+                  <div className="absolute top-8 right-8 flex items-center gap-2 z-50">
                     {['now', 'today', 'forecast', 'radar'].map(tab => (
                       <button
                         key={tab}
@@ -425,8 +473,8 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
                     ))}
                   </div>
 
-                  <div className="absolute bottom-8 right-8">
-                    <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-indigo-600 transition-all">
+                  <div className="absolute bottom-8 right-8 z-50">
+                    <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white group-hover:scale-110 group-hover:bg-indigo-600 transition-all shadow-2xl">
                       <Maximize2 size={18} />
                     </div>
                   </div>
