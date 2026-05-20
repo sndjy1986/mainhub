@@ -145,7 +145,7 @@ const DEFAULT_WIDGETS: WidgetItem[] = [
 ];
 
 export function StartPage() {
-  const { userSettings, updateUserSettings } = useTerminal();
+  const { userSettings, updateUserSettings, terminalUser } = useTerminal();
   const [now, setNow] = useState(new Date());
   const [widgets, setWidgets] = useState<WidgetItem[]>(DEFAULT_WIDGETS);
   const [hasInitialized, setHasInitialized] = useState(false);
@@ -255,7 +255,12 @@ export function StartPage() {
     setShowAddMenu(false);
   };
 
-  const visibleWidgets = widgets.filter(w => w.isVisible);
+  const visibleWidgets = widgets.filter(w => {
+    if (w.type === 'shift_report' && terminalUser?.role?.toLowerCase() === 'dispatcher') {
+      return false;
+    }
+    return w.isVisible;
+  });
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -585,7 +590,12 @@ export function StartPage() {
             { type: 'personnel', title: 'Active Personnel', size: 'md', desc: 'Fleet dashboard' },
             { type: 'calendar', title: 'Global Schedule', size: 'xl', desc: 'Operations calendar' },
             { type: 'shift_report', title: 'Shift Uplink', size: 'sm', desc: 'Post operations' },
-          ].map(widget => (
+          ].filter(widget => {
+            if (widget.type === 'shift_report' && terminalUser?.role?.toLowerCase() === 'dispatcher') {
+              return false;
+            }
+            return true;
+          }).map(widget => (
             <button
               key={widget.type}
               onClick={() => addWidget(widget.type as WidgetItem['type'], widget.title, widget.size)}

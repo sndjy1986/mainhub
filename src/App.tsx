@@ -37,7 +37,23 @@ export default function App() {
             <Route path="/unit-posting" element={<PageWrapper fullWidth className="overflow-hidden"><UnitPosting /></PageWrapper>} />
             <Route path="/distance-map" element={<PageWrapper fullWidth className="overflow-hidden"><DistanceMap /></PageWrapper>} />
             <Route path="/cameras" element={<PageWrapper fullWidth className="overflow-hidden"><DotCameras /></PageWrapper>} />
-            <Route path="/shift-report" element={<PageWrapper className="overflow-y-auto"><ShiftReport /></PageWrapper>} />
+            <Route 
+              path="/shift-report" 
+              element={
+                terminalUser?.role?.toLowerCase() === 'dispatcher' ? (
+                  <PageWrapper className="flex items-center justify-center min-h-[60vh]">
+                    <div className="p-8 text-center bg-white/5 border border-white/10 rounded-2xl max-w-md shadow-2xl">
+                      <h2 className="text-xl font-black text-rose-500 uppercase tracking-widest mb-3">Access Denied</h2>
+                      <p className="text-xs text-slate-400 uppercase tracking-[0.15em] leading-relaxed">
+                        Dispatcher privileges do not permit access to the Shift Report log. Please contact your system administrator.
+                      </p>
+                    </div>
+                  </PageWrapper>
+                ) : (
+                  <PageWrapper className="overflow-y-auto"><ShiftReport /></PageWrapper>
+                )
+              } 
+            />
             <Route path="/time-clock" element={<PageWrapper fullWidth className="overflow-hidden"><TimeClock /></PageWrapper>} />
             <Route path="/timers" element={<PageWrapper className="overflow-y-auto"><Timers /></PageWrapper>} />
             <Route path="/directory" element={<PageWrapper className="overflow-y-auto"><Directory /></PageWrapper>} />

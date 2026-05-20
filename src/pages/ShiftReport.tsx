@@ -743,7 +743,7 @@ export default function ShiftReport() {
             </div>
 
             {/* Row 3: Log */}
-            {(terminalUser?.role === 'admin' || terminalUser?.role === 'root') ? (
+            {terminalUser?.role?.toLowerCase() !== 'dispatcher' ? (
               <section className="tactical-card p-8 space-y-6 group">
                 <div className="flex items-center justify-between border-b border-white/5 pb-4">
                    <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-400 flex items-center gap-3">

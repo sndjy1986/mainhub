@@ -132,7 +132,12 @@ export function Sidebar() {
               <span className="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-400">Core Command</span>
             </div>
             <div className="space-y-0.5">
-              {CORE_COMMANDS.map((item) => {
+              {CORE_COMMANDS.filter((item) => {
+                if (item.id === 'report') {
+                  return terminalUser?.role?.toLowerCase() !== 'dispatcher';
+                }
+                return true;
+              }).map((item) => {
                 const IconComponent = iconMap[item.icon] || LinkIcon;
                 return (
                   <motion.div key={item.path} {...bouncyProps}>
