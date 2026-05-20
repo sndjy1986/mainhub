@@ -65,13 +65,13 @@ export default function DistanceMap() {
     if (toneTestMode) {
       // Only MED- units that are UP according to Tone Test
       const upUnits = toneRecords.filter(r => 
-        r.unit.toUpperCase().startsWith('MED') && 
+        (r.unit || '').toUpperCase().startsWith('MED') && 
         r.time && 
         !r.tenFortyTwo
       );
 
       return upUnits.map(tr => {
-        const unitId = tr.unit;
+        const unitId = tr.unit || '';
         const config = fleetConfigs.find(c => c.id.toLowerCase() === unitId.toLowerCase());
         const assignment = assignments.find(a => a.unitId.toLowerCase() === unitId.toLowerCase());
         

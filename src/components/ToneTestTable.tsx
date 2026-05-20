@@ -84,9 +84,9 @@ export default function ToneTestTable() {
     ];
     records.forEach((r, i) => {
       const timeStr = r.time || '--:--';
-      const callSign = r.unit.startsWith('MED') ? 'N/A' : (r.callSign || '--');
+      const callSign = (r.unit || '').startsWith('MED') ? 'N/A' : (r.callSign || '--');
       const tenFortyTwo = r.tenFortyTwo || '--:--';
-      lines.push(`${i + 1}\t${r.unit}\t${r.date}\t${timeStr}\t${callSign}\t${tenFortyTwo}`);
+      lines.push(`${i + 1}\t${r.unit || ''}\t${r.date || ''}\t${timeStr}\t${callSign}\t${tenFortyTwo}`);
     });
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       alert("Table copied to clipboard!");
@@ -131,8 +131,8 @@ export default function ToneTestTable() {
         
         // Custom Sort: MEDIC (MED-) first, then ALS-, and both numerically within group
         const sorted = data.sort((a, b) => {
-          const unitA = a.unit.toUpperCase();
-          const unitB = b.unit.toUpperCase();
+          const unitA = (a.unit || '').toUpperCase();
+          const unitB = (b.unit || '').toUpperCase();
           
           const isMedA = unitA.startsWith('MED');
           const isMedB = unitB.startsWith('MED');
@@ -309,7 +309,7 @@ export default function ToneTestTable() {
                   <td className="px-6 py-4 border-r border-white/5">
                     <div className="flex flex-col">
                       <span className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-1 leading-none">Chassis</span>
-                      <span className="text-lg font-black text-white group-hover:text-indigo-400 glow-text-indigo transition-colors tracking-tight">{record.unit}</span>
+                      <span className="text-lg font-black text-white group-hover:text-indigo-400 glow-text-indigo transition-colors tracking-tight">{record.unit || ''}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 border-r border-white/5">
@@ -344,13 +344,13 @@ export default function ToneTestTable() {
                     <input
                       type="text"
                       value={record.callSign}
-                      disabled={!isEditor || record.unit.toUpperCase().startsWith('MED')}
+                      disabled={!isEditor || (record.unit || '').toUpperCase().startsWith('MED')}
                       onChange={(e) => handleFieldUpdate(record.id!, 'callSign', e.target.value)}
                       className={cn(
                         "bg-transparent border-none focus:ring-0 rounded text-xs outline-none w-full font-black tracking-[0.2em] uppercase placeholder:text-slate-800 transition-all",
-                        record.unit.toUpperCase().startsWith('MED') && "opacity-10 cursor-not-allowed"
+                        (record.unit || '').toUpperCase().startsWith('MED') && "opacity-10 cursor-not-allowed"
                       )}
-                      placeholder={record.unit.toUpperCase().startsWith('MED') ? "INACTIVE" : "IDENT_CODE"}
+                      placeholder={(record.unit || '').toUpperCase().startsWith('MED') ? "INACTIVE" : "IDENT_CODE"}
                     />
                   </td>
                   <td className="px-6 py-4 border-r border-white/5">
