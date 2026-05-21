@@ -94,6 +94,12 @@ export function AdminPage() {
   const [globalSettings, setGlobalSettings] = useState<import('../../lib/firebase').GlobalSettings | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   
+  const lastLocalChangeRef = React.useRef<number>(0);
+  const changeThemeOverrides = useCallback((nextVal: import('../../lib/firebase').ThemeOverrides | ((prev: import('../../lib/firebase').ThemeOverrides) => import('../../lib/firebase').ThemeOverrides)) => {
+    lastLocalChangeRef.current = Date.now();
+    setThemeOverrides(nextVal);
+  }, []);
+
   const themeRef = React.useRef(themeOverrides);
   useEffect(() => {
     themeRef.current = themeOverrides;
@@ -158,8 +164,8 @@ export function AdminPage() {
         if (data.sidebarLinks) setSidebarLinks(data.sidebarLinks);
         
         // Only set theme overrides if they are different from current local state 
-        // and we aren't currently saving to prevent bounce-back
-        if (data.themeOverrides && !isSaving) {
+        // and we aren't currently saving or recently editing locally (within last 4 seconds) to prevent bounce-back
+        if (data.themeOverrides && !isSaving && (Date.now() - lastLocalChangeRef.current > 4000)) {
           const currentStr = JSON.stringify(themeRef.current);
           const incomingStr = JSON.stringify(data.themeOverrides);
           if (currentStr !== incomingStr) {
@@ -701,7 +707,7 @@ export function AdminPage() {
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
               onClick={() => {
-                setThemeOverrides({});
+                changeThemeOverrides({});
                 updateGlobalSettings({ themeOverrides: {} });
                 setShowToast("THEME_RESET_COMPLETE");
               }}
@@ -738,7 +744,7 @@ export function AdminPage() {
                         onChange={(e) => {
                           const val = e.target.value;
                           const next = { ...themeOverrides, [item.key]: val };
-                          setThemeOverrides(next);
+                          changeThemeOverrides(next);
                           debouncedThemeUpdate(next);
                         }}
                         className="w-20 h-20 rounded-2xl bg-transparent border-2 border-white/10 cursor-pointer p-0 hover:scale-105 active:scale-95 transition-all shadow-lg overflow-hidden"
@@ -750,7 +756,7 @@ export function AdminPage() {
                           onChange={(e) => {
                             const val = e.target.value;
                             const next = { ...themeOverrides, [item.key]: val };
-                            setThemeOverrides(next);
+                            changeThemeOverrides(next);
                             debouncedThemeUpdate(next);
                           }}
                           placeholder="HEX/RGB"
@@ -760,7 +766,7 @@ export function AdminPage() {
                           onClick={() => {
                             const newTheme = { ...themeOverrides };
                             delete newTheme[item.key as keyof typeof themeOverrides];
-                            setThemeOverrides(newTheme);
+                            changeThemeOverrides(newTheme);
                             handleUpdateSettings({ themeOverrides: newTheme });
                           }}
                           className="text-[8px] font-black text-rose-500 uppercase tracking-widest hover:text-rose-400"
@@ -789,7 +795,7 @@ export function AdminPage() {
                   value={themeOverrides.panelOpacity || 0.5}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    setThemeOverrides(prev => ({ ...prev, panelOpacity: val }));
+                    changeThemeOverrides(prev => ({ ...prev, panelOpacity: val }));
                   }}
                   onMouseUp={() => handleUpdateSettings({ themeOverrides: themeRef.current })}
                   className="w-full h-1.5 bg-black/40 rounded-full appearance-none cursor-pointer accent-indigo-500"
@@ -808,7 +814,7 @@ export function AdminPage() {
                   value={themeOverrides.globalScale || 1}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
-                    setThemeOverrides(prev => ({ ...prev, globalScale: val }));
+                    changeThemeOverrides(prev => ({ ...prev, globalScale: val }));
                   }}
                   onMouseUp={() => handleUpdateSettings({ themeOverrides: themeRef.current })}
                   className="w-full h-1.5 bg-black/40 rounded-full appearance-none cursor-pointer accent-indigo-500"
