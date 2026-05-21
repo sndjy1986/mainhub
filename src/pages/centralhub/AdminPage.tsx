@@ -67,7 +67,8 @@ export function AdminPage() {
     toneTestMode, 
     setToneTestMode,
     logoutTerminalUser,
-    setIsSavingGlobal
+    setIsSavingGlobal,
+    terminalUser
   } = useTerminal();
   const [showToast, setShowToast] = useState<string | null>(null);
 
@@ -86,6 +87,9 @@ export function AdminPage() {
   // Shift Report Config States
   const [user, setUser] = useState(auth.currentUser);
   const [personnel, setPersonnel] = useState<PersonnelMember[]>([]);
+
+  const isTeamLeadOrAdmin = terminalUser?.role === 'admin' || terminalUser?.role === 'root' || terminalUser?.role === 'teamlead' || user?.email === 'sndjy1986@gmail.com';
+  const isOnlyMe = terminalUser?.username === 'sndjy' || terminalUser?.role === 'root' || user?.email === 'sndjy1986@gmail.com';
   const [supervisors, setSupervisors] = useState<Record<string, string>>({});
   const [defaultCameraIds, setDefaultCameraIds] = useState<string[]>([]);
   const [fleetConfigs, setFleetConfigs] = useState<import('../../lib/firebase').UnitConfig[]>([]);
@@ -131,15 +135,27 @@ export function AdminPage() {
   // Terminal User States
   const [terminalUsers, setTerminalUsers] = useState<TerminalUser[]>([]);
   const [showUserModal, setShowUserModal] = useState(false);
-  const [userForm, setUserForm] = useState({ username: '', password: '', role: 'dispatcher' as 'dispatcher' | 'admin' });
+  const [userForm, setUserForm] = useState({ 
+    username: '', 
+    password: '', 
+    role: 'dispatcher' as 'dispatcher' | 'admin',
+    requirePasswordReset: false
+  });
 
   // Personnel Form State
   const [showPersonnelModal, setShowPersonnelModal] = useState(false);
   const [editingPerson, setEditingPerson] = useState<PersonnelMember | null>(null);
-  const [personForm, setPersonForm] = useState<{name: string, shift: 'A' | 'B' | 'C' | 'D' | 'Other', phone: string, certifications: {id: string, name: string, expirationDate: string, required: boolean}[]}>({
+  const [personForm, setPersonForm] = useState<{
+    name: string, 
+    shift: 'A' | 'B' | 'C' | 'D' | 'Other', 
+    phone: string, 
+    username?: string,
+    certifications: {id: string, name: string, expirationDate: string, required: boolean}[]
+  }>({
     name: '',
     shift: 'A',
     phone: '',
+    username: '',
     certifications: []
   });
 
@@ -230,11 +246,12 @@ export function AdminPage() {
         await setDoc(doc(db, 'terminal_users', username), {
           username,
           role: userForm.role,
+          requirePasswordReset: userForm.requirePasswordReset || false,
           createdAt: new Date().toISOString()
         });
 
         setShowUserModal(false);
-        setUserForm({ username: '', password: '', role: 'dispatcher' });
+        setUserForm({ username: '', password: '', role: 'dispatcher', requirePasswordReset: false });
         setShowToast("USER_UPLINK_ESTABLISHED");
       } finally {
         await deleteApp(tempApp);
@@ -252,6 +269,25 @@ export function AdminPage() {
       setShowToast("ACCESS_TERMINATED");
     } catch (err) {
       setShowToast("TERMINATION_FAILED");
+    }
+  };
+
+  const handleDirectPasswordReset = async (username: string) => {
+    const confirm = window.confirm(`Force security password reset for operator node ${username.toUpperCase()} on their next login?`);
+    if (!confirm) return;
+    setIsSaving(true);
+    try {
+      const { doc: firestoreDoc, updateDoc, db: firestoreDb } = await import('../../lib/firebase');
+      await updateDoc(firestoreDoc(firestoreDb, 'terminal_users', username), {
+        requirePasswordReset: true
+      });
+      alert(`Security Protocol Engaged:\n\n${username.toUpperCase()} will be forced to choose a new password immediately upon their next login attempt.`);
+      setShowToast("RESET_FLAG_ENABLED");
+    } catch (err: any) {
+      console.error(err);
+      alert(`Failed to set reset flag: ${err.message}`);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -273,7 +309,7 @@ export function AdminPage() {
     if (user) await handleUpdateSettings({ personnel: newPersonnel });
     setShowPersonnelModal(false);
     setEditingPerson(null);
-    setPersonForm({ name: '', shift: 'A', phone: '', certifications: [] });
+    setPersonForm({ name: '', shift: 'A', phone: '', username: '', certifications: [] });
     setShowToast("Personnel Updated");
   };
 
@@ -578,8 +614,10 @@ export function AdminPage() {
         <div className="flex flex-wrap items-center gap-2 border-b border-white/5 pb-6">
           {[
             { id: 'general', label: 'System & Theme', icon: <Settings className="w-4 h-4" /> },
-            { id: 'fleet', label: 'Fleet Configuration', icon: <Truck className="w-4 h-4" /> },
-            { id: 'personnel', label: 'Personnel & Access', icon: <User className="w-4 h-4" /> },
+            ...(isTeamLeadOrAdmin ? [
+              { id: 'fleet', label: 'Fleet Configuration', icon: <Truck className="w-4 h-4" /> },
+              { id: 'personnel', label: 'Personnel & Access', icon: <User className="w-4 h-4" /> }
+            ] : []),
             { id: 'links', label: 'Nav & Feeds', icon: <Camera className="w-4 h-4" /> },
             { id: 'archive', label: 'Archives', icon: <History className="w-4 h-4" /> },
           ].map(tab => (
@@ -1055,12 +1093,38 @@ export function AdminPage() {
                             ) : (
                               <div className="text-[8px] text-slate-600 font-bold uppercase tracking-widest mt-1">No contact data</div>
                             )}
+
+                            {p.certifications && p.certifications.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-1">
+                                {p.certifications.map(c => (
+                                  <div key={c.id} className="text-[8px] font-mono font-bold text-amber-500 bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/10 uppercase" title={`Exp: ${c.expirationDate}`}>
+                                    {c.name || 'Cert'}- Exp {c.expirationDate ? `${c.expirationDate.split('-')[1] || ''}/${c.expirationDate.split('-')[0].slice(2) || ''}` : 'N/A'}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {p.username && (
+                              <div className="mt-3 border-t border-white/5 pt-2 flex flex-col gap-1">
+                                <div className="text-[9px] font-mono font-black text-indigo-400 uppercase tracking-widest">
+                                  Username = {p.username}
+                                </div>
+                                {isOnlyMe && (
+                                  <button
+                                    onClick={() => handleDirectPasswordReset(p.username!)}
+                                    className="text-[8px] text-indigo-400/60 font-black hover:text-rose-400 hover:underline tracking-widest uppercase transition-colors text-left w-fit"
+                                  >
+                                    • Reset Password
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                           <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button 
                               onClick={() => {
                                 setEditingPerson(p);
-                                setPersonForm({ name: p.name, shift: p.shift, phone: p.phone || '', certifications: p.certifications || [] });
+                                setPersonForm({ name: p.name, shift: p.shift, phone: p.phone || '', username: p.username || '', certifications: p.certifications || [] });
                                 setShowPersonnelModal(true);
                               }}
                               className="p-1.5 text-slate-500 hover:text-indigo-400 transition-colors bg-white/5 rounded-lg"
@@ -1162,109 +1226,113 @@ export function AdminPage() {
         {/* LINKS & FEEDS TAB */}
         {activeTab === 'links' && (
           <div className="space-y-12 animate-in fade-in duration-500">
-          {/* Sidebar Link Management */}
-          <section className="tactical-card p-10 space-y-10 bg-brand-panel/20">
-          <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/5">
-            <div>
-              <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic">
-                <Settings className="w-6 h-6 text-indigo-400" />
-                Sidebar <span className="text-indigo-400 not-italic">Matrix</span>
-              </h3>
-              <p className="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black mt-2">Manage menu navigation and external portals</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => {
-                  setSidebarLinks([]);
-                  updateGlobalSettings({ sidebarLinks: [] });
-                  setShowToast("NAVIGATION_VECTORS_RECALIBRATED");
-                }}
-                className="px-6 py-2 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-rose-500 hover:text-white transition-all"
-              >
-                Reset Navigation
-              </button>
-              <button 
-                onClick={addSidebarLink}
-                className="tactical-btn-indigo px-8 py-3 text-[10px]"
-              >
-                <Plus className="w-4 h-4" />
-                Inject Link
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {(sidebarLinks.length > 0 ? sidebarLinks : [
-              { icon: 'LayoutDashboard', label: 'Start Page', path: '/', external: false, id: 'start' },
-              { icon: 'Activity', label: 'Tone Test', path: '/tone-test', external: false, id: 'tone' },
-              { icon: 'Terminal', label: 'Unit Posting', path: '/unit-posting', external: false, id: 'unit' },
-              { icon: 'MapIcon', label: 'Distance Map', path: '/distance-map', external: false, id: 'dist' },
-              { icon: 'FileText', label: 'Shift Report', path: '/shift-report', external: false, id: 'report' },
-              { icon: 'Camera', label: 'Cameras', path: '/cameras', external: false, id: 'cams' },
-              { icon: 'ClockIcon', label: 'Time Clock', path: '/time-clock', external: false, id: 'clock' },
-              { icon: 'Phone', label: 'Directory', path: '/directory', external: false, id: 'dir' },
-              { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/1Lq3m5KIhkwP7zQZu9RTKlXRO18BPhx1A/view?usp=drive_link', external: true, id: 'coroner' },
-              { icon: 'Table', label: 'Daily Worksheet', path: 'https://docs.google.com/spreadsheets/d/1-4Uwh00g4orCaOQoOrLIcRkamAhdxrBNhVVOt2IEOoY/edit?gid=534085027#gid=534085027', external: true, id: 'worksheet' },
-              { icon: 'CreditCard', label: 'PayCom Online', path: 'https://www.paycomonline.net/v4/ee/web.php/app/login', external: true, id: 'paycom' },
-            ]).map((link) => (
-              <div key={link.id} className="p-6 bg-black/40 border border-white/5 rounded-2xl group hover:border-indigo-500/40 transition-all space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{link.external ? 'EXTERNAL' : 'CORE'}</span>
-                  </div>
+          {isTeamLeadOrAdmin && (
+            <>
+              {/* Sidebar Link Management */}
+              <section className="tactical-card p-10 space-y-10 bg-brand-panel/20">
+              <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/5">
+                <div>
+                  <h3 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4 italic font-sans">
+                    <Settings className="w-6 h-6 text-indigo-400" />
+                    Sidebar <span className="text-indigo-400 not-italic">Matrix</span>
+                  </h3>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-[0.3em] font-black mt-2">Manage menu navigation and external portals</p>
+                </div>
+                <div className="flex items-center gap-4">
                   <button 
-                    onClick={() => removeSidebarLink(link.id)}
-                    className="p-1.5 text-slate-600 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100"
+                    onClick={() => {
+                      setSidebarLinks([]);
+                      updateGlobalSettings({ sidebarLinks: [] });
+                      setShowToast("NAVIGATION_VECTORS_RECALIBRATED");
+                    }}
+                    className="px-6 py-2 bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-rose-500 hover:text-white transition-all"
                   >
-                    <Trash2 size={14} />
+                    Reset Navigation
+                  </button>
+                  <button 
+                    onClick={addSidebarLink}
+                    className="tactical-btn-indigo px-8 py-3 text-[10px]"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Inject Link
                   </button>
                 </div>
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Label</label>
-                    <input 
-                      type="text" 
-                      value={link.label}
-                      onChange={(e) => updateSidebarLink(link.id, { label: e.target.value })}
-                      className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-black uppercase focus:border-indigo-500 outline-none"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Target Path / URL</label>
-                    <input 
-                      type="text" 
-                      value={link.path}
-                      onChange={(e) => updateSidebarLink(link.id, { path: e.target.value })}
-                      className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-mono focus:border-indigo-500 outline-none"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Icon Key</label>
-                      <input 
-                        type="text" 
-                        value={link.icon}
-                        onChange={(e) => updateSidebarLink(link.id, { icon: e.target.value })}
-                        className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-mono focus:border-indigo-500 outline-none"
-                      />
-                    </div>
-                    <div className="flex flex-col justify-end">
-                      <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-white/5 transition-colors">
-                        <input 
-                          type="checkbox" 
-                          checked={link.external}
-                          onChange={(e) => updateSidebarLink(link.id, { external: e.target.checked })}
-                          className="w-3 h-3 accent-indigo-500 rounded bg-black/40 border-white/10"
-                        />
-                        <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">External</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
               </div>
-            ))}
-          </div>
-        </section>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {(sidebarLinks.length > 0 ? sidebarLinks : [
+                  { icon: 'LayoutDashboard', label: 'Start Page', path: '/', external: false, id: 'start' },
+                  { icon: 'Activity', label: 'Tone Test', path: '/tone-test', external: false, id: 'tone' },
+                  { icon: 'Terminal', label: 'Unit Posting', path: '/unit-posting', external: false, id: 'unit' },
+                  { icon: 'MapIcon', label: 'Distance Map', path: '/distance-map', external: false, id: 'dist' },
+                  { icon: 'FileText', label: 'Shift Report', path: '/shift-report', external: false, id: 'report' },
+                  { icon: 'Camera', label: 'Cameras', path: '/cameras', external: false, id: 'cams' },
+                  { icon: 'ClockIcon', label: 'Time Clock', path: '/time-clock', external: false, id: 'clock' },
+                  { icon: 'Phone', label: 'Directory', path: '/directory', external: false, id: 'dir' },
+                  { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/1Lq3m5KIhkwP7zQZu9RTKlXRO18BPhx1A/view?usp=drive_link', external: true, id: 'coroner' },
+                  { icon: 'Table', label: 'Daily Worksheet', path: 'https://docs.google.com/spreadsheets/d/1-4Uwh00g4orCaOQoOrLIcRkamAhdxrBNhVVOt2IEOoY/edit?gid=534085027#gid=534085027', external: true, id: 'worksheet' },
+                  { icon: 'CreditCard', label: 'PayCom Online', path: 'https://www.paycomonline.net/v4/ee/web.php/app/login', external: true, id: 'paycom' },
+                ]).map((link) => (
+                  <div key={link.id} className="p-6 bg-black/40 border border-white/5 rounded-2xl group hover:border-indigo-500/40 transition-all space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{link.external ? 'EXTERNAL' : 'CORE'}</span>
+                      </div>
+                      <button 
+                        onClick={() => removeSidebarLink(link.id)}
+                        className="p-1.5 text-slate-600 hover:text-rose-400 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Label</label>
+                        <input 
+                          type="text" 
+                          value={link.label}
+                          onChange={(e) => updateSidebarLink(link.id, { label: e.target.value })}
+                          className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-black uppercase focus:border-indigo-500 outline-none"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Target Path / URL</label>
+                        <input 
+                          type="text" 
+                          value={link.path}
+                          onChange={(e) => updateSidebarLink(link.id, { path: e.target.value })}
+                          className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-mono focus:border-indigo-500 outline-none"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Icon Key</label>
+                          <input 
+                            type="text" 
+                            value={link.icon}
+                            onChange={(e) => updateSidebarLink(link.id, { icon: e.target.value })}
+                            className="w-full bg-black/40 border border-white/5 rounded-lg px-3 py-2 text-[10px] text-white font-mono focus:border-indigo-500 outline-none"
+                          />
+                        </div>
+                        <div className="flex flex-col justify-end">
+                          <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-white/5 transition-colors">
+                            <input 
+                              type="checkbox" 
+                              checked={link.external}
+                              onChange={(e) => updateSidebarLink(link.id, { external: e.target.checked })}
+                              className="w-3 h-3 accent-indigo-500 rounded bg-black/40 border-white/10"
+                            />
+                            <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">External</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+          )}
 
         {/* Level 4: Orbital Feeds - Full Wide */}
         <section className="tactical-card p-10 space-y-8">
@@ -1442,6 +1510,20 @@ export function AdminPage() {
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-2">Linked Operator Node</label>
+                  <select 
+                    value={personForm.username || ''}
+                    onChange={e => setPersonForm({...personForm, username: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 [color-scheme:dark]"
+                  >
+                    <option value="">-- UNLINKED --</option>
+                    {terminalUsers.map(u => (
+                      <option key={u.username} value={u.username}>{u.username.toUpperCase()} ({u.role})</option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 pl-2">Certifications</label>
@@ -1576,6 +1658,21 @@ export function AdminPage() {
                     ))}
                   </div>
                 </div>
+
+                {isOnlyMe && (
+                  <label className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-white/5 transition-all text-left">
+                    <input 
+                      type="checkbox" 
+                      checked={userForm.requirePasswordReset}
+                      onChange={e => setUserForm({...userForm, requirePasswordReset: e.target.checked})}
+                      className="w-4 h-4 accent-indigo-500 rounded bg-white/5 border-white/10"
+                    />
+                    <div>
+                      <span className="text-[10px] font-black text-slate-400 tracking-wider uppercase block">Force Password Reset</span>
+                      <span className="text-[8px] font-medium text-slate-500 block">Requires user to choose new key on first login</span>
+                    </div>
+                  </label>
+                )}
 
                 <button 
                    onClick={createTerminalUser}

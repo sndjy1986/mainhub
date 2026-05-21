@@ -12,6 +12,14 @@ export function LoginPage() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'error' | 'success'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
+  // First time reset password states
+  const [showResetForm, setShowResetForm] = useState(false);
+  const [resetUsername, setResetUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [resetStatus, setResetStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [resetError, setResetError] = useState('');
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username || !password) return;
@@ -31,7 +39,16 @@ export function LoginPage() {
       const userSnap = await getDoc(userRef);
       
       if (userSnap.exists()) {
-        const role = userSnap.data().role || 'dispatcher';
+        const userData = userSnap.data();
+        const role = userData.role || 'dispatcher';
+
+        if (userData.requirePasswordReset) {
+          setResetUsername(username.toLowerCase().trim());
+          setShowResetForm(true);
+          setStatus('idle');
+          return;
+        }
+
         setStatus('success');
         setTimeout(() => {
           loginTerminalUser(username.toLowerCase().trim(), role);
@@ -54,6 +71,154 @@ export function LoginPage() {
         : 'SYSTEM_ERROR // UPLINK_FAILURE');
     }
   };
+
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || !confirmPassword) return;
+    if (newPassword !== confirmPassword) {
+      setResetError('PASSWORDS_DO_NOT_MATCH');
+      setResetStatus('error');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setResetError('PASSWORD_TOO_SHORT (MIN 6 CHARS)');
+      setResetStatus('error');
+      return;
+    }
+
+    setResetStatus('loading');
+    setResetError('');
+
+    try {
+      const { auth, db } = await import('../../lib/firebase');
+      const { updatePassword } = await import('firebase/auth');
+      const { doc: fDoc, updateDoc } = await import('firebase/firestore');
+
+      if (!auth.currentUser) {
+        throw new Error("No active authenticated session.");
+      }
+
+      await updatePassword(auth.currentUser, newPassword);
+
+      const userRef = fDoc(db, 'terminal_users', resetUsername);
+      await updateDoc(userRef, {
+        requirePasswordReset: false
+      });
+
+      setResetStatus('success');
+      setTimeout(() => {
+        // Log in immediately as dispatcher after password reset completed
+        loginTerminalUser(resetUsername, 'dispatcher');
+      }, 1000);
+    } catch (err: any) {
+      console.error(err);
+      setResetStatus('error');
+      setResetError(err.message || 'PASSWORD_UPDATE_FAILED');
+    }
+  };
+
+  if (showResetForm) {
+    return (
+      <div className="min-h-screen bg-bg-main flex items-center justify-center p-6 relative overflow-hidden transition-colors duration-500">
+        {/* Background Ambience */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(225,29,72,0.05)_0%,transparent_70%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_80%)]" />
+
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-md w-full relative z-10"
+        >
+          <div className="tactical-card p-10 space-y-10 border-rose-500/20 bg-brand-panel/80 backdrop-blur-3xl shadow-[0_0_100px_rgba(225,29,72,0.1)]">
+            {/* Header */}
+            <div className="flex flex-col items-center text-center space-y-6">
+              <div className="w-16 h-16 rounded-[2rem] bg-rose-500/10 border border-rose-500/20 flex items-center justify-center relative group">
+                <div className="absolute inset-0 bg-rose-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Shield className="w-8 h-8 text-rose-500 relative z-10 animate-pulse" />
+              </div>
+              <div className="space-y-2">
+                <h1 className="text-2xl font-black text-text-main uppercase tracking-tighter italic">
+                  Security <span className="text-rose-500 not-italic">Reset Required</span>
+                </h1>
+                <p className="text-[10px] text-text-dim font-black uppercase tracking-[0.4em]">
+                  Credentials update is mandatory for {resetUsername.toUpperCase()}
+                </p>
+              </div>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleResetPasswordSubmit} className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2 group">
+                  <label className="text-[9px] font-black text-text-dim uppercase tracking-widest px-1">New Access Key (Password)</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-rose-500 transition-colors" />
+                    <input 
+                      type="password" 
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="NEW PASSWORD"
+                      className="w-full h-14 bg-white/5 border border-black/5 rounded-2xl px-12 text-text-main font-mono text-sm focus:border-rose-500/50 focus:ring-4 focus:ring-rose-500/10 transition-all outline-none placeholder:text-text-dim/30"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 group">
+                  <label className="text-[9px] font-black text-text-dim uppercase tracking-widest px-1">Confirm Access Key</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-rose-500 transition-colors" />
+                    <input 
+                      type="password" 
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="CONFIRM NEW PASSWORD"
+                      className="w-full h-14 bg-white/5 border border-black/5 rounded-2xl px-12 text-text-main font-mono text-sm focus:border-rose-500/50 focus:ring-4 focus:ring-rose-500/10 transition-all outline-none placeholder:text-text-dim/30"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <AnimatePresence mode="wait">
+                {resetStatus === 'error' && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    className="p-4 rounded-xl bg-rose-500/5 border border-rose-500/20 flex items-center gap-3"
+                  >
+                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                    <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest">{resetError}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <button 
+                type="submit"
+                disabled={resetStatus === 'loading' || resetStatus === 'success'}
+                className={`
+                  w-full h-16 rounded-[2rem] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-4 group relative overflow-hidden
+                  ${resetStatus === 'success' 
+                    ? 'bg-emerald-500 text-white shadow-[0_0_40px_rgba(16,185,129,0.3)]' 
+                    : 'bg-rose-600 hover:bg-rose-500 text-white shadow-[0_0_40px_rgba(225,29,72,0.3)] hover:scale-[1.02] active:scale-95 disabled:opacity-50'}
+                `}
+              >
+                {resetStatus === 'loading' ? (
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                ) : resetStatus === 'success' ? (
+                  <>ACCESS_SECURED <div className="w-2 h-2 rounded-full bg-white animate-ping" /></>
+                ) : (
+                  <>
+                    Update Access Key
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-bg-main flex items-center justify-center p-6 relative overflow-hidden transition-colors duration-500">

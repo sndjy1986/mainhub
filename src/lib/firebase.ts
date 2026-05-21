@@ -96,6 +96,7 @@ export type PersonnelMember = {
   shift: 'A' | 'B' | 'C' | 'D' | 'Other';
   phone?: string;
   email?: string;
+  username?: string;
   certifications?: Certification[];
 };
 

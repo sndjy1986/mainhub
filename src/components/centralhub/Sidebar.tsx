@@ -250,7 +250,7 @@ export function Sidebar() {
           </div>
 
           {/* Links Section */}
-          <div>
+          <div className="pt-6 mt-8 border-t border-white/5">
             <div className="px-4 mb-2 flex items-center gap-2">
               <div className="w-1 h-3 bg-emerald-500 rounded-full" />
               <span className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-400">Portal Links</span>

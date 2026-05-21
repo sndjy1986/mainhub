@@ -9,6 +9,7 @@ import UnitTable from '../components/distancechecker/UnitTable';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, onSnapshot, query, doc } from 'firebase/firestore';
 import { ToneTestRecord } from '../types';
+import { MASTER_POSTS } from '../lib/systemLevels';
 
 import { useTerminal } from '../context/TerminalContext';
 
@@ -78,11 +79,16 @@ export default function DistanceMap() {
         let coords: [number, number] | null = null;
         let addr = config?.address || TRANSPORT_ADDRS[unitId] || "";
 
-        if (assignment) {
-          const post = POST_DATA.find(p => p.name === assignment.postName);
-          if (post) {
-            coords = [post.lon, post.lat];
-            addr = `Posted @ ${post.name}`;
+        if (assignment && globalSettings?.postAssignmentsEnabled !== false) {
+          const masterPost = MASTER_POSTS[assignment.postName] || Object.values(MASTER_POSTS).find(mp => mp.name === assignment.postName);
+          const postLogistics = POST_DATA.find(p => p.name === assignment.postName || (assignment.postName === 'Headquarters' && p.name === 'Headquarters') || (assignment.postName === 'Medshore HQ' && p.name === 'Headquarters'));
+          
+          if (masterPost) {
+            coords = [masterPost.lon, masterPost.lat];
+            addr = masterPost.address;
+          } else if (postLogistics) {
+            coords = [postLogistics.lon, postLogistics.lat];
+            addr = postLogistics.name;
           }
         } else {
           // If NOT assigned, check if we have a valid post name to use for fixed coords
@@ -116,11 +122,16 @@ export default function DistanceMap() {
         let coords: [number, number] | null = null;
         let addr = config?.address || TRANSPORT_ADDRS[unitId] || "";
 
-        if (assignment) {
-          const post = POST_DATA.find(p => p.name === assignment.postName);
-          if (post) {
-            coords = [post.lon, post.lat];
-            addr = `Posted @ ${post.name}`;
+        if (assignment && globalSettings?.postAssignmentsEnabled !== false) {
+          const masterPost = MASTER_POSTS[assignment.postName] || Object.values(MASTER_POSTS).find(mp => mp.name === assignment.postName);
+          const postLogistics = POST_DATA.find(p => p.name === assignment.postName || (assignment.postName === 'Headquarters' && p.name === 'Headquarters') || (assignment.postName === 'Medshore HQ' && p.name === 'Headquarters'));
+          
+          if (masterPost) {
+            coords = [masterPost.lon, masterPost.lat];
+            addr = masterPost.address;
+          } else if (postLogistics) {
+            coords = [postLogistics.lon, postLogistics.lat];
+            addr = postLogistics.name;
           }
         } else {
           const homePostName = config?.homePost || u.home;
@@ -141,7 +152,7 @@ export default function DistanceMap() {
         };
       });
     }
-  }, [toneRecords, assignments, toneTestMode]);
+  }, [toneRecords, assignments, toneTestMode, globalSettings]);
 
   // QRVs are always active for now, or we could filter them too if needed
   const activeQrvUnits = useMemo(() => {

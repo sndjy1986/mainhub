@@ -1,18 +1,24 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { MASTER_POSTS, LEVEL_POSTS } from '../../lib/systemLevels';
 import { db, handleFirestoreError, OperationType } from '../../lib/firebase';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { ToneTestRecord } from '../../types';
 import { Minus, Plus, Navigation, Shield, Radio, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
+import { INITIAL_UNITS } from '../../lib/dispatchConstants';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 export function UnitPosting() {
   const [unitRecords, setUnitRecords] = useState<ToneTestRecord[]>([]);
+  const [globalSettings, setGlobalSettings] = useState<any>(null);
   const [systemLevel, setSystemLevel] = useState(11);
   const [loading, setLoading] = useState(true);
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [unitsList, setUnitsList] = useState<any[]>([]);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; postName: string } | null>(null);
+  
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -23,14 +29,132 @@ export function UnitPosting() {
     const unsubTone = onSnapshot(qTone, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ToneTestRecord));
       setUnitRecords(data);
-      setLoading(false);
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'toneTests');
-      setLoading(false);
     });
 
-    return () => unsubTone();
+    // Listen to unit assignments
+    const unsubAssign = onSnapshot(collection(db, 'unitAssignments'), (snapshot) => {
+      setAssignments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setLoading(false);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'unitAssignments');
+    });
+
+    // Listen to units list
+    const unsubUnits = onSnapshot(collection(db, 'units'), (snapshot) => {
+      setUnitsList(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'units');
+    });
+
+    // Listen to global settings
+    const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), (snapshot) => {
+      if (snapshot.exists()) {
+        setGlobalSettings(snapshot.data());
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'settings/global');
+    });
+
+    return () => {
+      unsubTone();
+      unsubAssign();
+      unsubUnits();
+      unsubSettings();
+    };
   }, []);
+
+  const allUnitIds = useMemo(() => {
+    const ids = new Set<string>();
+    INITIAL_UNITS.forEach(u => ids.add(u.id));
+    unitsList.forEach(u => { if (u.id) ids.add(u.id); });
+    unitRecords.forEach(r => { if (r.unit) ids.add(r.unit); });
+    return Array.from(ids).sort((a, b) => {
+      const numA = parseInt(a.replace(/^\D+/g, ''), 10) || 0;
+      const numB = parseInt(b.replace(/^\D+/g, ''), 10) || 0;
+      if (numA !== numB) return numA - numB;
+      return a.localeCompare(b);
+    });
+  }, [unitsList, unitRecords]);
+
+  const handleContextMenu = (e: React.MouseEvent, postName: string) => {
+    e.preventDefault();
+    const menuWidth = 256;
+    const menuHeight = 350;
+    const x = Math.min(e.clientX, window.innerWidth - menuWidth - 20);
+    const y = Math.min(e.clientY, window.innerHeight - menuHeight - 20);
+    setContextMenu({ x, y, postName });
+  };
+
+  const assignUnitToPost = async (unitId: string, postName: string) => {
+    try {
+      const post = MASTER_POSTS[postName];
+      if (!post) return;
+
+      // Update unit assignments
+      await setDoc(doc(db, 'unitAssignments', unitId.toLowerCase()), {
+        unitId,
+        postName
+      });
+
+      // Update overall unit state as well to sync main console and Map
+      await setDoc(doc(db, 'units', unitId), {
+        id: unitId,
+        pos: { lat: post.lat, lon: post.lon },
+        stagedAt: postName,
+        status: 'READY',
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `unitAssignments/${unitId}`);
+    }
+  };
+
+  const clearPostAssignments = async (postName: string) => {
+    try {
+      const toRemove = assignments.filter(a => a.postName === postName);
+      for (const assign of toRemove) {
+        await deleteDoc(doc(db, 'unitAssignments', assign.unitId.toLowerCase()));
+        await setDoc(doc(db, 'units', assign.unitId), {
+          pos: null,
+          stagedAt: null,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      }
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, `clearPostAssignments`);
+    }
+  };
+
+  const togglePostAssignments = async () => {
+    try {
+      const currentVal = globalSettings?.postAssignmentsEnabled !== false;
+      await setDoc(doc(db, 'settings', 'global'), {
+        postAssignmentsEnabled: !currentVal,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'togglePostAssignments');
+    }
+  };
+
+  const resetAllPostAssignments = async () => {
+    if (!confirm('This will RESET all active tactical post assignments and return all trucks to their home or default positions. Do you want to proceed?')) return;
+    try {
+      for (const assign of assignments) {
+        await deleteDoc(doc(db, 'unitAssignments', assign.unitId.toLowerCase()));
+        await setDoc(doc(db, 'units', assign.unitId), {
+          pos: null,
+          stagedAt: null,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      }
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'resetAllPostAssignments');
+    }
+  };
 
   const currentPosts = useMemo(() => {
     return (LEVEL_POSTS[systemLevel] || []).map(name => ({
@@ -168,6 +292,46 @@ export function UnitPosting() {
           </div>
         </header>
 
+        {/* Post Overrides Tactical Controls */}
+        <section className="bg-slate-900/40 backdrop-blur-2xl px-8 py-6 rounded-[2.5rem] border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-start gap-4">
+            <div className={`p-3 rounded-2xl border transition-all ${globalSettings?.postAssignmentsEnabled !== false ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
+              <Shield size={20} className={globalSettings?.postAssignmentsEnabled !== false ? 'animate-pulse' : ''} />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-white uppercase tracking-widest">Tactical Post-to-Truck Overrides</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                {globalSettings?.postAssignmentsEnabled !== false 
+                  ? "🟢 ON: Distance checker and active maps utilize right-click post addresses for calculations."
+                  : "🔴 OFF: Right-click assignments are bypassed. Units are solved using standard physical addresses."
+                }
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* On/Off Switch */}
+            <button
+              onClick={togglePostAssignments}
+              className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 border ${
+                globalSettings?.postAssignmentsEnabled !== false
+                  ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/20"
+                  : "bg-slate-800 border-white/10 text-slate-400 hover:border-slate-700"
+              }`}
+            >
+              <div>{globalSettings?.postAssignmentsEnabled !== false ? "Disable Overrides" : "Enable Overrides"}</div>
+            </button>
+
+            {/* Reset Button */}
+            <button
+              onClick={resetAllPostAssignments}
+              className="px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500/20 flex items-center gap-2"
+            >
+              Reset Matrix Assignments
+            </button>
+          </div>
+        </section>
+
         {/* Level & Post List - Cascading Matrix */}
         <section className="space-y-16">
           <AnimatePresence mode="wait">
@@ -188,21 +352,54 @@ export function UnitPosting() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {lvl.posts.map((post, i) => (
-                    <motion.div 
-                      key={`${lvl.level}-${post.name}-${i}`}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="tactical-card p-4 flex items-center justify-between group cursor-default"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-500 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 group-hover:border-indigo-500/20 transition-all">
-                          <Shield size={14} />
+                  {lvl.posts.map((post, i) => {
+                    const postAssigns = assignments.filter(a => a.postName === post.name);
+                    return (
+                      <motion.div 
+                        key={`${lvl.level}-${post.name}-${i}`}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        onContextMenu={(e) => handleContextMenu(e, post.name)}
+                        className="tactical-card p-4 flex items-center justify-between group cursor-pointer relative hover:border-indigo-500/50 hover:bg-indigo-500/[0.02] transition-all"
+                        title="Right click to assign a unit"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-500 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 group-hover:border-indigo-500/20 transition-all">
+                            <Shield size={14} />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-black text-slate-300 group-hover:text-white transition-colors uppercase tracking-widest">{post.name}</span>
+                            {post.address && (
+                              <span className="text-[9px] font-semibold text-slate-500 group-hover:text-slate-400 transition-colors uppercase mt-0.5">{post.address}</span>
+                            )}
+                          </div>
                         </div>
-                        <span className="text-xs font-black text-slate-300 group-hover:text-white transition-colors uppercase tracking-widest">{post.name}</span>
-                      </div>
-                    </motion.div>
-                  ))}
+
+                        {/* Active Assignments Indicator */}
+                        {postAssigns.length > 0 && (
+                          <div className="flex items-center gap-1.5 flex-wrap justify-end ml-2 shrink-0">
+                            {postAssigns.map(pa => {
+                              const isActive = globalSettings?.postAssignmentsEnabled !== false;
+                              return (
+                                <div 
+                                  key={pa.unitId} 
+                                  className={cn(
+                                    "px-2 py-0.5 rounded-md font-bold font-mono text-[9px] uppercase tracking-wider transition-all",
+                                    isActive
+                                      ? "bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 animate-pulse"
+                                      : "bg-rose-500/10 border border-rose-500/20 text-rose-400 line-through opacity-50"
+                                  )}
+                                  title={isActive ? "Assignment Active" : "Assignment Inactive (Overrides Disabled)"}
+                                >
+                                  {pa.unitId}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </motion.div>
             ))}
@@ -275,6 +472,79 @@ export function UnitPosting() {
           </div>
         </section>
       </div>
+
+      {/* Dispatch Context Menu Overlay */}
+      {contextMenu && (
+        <div 
+          className="fixed inset-0 z-[5000] bg-black/10"
+          onClick={() => setContextMenu(null)}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            setContextMenu(null);
+          }}
+        >
+          <div 
+            className="absolute bg-slate-900/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_24px_50px_rgba(0,0,0,0.8)] p-3 w-64 text-slate-100 flex flex-col max-h-[380px]"
+            style={{ top: contextMenu.y, left: contextMenu.x }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-3 py-2 border-b border-white/5 shrink-0">
+              <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${globalSettings?.postAssignmentsEnabled !== false ? 'text-indigo-400' : 'text-rose-400'}`}>
+                {globalSettings?.postAssignmentsEnabled !== false ? 'Dispatch Request' : 'Dispatch Bypassed'}
+              </span>
+              <h4 className="text-xs font-black text-white uppercase tracking-widest mt-1 truncate">{contextMenu.postName}</h4>
+              {globalSettings?.postAssignmentsEnabled === false && (
+                <div className="text-[8px] text-rose-400 font-bold mt-1 uppercase tracking-wider">⚠️ OVERRIDES CURRENTLY OFF</div>
+              )}
+            </div>
+            
+            <div className="overflow-y-auto custom-scrollbar flex-1 py-1 pr-1 space-y-0.5 mt-2">
+              {allUnitIds.map((uId) => {
+                const currentAssign = assignments.find(a => a.unitId.toLowerCase() === uId.toLowerCase());
+                const isAtThisPost = currentAssign?.postName === contextMenu.postName;
+                
+                return (
+                  <button
+                    key={uId}
+                    onClick={async () => {
+                      await assignUnitToPost(uId, contextMenu.postName);
+                      setContextMenu(null);
+                    }}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-xl transition-all flex items-center justify-between text-xs font-black uppercase",
+                      isAtThisPost 
+                        ? "bg-indigo-500/10 border border-indigo-500/20 text-indigo-400"
+                        : "hover:bg-white/5 hover:text-white text-slate-300"
+                    )}
+                  >
+                    <span>{uId}</span>
+                    {currentAssign && (
+                      <span className="text-[8px] font-bold text-slate-500 max-w-[120px] truncate">
+                        {isAtThisPost ? "STAGED" : `@ ${currentAssign.postName}`}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {assignments.some(a => a.postName === contextMenu.postName) && (
+              <div className="border-t border-white/5 pt-2 mt-2 shrink-0">
+                <button
+                  onClick={async () => {
+                    await clearPostAssignments(contextMenu.postName);
+                    setContextMenu(null);
+                  }}
+                  className="w-full text-left px-3 py-2 rounded-xl transition-all hover:bg-rose-500/10 text-rose-400 text-xs font-black uppercase flex items-center justify-between"
+                >
+                  <span>Clear Post</span>
+                  <span className="text-[9px] text-rose-400/50">Recall All</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
