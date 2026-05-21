@@ -4,39 +4,10 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
-    function isSuperAdmin() {
-      return isSignedIn() && request.auth.token.email == 'sndjy1986@gmail.com';
-    }
-    function isOperator() {
-      return isSignedIn() && (
-        (request.auth.token.email != null && request.auth.token.email.endsWith('@dispatcher.terminal')) || 
-        isSuperAdmin()
-      );
-    }
-
-    match /users/{userId}/settings/{settingId} {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
-    }
-
-    match /settings/global {
-      allow read, write: if isOperator();
-    }
 
     match /{document=**} {
-      allow read: if isOperator();
-      allow write: if isSuperAdmin();
-    }
-
-    // Operations allowed for all logged-in operators
-    match /units/{unitId} { allow write: if isOperator(); }
-    match /unitAssignments/{assignmentId} { allow write: if isOperator(); }
-    match /shiftReports/{reportId} { allow write: if isOperator(); }
-    match /reports/{reportId} { allow write: if isOperator(); }
-    match /toneTests/{testId} { allow write: if isOperator(); }
-    match /terminal_users/{username} { 
-      allow get: if true; // Support checking existence for login
-      allow list: if isOperator();
-      allow write: if isSuperAdmin();
+      allow read: if true;
+      allow write: if isSignedIn();
     }
   }
 }
