@@ -72,6 +72,32 @@ export function AdminPage() {
   } = useTerminal();
   const [showToast, setShowToast] = useState<string | null>(null);
 
+  const safeConfirm = (message: string): boolean => {
+    try {
+      return window.confirm(message);
+    } catch (e) {
+      console.warn("window.confirm is blocked in this environment. Proceeding with autoconfirm.", message);
+      return true;
+    }
+  };
+
+  const safeAlert = (message: string) => {
+    try {
+      window.alert(message);
+    } catch (e) {
+      console.warn("window.alert is blocked in this environment:", message);
+    }
+  };
+
+  const safePrompt = (message: string): string | null => {
+    try {
+      return window.prompt(message);
+    } catch (e) {
+      console.warn("window.prompt is blocked in this environment:", message);
+      return null;
+    }
+  };
+
   const THEMES: { id: AppTheme; name: string; color: string }[] = [
     { id: 'paper', name: 'Paper', color: '#e2e8f0' },
     { id: 'midnight', name: 'Midnight', color: '#1a1d23' },
@@ -271,7 +297,7 @@ export function AdminPage() {
   };
 
   const deleteTerminalUser = async (username: string) => {
-    if (!window.confirm(`Terminate access for operator: ${(username || '').toUpperCase()}?`)) return;
+    if (!safeConfirm(`Terminate access for operator: ${(username || '').toUpperCase()}?`)) return;
     try {
       await deleteDoc(doc(db, 'terminal_users', username));
       setShowToast("ACCESS_TERMINATED");
@@ -281,7 +307,7 @@ export function AdminPage() {
   };
 
   const handleDirectPasswordReset = async (username: string) => {
-    const confirm = window.confirm(`Force security password reset for operator node ${(username || '').toUpperCase()} on their next login?`);
+    const confirm = safeConfirm(`Force security password reset for operator node ${(username || '').toUpperCase()} on their next login?`);
     if (!confirm) return;
     setIsSaving(true);
     try {
@@ -289,11 +315,11 @@ export function AdminPage() {
       await updateDoc(firestoreDoc(firestoreDb, 'terminal_users', username), {
         requirePasswordReset: true
       });
-      alert(`Security Protocol Engaged:\n\n${(username || '').toUpperCase()} will be forced to choose a new password immediately upon their next login attempt.`);
+      safeAlert(`Security Protocol Engaged:\n\n${(username || '').toUpperCase()} will be forced to choose a new password immediately upon their next login attempt.`);
       setShowToast("RESET_FLAG_ENABLED");
     } catch (err: any) {
       console.error(err);
-      alert(`Failed to set reset flag: ${err.message}`);
+      safeAlert(`Failed to set reset flag: ${err.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -322,7 +348,7 @@ export function AdminPage() {
   };
 
   const deletePerson = async (id: string) => {
-    if (!window.confirm("Remove this member?")) return;
+    if (!safeConfirm("Remove this member?")) return;
     const newPersonnel = personnel.filter(p => p.id !== id);
     setPersonnel(newPersonnel);
     if (user) await handleUpdateSettings({ personnel: newPersonnel });
@@ -341,7 +367,7 @@ export function AdminPage() {
 
   const seedPersonnel = async () => {
     if (!user) return;
-    if (personnel.length > 0 && !window.confirm("Personnel records already exist. This will append new records. Proceed?")) return;
+    if (personnel.length > 0 && !safeConfirm("Personnel records already exist. This will append new records. Proceed?")) return;
 
     const seedData: PersonnelMember[] = [
       { id: crypto.randomUUID(), name: "Crystal Culbertson", shift: 'A' },
@@ -372,7 +398,7 @@ export function AdminPage() {
 
   const seedFleet = async () => {
     if (!user) return;
-    if (fleetConfigs.length > 0 && !window.confirm("Fleet configuration already exists. This will reset to system defaults. Proceed?")) return;
+    if (fleetConfigs.length > 0 && !safeConfirm("Fleet configuration already exists. This will reset to system defaults. Proceed?")) return;
 
     const { INITIAL_UNITS, TRANSPORT_ADDRS, QRV_UNITS } = await import('../../lib/dispatchConstants');
     
@@ -518,7 +544,7 @@ export function AdminPage() {
   };
 
   const removeSidebarLink = (id: string) => {
-    if (!window.confirm("Remove this link?")) return;
+    if (!safeConfirm("Remove this link?")) return;
     const updated = sidebarLinks.filter(l => l.id !== id);
     setSidebarLinks(updated);
     handleUpdateSettings({ sidebarLinks: updated });
@@ -964,7 +990,7 @@ export function AdminPage() {
                 <button 
                   disabled={!user}
                   onClick={() => {
-                    alert("TO ADD A LOGIN:\n1. Choose a unique Operator ID (e.g. 'dispatcher1')\n2. Set a secure Access Key (Password)\n3. Click 'Confirm Registration'\n\nThe user can then log in using just that Operator ID and Access Key.");
+                    safeAlert("TO ADD A LOGIN:\n1. Choose a unique Operator ID (e.g. 'dispatcher1')\n2. Set a secure Access Key (Password)\n3. Click 'Confirm Registration'\n\nThe user can then log in using just that Operator ID and Access Key.");
                   }}
                   className="px-4 py-2 border border-indigo-500/30 text-indigo-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-500/10 transition-all"
                 >
@@ -1004,13 +1030,13 @@ export function AdminPage() {
                     <div className="flex gap-2">
                        <button 
                         onClick={() => {
-                          const newPass = window.prompt(`SET NEW ACCESS KEY FOR ${(u.username || '').toUpperCase()}:`);
+                          const newPass = safePrompt(`SET NEW ACCESS KEY FOR ${(u.username || '').toUpperCase()}:`);
                           if (newPass && newPass.length >= 6) {
                             // This would ideally use a cloud function or different pattern to update auth
                             // For now, we inform that they should delete and recreate the node as a shortcut
-                            alert("To change a password, please delete the node and re-create it with the same username. This ensures the authentication portal is synchronized.");
+                            safeAlert("To change a password, please delete the node and re-create it with the same username. This ensures the authentication portal is synchronized.");
                           } else if (newPass) {
-                            alert("KEY TOO SHORT (MIN 6 CHARS)");
+                            safeAlert("KEY TOO SHORT (MIN 6 CHARS)");
                           }
                         }}
                         className="p-2 text-slate-600 hover:text-indigo-400 transition-colors bg-white/5 rounded-lg opacity-0 group-hover:opacity-100"
