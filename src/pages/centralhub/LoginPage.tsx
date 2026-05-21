@@ -113,7 +113,8 @@ export function LoginPage() {
 
       const userRef = fDoc(db, 'terminal_users', resetUsername);
       await updateDoc(userRef, {
-        requirePasswordReset: false
+        requirePasswordReset: false,
+        password: newPassword
       });
 
       setResetStatus('success');

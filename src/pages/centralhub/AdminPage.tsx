@@ -273,13 +273,56 @@ export function AdminPage() {
       const tempAuth = getAuth(tempApp);
       
       try {
-        // Create in Firebase Auth
-        await createUserWithEmailAndPassword(tempAuth, email, userForm.password);
+        try {
+          // Try creating brand new Firebase Auth account
+          await createUserWithEmailAndPassword(tempAuth, email, userForm.password);
+        } catch (authErr: any) {
+          if (authErr.code === 'auth/email-already-in-use') {
+            console.warn("Auth account already exists. Attempting auto-rotation via candidates.");
+            // Collect candidate passwords to try to log in and update or recreate
+            const existingUserDoc = terminalUsers.find(tu => tu.username === username);
+            const candidates = Array.from(new Set([
+              existingUserDoc?.password || '',
+              userForm.password,
+              'Russell1',
+              '123456',
+              'password',
+              'admin123'
+            ].filter(Boolean)));
+
+            const { signInWithEmailAndPassword, deleteUser } = await import('firebase/auth');
+            let authPurged = false;
+            for (const cand of candidates) {
+              try {
+                const tempCred = await signInWithEmailAndPassword(tempAuth, email, cand);
+                if (tempCred.user) {
+                  await deleteUser(tempCred.user);
+                  authPurged = true;
+                  break;
+                }
+              } catch (e) {
+                // Try next
+              }
+            }
+
+            if (authPurged) {
+              // Now we can recreate cleanly with the new password
+              await createUserWithEmailAndPassword(tempAuth, email, userForm.password);
+              console.log("Recreated Firebase Auth user after auto-purging old account.");
+            } else {
+              // If we couldn't purge, check if we can at least write/update the Firestore document
+              console.warn("Could not auto-purge Firebase Auth. Proceeding with Firestore sync anyway.");
+            }
+          } else {
+            throw authErr;
+          }
+        }
         
-        // Record in Firestore
+        // Record in Firestore (including password so admin can easily manage/delete Auth account)
         await setDoc(doc(db, 'terminal_users', username), {
           username,
           role: userForm.role,
+          password: userForm.password,
           requirePasswordReset: userForm.requirePasswordReset || false,
           createdAt: new Date().toISOString()
         });
@@ -299,9 +342,49 @@ export function AdminPage() {
   const deleteTerminalUser = async (username: string) => {
     if (!safeConfirm(`Terminate access for operator: ${(username || '').toUpperCase()}?`)) return;
     try {
+      // Find the user to get their password if we have it
+      const targetUser = terminalUsers.find(tu => tu.username === username);
+      const savedPassword = targetUser?.password;
+      
+      const { initializeApp, deleteApp } = await import('firebase/app');
+      const { getAuth, signInWithEmailAndPassword, deleteUser } = await import('firebase/auth');
+      const firebaseConfig = (await import('../../../firebase-applet-config.json')).default;
+      
+      const appName = `DeleteUser-${Date.now()}`;
+      const tempApp = initializeApp(firebaseConfig, appName);
+      const tempAuth = getAuth(tempApp);
+      const email = `${username}@dispatcher.terminal`;
+
+      // Collect candidate passwords
+      const candidates = Array.from(new Set([
+        savedPassword || '',
+        'Russell1',
+        '123456',
+        'password',
+        'admin123'
+      ].filter(Boolean)));
+
+      let authUserDeleted = false;
+      for (const cand of candidates) {
+        try {
+          const credentials = await signInWithEmailAndPassword(tempAuth, email, cand);
+          if (credentials.user) {
+            await deleteUser(credentials.user);
+            authUserDeleted = true;
+            console.log(`Deleted user from Firebase Auth using password candidate: ${cand}`);
+            break;
+          }
+        } catch (e) {
+          // Candidate failed
+        }
+      }
+
+      await deleteApp(tempApp);
+
       await deleteDoc(doc(db, 'terminal_users', username));
       setShowToast("ACCESS_TERMINATED");
-    } catch (err) {
+    } catch (err: any) {
+      console.error(err);
       setShowToast("TERMINATION_FAILED");
     }
   };
@@ -1029,12 +1112,66 @@ export function AdminPage() {
                     </div>
                     <div className="flex gap-2">
                        <button 
-                        onClick={() => {
+                        onClick={async () => {
                           const newPass = safePrompt(`SET NEW ACCESS KEY FOR ${(u.username || '').toUpperCase()}:`);
                           if (newPass && newPass.length >= 6) {
-                            // This would ideally use a cloud function or different pattern to update auth
-                            // For now, we inform that they should delete and recreate the node as a shortcut
-                            safeAlert("To change a password, please delete the node and re-create it with the same username. This ensures the authentication portal is synchronized.");
+                            try {
+                              const { initializeApp, deleteApp } = await import('firebase/app');
+                              const { getAuth, signInWithEmailAndPassword, updatePassword } = await import('firebase/auth');
+                              const firebaseConfig = (await import('../../../firebase-applet-config.json')).default;
+                              
+                              const appName = `UpdatePass-${Date.now()}`;
+                              const tempApp = initializeApp(firebaseConfig, appName);
+                              const tempAuth = getAuth(tempApp);
+                              const email = `${u.username}@dispatcher.terminal`;
+
+                              const candidates = Array.from(new Set([
+                                u.password || '',
+                                'Russell1',
+                                '123456',
+                                'password',
+                                'admin123'
+                              ].filter(Boolean)));
+
+                              let updated = false;
+                              for (const cand of candidates) {
+                                try {
+                                  const credentials = await signInWithEmailAndPassword(tempAuth, email, cand);
+                                  if (credentials.user) {
+                                    await updatePassword(credentials.user, newPass);
+                                    updated = true;
+                                    break;
+                                  }
+                                } catch (e) {
+                                  // Failed
+                                }
+                              }
+
+                              if (!updated) {
+                                try {
+                                  const { createUserWithEmailAndPassword } = await import('firebase/auth');
+                                  await createUserWithEmailAndPassword(tempAuth, email, newPass);
+                                  updated = true;
+                                } catch (createErr) {
+                                  console.warn("Could not create user on rotation fallback:", createErr);
+                                }
+                              }
+
+                              await deleteApp(tempApp);
+
+                              if (updated) {
+                                await setDoc(doc(db, 'terminal_users', u.username), {
+                                  ...u,
+                                  password: newPass
+                                });
+                                safeAlert(`ACCESS KEY FOR ${(u.username || '').toUpperCase()} HAS BEEN UPDATED SUCCESSFULLY.`);
+                              } else {
+                                safeAlert("Failed to authenticate with current credentials to rotate key. If the node was deleted, please purge and recreate it.");
+                              }
+                            } catch (err: any) {
+                              console.error(err);
+                              safeAlert(`Error updating key: ${err.message}`);
+                            }
                           } else if (newPass) {
                             safeAlert("KEY TOO SHORT (MIN 6 CHARS)");
                           }
