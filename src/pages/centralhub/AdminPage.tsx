@@ -198,7 +198,15 @@ export function AdminPage() {
   useEffect(() => {
     if (!user) return;
     const unsub = onSnapshot(collection(db, 'terminal_users'), (snap) => {
-      setTerminalUsers(snap.docs.map(d => d.data() as TerminalUser));
+      setTerminalUsers(snap.docs.map(d => {
+        const data = d.data();
+        return {
+          username: data.username || d.id,
+          role: data.role || 'dispatcher',
+          createdAt: data.createdAt || new Date().toISOString(),
+          ...data
+        } as TerminalUser;
+      }));
     });
     return () => unsub();
   }, [user]);
@@ -263,7 +271,7 @@ export function AdminPage() {
   };
 
   const deleteTerminalUser = async (username: string) => {
-    if (!window.confirm(`Terminate access for operator: ${username.toUpperCase()}?`)) return;
+    if (!window.confirm(`Terminate access for operator: ${(username || '').toUpperCase()}?`)) return;
     try {
       await deleteDoc(doc(db, 'terminal_users', username));
       setShowToast("ACCESS_TERMINATED");
@@ -273,7 +281,7 @@ export function AdminPage() {
   };
 
   const handleDirectPasswordReset = async (username: string) => {
-    const confirm = window.confirm(`Force security password reset for operator node ${username.toUpperCase()} on their next login?`);
+    const confirm = window.confirm(`Force security password reset for operator node ${(username || '').toUpperCase()} on their next login?`);
     if (!confirm) return;
     setIsSaving(true);
     try {
@@ -281,7 +289,7 @@ export function AdminPage() {
       await updateDoc(firestoreDoc(firestoreDb, 'terminal_users', username), {
         requirePasswordReset: true
       });
-      alert(`Security Protocol Engaged:\n\n${username.toUpperCase()} will be forced to choose a new password immediately upon their next login attempt.`);
+      alert(`Security Protocol Engaged:\n\n${(username || '').toUpperCase()} will be forced to choose a new password immediately upon their next login attempt.`);
       setShowToast("RESET_FLAG_ENABLED");
     } catch (err: any) {
       console.error(err);
@@ -996,7 +1004,7 @@ export function AdminPage() {
                     <div className="flex gap-2">
                        <button 
                         onClick={() => {
-                          const newPass = window.prompt(`SET NEW ACCESS KEY FOR ${u.username.toUpperCase()}:`);
+                          const newPass = window.prompt(`SET NEW ACCESS KEY FOR ${(u.username || '').toUpperCase()}:`);
                           if (newPass && newPass.length >= 6) {
                             // This would ideally use a cloud function or different pattern to update auth
                             // For now, we inform that they should delete and recreate the node as a shortcut
@@ -1519,7 +1527,7 @@ export function AdminPage() {
                   >
                     <option value="">-- UNLINKED --</option>
                     {terminalUsers.map(u => (
-                      <option key={u.username} value={u.username}>{u.username.toUpperCase()} ({u.role})</option>
+                      <option key={u.username} value={u.username}>{(u.username || '').toUpperCase()} ({(u.role || '').toUpperCase()})</option>
                     ))}
                   </select>
                 </div>
