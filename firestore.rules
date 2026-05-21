@@ -19,8 +19,7 @@ service cloud.firestore {
     }
 
     match /settings/global {
-      allow read: if isOperator();
-      allow write: if isSuperAdmin() || (isSignedIn() && exists(/databases/$(database)/documents/terminal_users/$(request.auth.token.email.replace('@dispatcher.terminal', ''))));
+      allow read, write: if isOperator();
     }
 
     match /{document=**} {
