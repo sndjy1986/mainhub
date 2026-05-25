@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Bell, 
@@ -47,7 +47,11 @@ export default function SendAdminMessage() {
   const [copiedSubject, setCopiedSubject] = useState(false);
   const [copiedBody, setCopiedBody] = useState(false);
   const [copiedBookmarklet, setCopiedBookmarklet] = useState(false);
+  const [copiedClean, setCopiedClean] = useState(false);
   const [activeTab, setActiveTab] = useState<'preview' | 'instructions'>('preview');
+
+  const bookmarkRef = useRef<HTMLAnchorElement>(null);
+  const bookmarkRefPlain = useRef<HTMLAnchorElement>(null);
 
   // Load default operator name
   const currentOperator = terminalUser?.username || firebaseUser?.displayName || 'OPERATOR_1';
@@ -255,7 +259,40 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
     return `javascript:${encodeURIComponent(minimized)}`;
   };
 
-  const copyToClipboard = async (text: string, type: 'subject' | 'body' | 'bookmarklet') => {
+  const getBookmarkletHrefClean = (): string => {
+    const minimized = getRawBookmarkletCode()
+      .replace(/\s+/g, ' ')
+      .trim();
+    return `javascript:${minimized}`;
+  };
+
+  // Synchronize dynamic refs to bypass React's javascript: URL security verification
+  useEffect(() => {
+    if (bookmarkRef.current) {
+      bookmarkRef.current.setAttribute('href', getBookmarkletHref());
+    }
+    if (bookmarkRefPlain.current) {
+      bookmarkRefPlain.current.setAttribute('href', getBookmarkletHrefClean());
+    }
+  }, [
+    selectedType,
+    form.statusLevel,
+    form.employeeName,
+    form.employeeId,
+    form.injuryType,
+    form.injuryLocation,
+    form.supervisorName,
+    form.actionsTaken,
+    form.vehicleUnit,
+    form.accidentLocation,
+    form.crewMembers,
+    form.policeIncident,
+    form.injuriesReported,
+    form.vehicleStatus,
+    form.briefDescription
+  ]);
+
+  const copyToClipboard = async (text: string, type: 'subject' | 'body' | 'bookmarklet' | 'bookmarklet_clean') => {
     try {
       await navigator.clipboard.writeText(text);
       if (type === 'subject') {
@@ -264,6 +301,9 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
       } else if (type === 'body') {
         setCopiedBody(true);
         setTimeout(() => setCopiedBody(false), 2000);
+      } else if (type === 'bookmarklet_clean') {
+        setCopiedClean(true);
+        setTimeout(() => setCopiedClean(false), 2000);
       } else {
         setCopiedBookmarklet(true);
         setTimeout(() => setCopiedBookmarklet(false), 2000);
@@ -666,27 +706,100 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[10px] font-black text-text-main uppercase tracking-widest">ESO Suite Auto-Inject</span>
-                          <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-widest mt-0.5">Dual-Method Launch</span>
+                          <span className="text-[9px] font-semibold text-emerald-400 uppercase tracking-widest mt-0.5">Integration Options</span>
                         </div>
                       </div>
 
-                      <p className="text-[10px] uppercase font-bold text-text-dim leading-relaxed tracking-wider">
-                        Click <strong className="text-emerald-400">"Copy Bookmarklet Address"</strong> below. Then, right-click your browser's bookmarks bar, select <strong className="text-emerald-400">"Add Page" / "Bookmark link"</strong>, name it, and paste this address in. Then click <strong className="text-emerald-400">"Launch Scheduling Portal"</strong> and run it!
-                      </p>
+                      <div className="space-y-4">
+                        <p className="text-[10px] uppercase font-bold text-text-dim leading-relaxed tracking-wider">
+                          Choose any of these options to install the bookmarklet in your browser. All options are formatted with the updated ESO class and input names!
+                        </p>
 
-                      <div className="flex flex-wrap gap-3 pt-1">
-                        {/* Copy Bookmarklet Code Trigger */}
-                        <button
-                          onClick={() => copyToClipboard(getBookmarkletHref(), 'bookmarklet')}
-                          className="px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest bg-emerald-500 text-white border border-emerald-400 hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all flex items-center gap-2 shadow-inner active:scale-95"
-                        >
-                          <Hammer size={12} />
-                          <span>{copiedBookmarklet ? "✅ Copied Address!" : "📋 Copy Bookmarklet Address"}</span>
-                        </button>
+                        {/* Interactive Drag & Drop Area */}
+                        <div className="p-4 bg-black/30 border border-white/5 rounded-xl space-y-3">
+                          <h4 className="text-[9px] font-black uppercase tracking-wider text-emerald-400">Option 1: Drag & Drop directly to your Bookmarks Bar</h4>
+                          <p className="text-[8.5px] uppercase text-text-dim/80 leading-normal">
+                            Make sure your Bookmarks Bar is visible (Ctrl+Shift+B or Cmd+Shift+B). Literally drag either of these buttons directly up to your bookmarks bar!
+                          </p>
+                          <div className="flex flex-wrap gap-2.5 pt-1">
+                            <a
+                              ref={bookmarkRef}
+                              draggable
+                              className="px-4 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white border border-emerald-500/30 hover:shadow-[0_0_12px_rgba(16,185,129,0.3)] transition-all flex items-center gap-1.5 cursor-grab active:cursor-grabbing"
+                              title="Drag this to your bookmarks bar"
+                              onClick={(e) => e.preventDefault()}
+                            >
+                              <Hammer size={11} />
+                              <span>📥 ESO Match (Encoded)</span>
+                            </a>
+                            <a
+                              ref={bookmarkRefPlain}
+                              draggable
+                              className="px-4 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/20 hover:border-emerald-500/40 transition-all flex items-center gap-1.5 cursor-grab active:cursor-grabbing"
+                              title="Drag this to your bookmarks bar"
+                              onClick={(e) => e.preventDefault()}
+                            >
+                              <Hammer size={11} />
+                              <span>📥 ESO Match (Plain-Text)</span>
+                            </a>
+                          </div>
+                        </div>
 
+                        {/* Manual Copy Area */}
+                        <div className="p-4 bg-black/30 border border-white/5 rounded-xl space-y-3">
+                          <h4 className="text-[9px] font-black uppercase tracking-wider text-emerald-400">Option 2: Copy link and create bookmark manually</h4>
+                          <p className="text-[8.5px] uppercase text-text-dim/80 leading-normal">
+                            Right-click your bookmarks bar, select <strong className="text-emerald-400">"Add Page" or "Add Bookmark"</strong>, set the Name to <strong className="text-emerald-400">"ESO Sync"</strong>, and paste either link below into the URL/Address box:
+                          </p>
+
+                          <div className="space-y-2.5 pt-1.5">
+                            {/* Plain text input group */}
+                            <div className="space-y-1">
+                              <span className="text-[8px] font-black uppercase text-text-dim">Standard Address (Plain-Text - Recommended)</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  readOnly
+                                  value={getBookmarkletHrefClean()}
+                                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                                  className="flex-1 bg-black/40 border border-white/5 rounded-md px-3 py-1.5 text-[9px] font-mono text-text-dim/80 focus:outline-none select-all"
+                                />
+                                <button
+                                  onClick={() => copyToClipboard(getBookmarkletHrefClean(), 'bookmarklet_clean')}
+                                  className="px-3 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white rounded-md text-[9px] font-black uppercase tracking-widest border border-emerald-500/20 transition-all active:scale-95 shrink-0"
+                                >
+                                  {copiedClean ? "Copied!" : "Copy"}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Encoded input group */}
+                            <div className="space-y-1">
+                              <span className="text-[8px] font-black uppercase text-text-dim">Encoded Address (URL Encoded - Backup)</span>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  readOnly
+                                  value={getBookmarkletHref()}
+                                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                                  className="flex-1 bg-black/40 border border-white/5 rounded-md px-3 py-1.5 text-[9px] font-mono text-text-dim/80 focus:outline-none select-all"
+                                />
+                                <button
+                                  onClick={() => copyToClipboard(getBookmarkletHref(), 'bookmarklet')}
+                                  className="px-3 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white rounded-md text-[9px] font-black uppercase tracking-widest border border-emerald-500/20 transition-all active:scale-95 shrink-0"
+                                >
+                                  {copiedBookmarklet ? "Copied!" : "Copy"}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-white/5 flex justify-end">
                         <button
                           onClick={handleOpenSuite}
-                          className="px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest bg-black/30 hover:bg-black/50 border border-white/10 hover:border-emerald-500/30 text-text-main hover:text-emerald-400 transition-all active:scale-95 flex items-center gap-2"
+                          className="px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-500 text-emerald-400 transition-all active:scale-95 flex items-center gap-2"
                         >
                           <ExternalLink size={12} className="text-emerald-400" />
                           <span>Launch Scheduling Portal</span>
