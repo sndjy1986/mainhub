@@ -22,10 +22,6 @@ type MessageType = 'status' | 'hurt' | 'accident';
 interface FormState {
   // System Status fields
   statusLevel: '0' | '1' | '2' | '3';
-  affectedSystem: string;
-  impactDetails: string;
-  restorationTime: string;
-  systemLead: string;
 
   // Employee Hurt fields
   employeeName: string;
@@ -59,10 +55,6 @@ export default function SendAdminMessage() {
   // State values
   const [form, setForm] = useState<FormState>({
     statusLevel: '1',
-    affectedSystem: 'CAD Paging & Radios',
-    impactDetails: 'Some paging transmitters are responding with delays. Primary radio channels are fully active.',
-    restorationTime: 'Within 2 hours - vendor dispatched',
-    systemLead: currentOperator,
 
     employeeName: 'Officer Miller',
     employeeId: 'EMP-3841',
@@ -141,92 +133,81 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
 
       let filledCount = 0;
 
-      // 1. SELECT MESSAGE GROUP DROPDOWN (Anderson ALERTS or Medshore)
-      const dropdowns = Array.from(document.querySelectorAll('select'));
-      let msgGroupSelected = false;
-      for (const sel of dropdowns) {
-        for (let i = 0; i < sel.options.length; i++) {
-          const optText = sel.options[i].text.toLowerCase();
-          if (optText.includes('alerts') || optText.includes('anderson') || optText.includes('medshore')) {
-            sel.selectedIndex = i;
-            sel.dispatchEvent(new Event('change', { bubbles: true }));
-            msgGroupSelected = true;
-            filledCount++;
+      // 1. SELECT MESSAGE GROUP DROPDOWN (Medshore - Anderson ALERTS preferred)
+      const groupSelect = document.querySelector('select[name="MessageGroup"]');
+      if (groupSelect) {
+        let valueToSelect = "";
+        for (let i = 0; i < groupSelect.options.length; i++) {
+          const optText = groupSelect.options[i].text.toLowerCase();
+          if (optText.includes('anderson') && optText.includes('alerts')) {
+            valueToSelect = groupSelect.options[i].value;
             break;
           }
         }
-        if (msgGroupSelected) break;
+        if (!valueToSelect) {
+          for (let i = 0; i < groupSelect.options.length; i++) {
+            const optText = groupSelect.options[i].text.toLowerCase();
+            if (optText.includes('alerts') || optText.includes('alert') || optText.includes('medshore')) {
+              valueToSelect = groupSelect.options[i].value;
+              break;
+            }
+          }
+        }
+        if (valueToSelect) {
+          groupSelect.value = valueToSelect;
+          groupSelect.dispatchEvent(new Event('change', { bubbles: true }));
+          if (typeof window.EmployeeListChange === 'function') {
+            try { window.EmployeeListChange(); } catch(e){}
+          }
+          filledCount++;
+        }
       }
 
-      // 2. REGISTERED / REQUIRED TO ACKNOWLEDGE RADIO BUTTONS ("Yes")
-      const labels = Array.from(document.querySelectorAll('label'));
-      let radioClicked = false;
-      labels.forEach(lbl => {
-        if (lbl.innerText.trim().toLowerCase() === 'yes') {
-          const forId = lbl.getAttribute('for');
-          let radio = null;
-          if (forId) {
-            radio = document.getElementById(forId);
-          }
-          if (!radio) {
-            radio = lbl.querySelector('input[type="radio"]') || lbl.previousElementSibling;
-          }
-          if (radio && radio.type === 'radio') {
-            radio.checked = true;
-            radio.dispatchEvent(new Event('change', { bubbles: true }));
-            radioClicked = true;
-          }
+      // 2. REGISTERED RADIO BUTTONS ("Yes" value="1")
+      const regYesRadio = document.querySelector('input[name="Registered"][value="1"]');
+      if (regYesRadio) {
+        regYesRadio.checked = true;
+        regYesRadio.dispatchEvent(new Event('click', { bubbles: true }));
+        regYesRadio.dispatchEvent(new Event('change', { bubbles: true }));
+        if (typeof window.ChangeRequired === 'function') {
+          try { window.ChangeRequired('Enable'); } catch(e){}
         }
-      });
+        filledCount++;
+      }
 
-      // Backup radio pass by ID or value
-      const radios = Array.from(document.querySelectorAll('input[type="radio"]'));
-      radios.forEach(radio => {
-        const id = (radio.id || '').toLowerCase();
-        const value = (radio.value || '').toLowerCase();
-        if (id.includes('yes') || value === 'yes' || id.endsWith('_0')) {
-          if (!radio.checked) {
-            radio.checked = true;
-            radio.dispatchEvent(new Event('change', { bubbles: true }));
-            radioClicked = true;
-          }
+      // 3. REQUIRED TO ACKNOWLEDGE RADIO BUTTONS ("Yes" value="1")
+      const reqYesRadio = document.querySelector('input[name="Required"][value="1"]');
+      if (reqYesRadio) {
+        reqYesRadio.removeAttribute('disabled');
+        reqYesRadio.disabled = false;
+        reqYesRadio.checked = true;
+        reqYesRadio.dispatchEvent(new Event('click', { bubbles: true }));
+        reqYesRadio.dispatchEvent(new Event('change', { bubbles: true }));
+        filledCount++;
+      }
+
+      // 4. CHECKBOX "Send By Checkboxes (Email & Text Page)"
+      const emailCheckbox = document.querySelector('input[name="SendByEMail"]');
+      if (emailCheckbox && !emailCheckbox.checked) {
+        emailCheckbox.checked = true;
+        emailCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+        filledCount++;
+      }
+
+      const textCheckbox = document.getElementById('SendByText') || document.querySelector('input[name="SendByText"]');
+      if (textCheckbox) {
+        if (!textCheckbox.checked) {
+          textCheckbox.checked = true;
+          textCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
         }
-      });
-      if (radioClicked) filledCount++;
-
-      // 3. CHECKBOXES FOR "Send By: Email" AND "Send By: Text Page"
-      const checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"]'));
-      let cbCheckedCount = 0;
-      checkboxes.forEach(cb => {
-        const parent = cb.parentElement;
-        const parentText = parent ? parent.innerText || '' : '';
-        const id = (cb.id || '').toLowerCase();
-        const labelText = parentText.toLowerCase();
-
-        // Avoid touching "Include Quarantined Employees?"
-        if (labelText.includes('quarantined') || id.includes('quarantine')) {
-          return;
+        if (typeof window.TextCheck === 'function') {
+          try { window.TextCheck(); } catch(e){}
         }
+        filledCount++;
+      }
 
-        if (labelText.includes('email') || labelText.includes('text page') || labelText.includes('textpage') || id.includes('email') || id.includes('text') || id.includes('sms')) {
-          if (!cb.checked) {
-            cb.checked = true;
-            cb.dispatchEvent(new Event('change', { bubbles: true }));
-            cbCheckedCount++;
-          }
-        }
-      });
-      if (cbCheckedCount > 0) filledCount++;
-
-      // 4. FIND AND FILL SUBJECT
-      const subjectInput = document.getElementById('txtSubject') || 
-                           document.querySelector('input[name*="Subject"]') || 
-                           document.querySelector('input[id*="Subject"]') ||
-                           Array.from(document.querySelectorAll('input')).find(input => {
-                             const name = (input.name || '').toLowerCase();
-                             const id = (input.id || '').toLowerCase();
-                             return name.includes('subject') || id.includes('subject');
-                           });
+      // 5. FILL SUBJECT (named "Title" in ESO Suite)
+      const subjectInput = document.querySelector('input[name="Title"]');
       if (subjectInput) {
         subjectInput.value = subVal;
         subjectInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -234,41 +215,36 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
         filledCount++;
       }
 
-      // 5. FIND AND FILL BOTH TEXT AREAS (Message Center & Pagers)
-      const textareas = Array.from(document.querySelectorAll('textarea'));
-      let textareaFilled = 0;
-      if (textareas.length >= 2) {
-        textareas[0].value = bdyVal;
-        textareas[0].dispatchEvent(new Event('input', { bubbles: true }));
-        textareas[0].dispatchEvent(new Event('change', { bubbles: true }));
-
-        textareas[1].value = bdyVal;
-        textareas[1].dispatchEvent(new Event('input', { bubbles: true }));
-        textareas[1].dispatchEvent(new Event('change', { bubbles: true }));
-        textareaFilled = 2;
-        filledCount += 2;
-      } else if (textareas.length === 1) {
-        textareas[0].value = bdyVal;
-        textareas[0].dispatchEvent(new Event('input', { bubbles: true }));
-        textareas[0].dispatchEvent(new Event('change', { bubbles: true }));
-        textareaFilled = 1;
-        filledCount++;
-      } else {
-        const msgInput = document.getElementById('txtMessage') || document.getElementById('txtBody');
-        if (msgInput) {
-          msgInput.value = bdyVal;
-          msgInput.dispatchEvent(new Event('input', { bubbles: true }));
-          msgInput.dispatchEvent(new Event('change', { bubbles: true }));
-          textareaFilled = 1;
+      // 6. FILL TEXTAREAS ("Message" and "Message2" for Pagers)
+      setTimeout(function() {
+        const msgTextarea = document.getElementById('Message') || document.querySelector('textarea[name="Message"]');
+        if (msgTextarea) {
+          msgTextarea.value = bdyVal;
+          msgTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+          msgTextarea.dispatchEvent(new Event('change', { bubbles: true }));
           filledCount++;
         }
-      }
 
-      if (filledCount > 0) {
-        alert("Magic Auto-fill Completed! Set dropdowns, checked options, and populated subject + " + textareaFilled + " text fields.");
-      } else {
-        alert("Connected to page, but couldn't locate fields to inject.");
-      }
+        const msg2Textarea = document.getElementById('Message2') || document.querySelector('textarea[name="Message2"]');
+        if (msg2Textarea) {
+          msg2Textarea.removeAttribute('disabled');
+          msg2Textarea.disabled = false;
+          msg2Textarea.value = bdyVal;
+          msg2Textarea.dispatchEvent(new Event('input', { bubbles: true }));
+          msg2Textarea.dispatchEvent(new Event('change', { bubbles: true }));
+          if (typeof window.ValidTextCheck === 'function') {
+            try { window.ValidTextCheck(); } catch(e){}
+          }
+          filledCount++;
+        }
+
+        if (filledCount > 0) {
+          alert("⚡ Auto-fill Completed! Form entries successfully populated based on target specifications.");
+        } else {
+          alert("Connected, but could not locate standard inputs on this page to inject.");
+        }
+      }, 150);
+
     })();`;
   };
 
