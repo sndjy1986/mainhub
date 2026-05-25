@@ -128,158 +128,107 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
 
   // Generate Bookmarklet JavaScript Code
   const getRawBookmarkletCode = (): string => {
-    const subjVal = getSubject().replace(/"/g, '\\"').replace(/\n/g, '\\n');
-    const bodyVal = getBody().replace(/"/g, '\\"').replace(/\n/g, '\\n');
+    const subjValJson = JSON.stringify(getSubject());
+    const bodyValJson = JSON.stringify(getBody());
 
     return `(function(){
-      const subVal = "${subjVal}";
-      const bdyVal = "${bodyVal}";
+      var subVal = ${subjValJson};
+      var bdyVal = ${bodyValJson};
+      var count = 0;
 
-      let filledCount = 0;
-
-      // Recursive lookup helper to search frames/iframes
-      function findEl(selector) {
-        function search(doc) {
-          if (!doc) return null;
-          try {
-            const el = doc.querySelector(selector);
-            if (el) return el;
-          } catch(e) {}
-          try {
-            const frames = doc.querySelectorAll('iframe, frame');
-            for (let i = 0; i < frames.length; i++) {
-              try {
-                const subDoc = frames[i].contentDocument || frames[i].contentWindow.document;
-                const el = search(subDoc);
-                if (el) return el;
-              } catch(e) {}
-            }
-          } catch(e) {}
-          return null;
-        }
-        return search(document);
-      }
-
-      // 1. SELECT MESSAGE GROUP DROPDOWN (Medshore - Anderson ALERTS preferred)
-      const groupSelect = findEl('select[name="MessageGroup"]');
-      if (groupSelect) {
-        let valueToSelect = "";
-        for (let i = 0; i < groupSelect.options.length; i++) {
-          const optText = groupSelect.options[i].text.toLowerCase();
-          if (optText.includes('anderson') && optText.includes('alerts')) {
-            valueToSelect = groupSelect.options[i].value;
-            break;
-          }
-        }
-        if (!valueToSelect) {
-          for (let i = 0; i < groupSelect.options.length; i++) {
-            const optText = groupSelect.options[i].text.toLowerCase();
-            if (optText.includes('alerts') || optText.includes('alert') || optText.includes('medshore')) {
-              valueToSelect = groupSelect.options[i].value;
-              break;
-            }
-          }
-        }
-        if (valueToSelect) {
-          groupSelect.value = valueToSelect;
-          groupSelect.dispatchEvent(new Event('change', { bubbles: true }));
-          const frameWin = groupSelect.ownerDocument.defaultView;
-          if (frameWin && typeof frameWin.EmployeeListChange === 'function') {
-            try { frameWin.EmployeeListChange(); } catch(e){}
-          }
-          filledCount++;
-        }
-      }
-
-      // 2. REGISTERED RADIO BUTTONS ("Yes" value="1")
-      const regYesRadio = findEl('input[name="Registered"][value="1"]');
-      if (regYesRadio) {
-        regYesRadio.checked = true;
-        regYesRadio.click();
-        regYesRadio.dispatchEvent(new Event('change', { bubbles: true }));
-        const frameWin = regYesRadio.ownerDocument.defaultView;
-        if (frameWin && typeof frameWin.ChangeRequired === 'function') {
-          try { frameWin.ChangeRequired('Enable'); } catch(e){}
-        }
-        filledCount++;
-      }
-
-      // 3. REQUIRED TO ACKNOWLEDGE RADIO BUTTONS ("Yes" value="1")
-      const reqYesRadio = findEl('input[name="Required"][value="1"]');
-      if (reqYesRadio) {
-        reqYesRadio.removeAttribute('disabled');
-        reqYesRadio.disabled = false;
-        reqYesRadio.checked = true;
-        reqYesRadio.click();
-        reqYesRadio.dispatchEvent(new Event('change', { bubbles: true }));
-        filledCount++;
-      }
-
-      // 4. CHECKBOX "Send By Checkboxes (Email & Text Page)"
-      const emailCheckbox = findEl('input[name="SendByEMail"]');
-      if (emailCheckbox) {
-        if (!emailCheckbox.checked) {
-          emailCheckbox.checked = true;
-          emailCheckbox.click();
-          emailCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-        filledCount++;
-      }
-
-      const textCheckbox = findEl('#SendByText') || findEl('input[name="SendByText"]');
-      if (textCheckbox) {
-        if (!textCheckbox.checked) {
-          textCheckbox.checked = true;
-          textCheckbox.click();
-          textCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-        const frameWin = textCheckbox.ownerDocument.defaultView;
-        if (frameWin && typeof frameWin.TextCheck === 'function') {
-          try { frameWin.TextCheck(); } catch(e){}
-        }
-        filledCount++;
-      }
-
-      // 5. FILL SUBJECT (named "Title" in ESO Suite)
-      const subjectInput = findEl('input[name="Title"]');
-      if (subjectInput) {
-        subjectInput.value = subVal;
-        subjectInput.dispatchEvent(new Event('input', { bubbles: true }));
-        subjectInput.dispatchEvent(new Event('change', { bubbles: true }));
-        filledCount++;
-      }
-
-      // 6. FILL TEXTAREAS ("Message" and "Message2" for Pagers)
-      setTimeout(function() {
-        const msgTextarea = findEl('#Message') || findEl('textarea[name="Message"]');
-        if (msgTextarea) {
-          msgTextarea.value = bdyVal;
-          msgTextarea.dispatchEvent(new Event('input', { bubbles: true }));
-          msgTextarea.dispatchEvent(new Event('change', { bubbles: true }));
-          filledCount++;
-        }
-
-        const msg2Textarea = findEl('#Message2') || findEl('textarea[name="Message2"]');
-        if (msg2Textarea) {
-          msg2Textarea.removeAttribute('disabled');
-          msg2Textarea.disabled = false;
-          msg2Textarea.value = bdyVal;
-          msg2Textarea.dispatchEvent(new Event('input', { bubbles: true }));
-          msg2Textarea.dispatchEvent(new Event('change', { bubbles: true }));
-          const frameWin = msg2Textarea.ownerDocument.defaultView;
-          if (frameWin && typeof frameWin.ValidTextCheck === 'function') {
-            try { frameWin.ValidTextCheck(); } catch(e){}
-          }
-          filledCount++;
-        }
-
-        if (filledCount > 0) {
-          alert("⚡ Auto-fill Completed! Form entries successfully populated based on target specifications.");
+      // 1. MessageGroup dropdown
+      var mg = document.getElementsByName('MessageGroup')[0];
+      if (mg) {
+        mg.value = '74';
+        if (typeof EmployeeListChange === 'function') {
+          try { EmployeeListChange(); } catch(e){}
         } else {
-          alert("Connected, but could not locate standard inputs on this page to inject.");
+          mg.dispatchEvent(new Event('change', { bubbles: true }));
         }
-      }, 150);
+        count++;
+      }
 
+      // 2. Registered Yes radio
+      var reg = document.getElementsByName('Registered')[0];
+      if (reg) {
+        reg.checked = true;
+        if (typeof ChangeRequired === 'function') {
+          try { ChangeRequired('Enable'); } catch(e){}
+        } else {
+          reg.click();
+          reg.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        count++;
+      }
+
+      // 3. Required Yes radio
+      var req = document.getElementsByName('Required')[0];
+      if (req) {
+        req.removeAttribute('disabled');
+        req.disabled = false;
+        req.checked = true;
+        req.click();
+        req.dispatchEvent(new Event('change', { bubbles: true }));
+        count++;
+      }
+
+      // 4. SendByEMail checkbox
+      var email = document.getElementsByName('SendByEMail')[0];
+      if (email) {
+        email.checked = true;
+        email.dispatchEvent(new Event('change', { bubbles: true }));
+        count++;
+      }
+
+      // 5. SendByText checkbox
+      var text = document.getElementById('SendByText') || document.getElementsByName('SendByText')[0];
+      if (text) {
+        text.checked = true;
+        if (typeof TextCheck === 'function') {
+          try { TextCheck(); } catch(e){}
+        } else {
+          text.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        count++;
+      }
+
+      // 6. Title / Subject Box
+      var title = document.getElementsByName('Title')[0];
+      if (title) {
+        title.value = subVal;
+        title.dispatchEvent(new Event('input', { bubbles: true }));
+        title.dispatchEvent(new Event('change', { bubbles: true }));
+        count++;
+      }
+
+      // 7. Message textarea
+      var msg = document.getElementById('Message') || document.getElementsByName('Message')[0];
+      if (msg) {
+        msg.value = bdyVal;
+        msg.dispatchEvent(new Event('input', { bubbles: true }));
+        msg.dispatchEvent(new Event('change', { bubbles: true }));
+        count++;
+      }
+
+      // 8. Message2 textarea (SMS/Pagers)
+      var msg2 = document.getElementById('Message2') || document.getElementsByName('Message2')[0];
+      if (msg2) {
+        msg2.removeAttribute('disabled');
+        msg2.disabled = false;
+        msg2.value = bdyVal;
+        msg2.dispatchEvent(new Event('input', { bubbles: true }));
+        msg2.dispatchEvent(new Event('change', { bubbles: true }));
+        if (typeof ValidTextCheck === 'function') {
+          try { ValidTextCheck(); } catch(e){}
+        }
+        count++;
+      }
+
+      if (count > 0) {
+        alert("⚡ ESO Auto-Fill Successful! Populated " + count + " field inputs.");
+      } else {
+        alert("❌ Could not find standard ESO message input fields.");
+      }
     })();`;
   };
 
