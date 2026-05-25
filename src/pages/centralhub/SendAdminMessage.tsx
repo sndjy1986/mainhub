@@ -137,8 +137,31 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
 
       let filledCount = 0;
 
+      // Recursive lookup helper to search frames/iframes
+      function findEl(selector) {
+        function search(doc) {
+          if (!doc) return null;
+          try {
+            const el = doc.querySelector(selector);
+            if (el) return el;
+          } catch(e) {}
+          try {
+            const frames = doc.querySelectorAll('iframe, frame');
+            for (let i = 0; i < frames.length; i++) {
+              try {
+                const subDoc = frames[i].contentDocument || frames[i].contentWindow.document;
+                const el = search(subDoc);
+                if (el) return el;
+              } catch(e) {}
+            }
+          } catch(e) {}
+          return null;
+        }
+        return search(document);
+      }
+
       // 1. SELECT MESSAGE GROUP DROPDOWN (Medshore - Anderson ALERTS preferred)
-      const groupSelect = document.querySelector('select[name="MessageGroup"]');
+      const groupSelect = findEl('select[name="MessageGroup"]');
       if (groupSelect) {
         let valueToSelect = "";
         for (let i = 0; i < groupSelect.options.length; i++) {
@@ -160,58 +183,65 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
         if (valueToSelect) {
           groupSelect.value = valueToSelect;
           groupSelect.dispatchEvent(new Event('change', { bubbles: true }));
-          if (typeof window.EmployeeListChange === 'function') {
-            try { window.EmployeeListChange(); } catch(e){}
+          const frameWin = groupSelect.ownerDocument.defaultView;
+          if (frameWin && typeof frameWin.EmployeeListChange === 'function') {
+            try { frameWin.EmployeeListChange(); } catch(e){}
           }
           filledCount++;
         }
       }
 
       // 2. REGISTERED RADIO BUTTONS ("Yes" value="1")
-      const regYesRadio = document.querySelector('input[name="Registered"][value="1"]');
+      const regYesRadio = findEl('input[name="Registered"][value="1"]');
       if (regYesRadio) {
         regYesRadio.checked = true;
-        regYesRadio.dispatchEvent(new Event('click', { bubbles: true }));
+        regYesRadio.click();
         regYesRadio.dispatchEvent(new Event('change', { bubbles: true }));
-        if (typeof window.ChangeRequired === 'function') {
-          try { window.ChangeRequired('Enable'); } catch(e){}
+        const frameWin = regYesRadio.ownerDocument.defaultView;
+        if (frameWin && typeof frameWin.ChangeRequired === 'function') {
+          try { frameWin.ChangeRequired('Enable'); } catch(e){}
         }
         filledCount++;
       }
 
       // 3. REQUIRED TO ACKNOWLEDGE RADIO BUTTONS ("Yes" value="1")
-      const reqYesRadio = document.querySelector('input[name="Required"][value="1"]');
+      const reqYesRadio = findEl('input[name="Required"][value="1"]');
       if (reqYesRadio) {
         reqYesRadio.removeAttribute('disabled');
         reqYesRadio.disabled = false;
         reqYesRadio.checked = true;
-        reqYesRadio.dispatchEvent(new Event('click', { bubbles: true }));
+        reqYesRadio.click();
         reqYesRadio.dispatchEvent(new Event('change', { bubbles: true }));
         filledCount++;
       }
 
       // 4. CHECKBOX "Send By Checkboxes (Email & Text Page)"
-      const emailCheckbox = document.querySelector('input[name="SendByEMail"]');
-      if (emailCheckbox && !emailCheckbox.checked) {
-        emailCheckbox.checked = true;
-        emailCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+      const emailCheckbox = findEl('input[name="SendByEMail"]');
+      if (emailCheckbox) {
+        if (!emailCheckbox.checked) {
+          emailCheckbox.checked = true;
+          emailCheckbox.click();
+          emailCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+        }
         filledCount++;
       }
 
-      const textCheckbox = document.getElementById('SendByText') || document.querySelector('input[name="SendByText"]');
+      const textCheckbox = findEl('#SendByText') || findEl('input[name="SendByText"]');
       if (textCheckbox) {
         if (!textCheckbox.checked) {
           textCheckbox.checked = true;
+          textCheckbox.click();
           textCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
         }
-        if (typeof window.TextCheck === 'function') {
-          try { window.TextCheck(); } catch(e){}
+        const frameWin = textCheckbox.ownerDocument.defaultView;
+        if (frameWin && typeof frameWin.TextCheck === 'function') {
+          try { frameWin.TextCheck(); } catch(e){}
         }
         filledCount++;
       }
 
       // 5. FILL SUBJECT (named "Title" in ESO Suite)
-      const subjectInput = document.querySelector('input[name="Title"]');
+      const subjectInput = findEl('input[name="Title"]');
       if (subjectInput) {
         subjectInput.value = subVal;
         subjectInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -221,7 +251,7 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
 
       // 6. FILL TEXTAREAS ("Message" and "Message2" for Pagers)
       setTimeout(function() {
-        const msgTextarea = document.getElementById('Message') || document.querySelector('textarea[name="Message"]');
+        const msgTextarea = findEl('#Message') || findEl('textarea[name="Message"]');
         if (msgTextarea) {
           msgTextarea.value = bdyVal;
           msgTextarea.dispatchEvent(new Event('input', { bubbles: true }));
@@ -229,15 +259,16 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
           filledCount++;
         }
 
-        const msg2Textarea = document.getElementById('Message2') || document.querySelector('textarea[name="Message2"]');
+        const msg2Textarea = findEl('#Message2') || findEl('textarea[name="Message2"]');
         if (msg2Textarea) {
           msg2Textarea.removeAttribute('disabled');
           msg2Textarea.disabled = false;
           msg2Textarea.value = bdyVal;
           msg2Textarea.dispatchEvent(new Event('input', { bubbles: true }));
           msg2Textarea.dispatchEvent(new Event('change', { bubbles: true }));
-          if (typeof window.ValidTextCheck === 'function') {
-            try { window.ValidTextCheck(); } catch(e){}
+          const frameWin = msg2Textarea.ownerDocument.defaultView;
+          if (frameWin && typeof frameWin.ValidTextCheck === 'function') {
+            try { frameWin.ValidTextCheck(); } catch(e){}
           }
           filledCount++;
         }
