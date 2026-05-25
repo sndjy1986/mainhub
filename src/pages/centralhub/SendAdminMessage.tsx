@@ -52,7 +52,6 @@ export default function SendAdminMessage() {
   const [copiedBody, setCopiedBody] = useState(false);
   const [copiedBookmarklet, setCopiedBookmarklet] = useState(false);
   const [activeTab, setActiveTab] = useState<'preview' | 'instructions'>('preview');
-  const [includeTechDetails, setIncludeTechDetails] = useState(false);
 
   // Load default operator name
   const currentOperator = terminalUser?.username || firebaseUser?.displayName || 'OPERATOR_1';
@@ -101,16 +100,6 @@ export default function SendAdminMessage() {
     const timestamp = new Date().toLocaleString();
     switch (selectedType) {
       case 'status':
-        if (includeTechDetails) {
-          return `=== EMERGENCY DISPATCH SYSTEM UPDATE ===
-TIMESTAMP: ${timestamp}
-STATUS LEVEL: Level ${form.statusLevel}
-AFFECTED SYSTEM: ${form.affectedSystem}
-IMPACT DETAILS: ${form.impactDetails}
-ESTIMATED RESOLUTION: ${form.restorationTime}
-REPORTED BY: ${form.systemLead.toUpperCase()}
-========================================`;
-        }
         return `System Status Level ${form.statusLevel}.
 
 Thanks,
@@ -418,63 +407,6 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
                         );
                       })}
                     </div>
-
-                    {/* Tech Details Toggle */}
-                    <div className="flex items-center justify-between p-3.5 bg-white/5 border border-white/10 rounded-xl">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-text-main">Detailed System Stats</span>
-                        <span className="text-[8px] font-semibold text-text-dim uppercase mt-0.5">Toggle full table block vs. brief alert</span>
-                      </div>
-                      <input
-                        type="checkbox"
-                        checked={includeTechDetails}
-                        onChange={(e) => setIncludeTechDetails(e.target.checked)}
-                        className="w-4 h-4 accent-emerald-500 rounded cursor-pointer"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Affected System(s)</label>
-                    <input
-                      type="text"
-                      value={form.affectedSystem}
-                      onChange={(e) => handleFieldChange('affectedSystem', e.target.value)}
-                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
-                      placeholder="e.g. CAD, Secondary Radio channel, Workstations"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Estimated Resolution</label>
-                    <input
-                      type="text"
-                      value={form.restorationTime}
-                      onChange={(e) => handleFieldChange('restorationTime', e.target.value)}
-                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
-                      placeholder="e.g. Within 2 hours, pending vendor response"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Technical / Operations Lead</label>
-                    <input
-                      type="text"
-                      value={form.systemLead}
-                      onChange={(e) => handleFieldChange('systemLead', e.target.value)}
-                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Impact & Scope Details</label>
-                    <textarea
-                      value={form.impactDetails}
-                      onChange={(e) => handleFieldChange('impactDetails', e.target.value)}
-                      rows={4}
-                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors resize-none custom-scrollbar"
-                      placeholder="Brief description of symptoms, workarounds..."
-                    />
                   </div>
                 </motion.div>
               )}
@@ -763,22 +695,18 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
                       </div>
 
                       <p className="text-[10px] uppercase font-bold text-text-dim leading-relaxed tracking-wider">
-                        Drag the bookmarklet below to your browser bar. Then, click <strong className="text-emerald-400">"Launch Scheduling Portal"</strong>, and click your new bookmark on the tab to instantly populate the text fields!
+                        Click <strong className="text-emerald-400">"Copy Bookmarklet Address"</strong> below. Then, right-click your browser's bookmarks bar, select <strong className="text-emerald-400">"Add Page" / "Bookmark link"</strong>, name it, and paste this address in. Then click <strong className="text-emerald-400">"Launch Scheduling Portal"</strong> and run it!
                       </p>
 
                       <div className="flex flex-wrap gap-3 pt-1">
-                        {/* The Draggable Bookmarklet Button */}
-                        <a
-                          href={getBookmarkletHref()}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            alert("INSTRUCTIONS:\nDrag this button straight onto your Browser Bookmarks / Favorites bar.\nOnce on the ESO Scheduler tab, simply click the bookmark to auto-fill the boxes!");
-                          }}
-                          className="px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest bg-emerald-500 text-white border border-emerald-400 hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] select-none cursor-grab transition-all flex items-center gap-2 shadow-inner"
+                        {/* Copy Bookmarklet Code Trigger */}
+                        <button
+                          onClick={() => copyToClipboard(getBookmarkletHref(), 'bookmarklet')}
+                          className="px-5 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest bg-emerald-500 text-white border border-emerald-400 hover:bg-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all flex items-center gap-2 shadow-inner active:scale-95"
                         >
                           <Hammer size={12} />
-                          <span>📥 Drag Me To Bookmarks</span>
-                        </a>
+                          <span>{copiedBookmarklet ? "✅ Copied Address!" : "📋 Copy Bookmarklet Address"}</span>
+                        </button>
 
                         <button
                           onClick={handleOpenSuite}
@@ -809,7 +737,7 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
                           <div className="space-y-1">
                             <h4 className="text-[10px] font-black uppercase tracking-wider text-text-main">Equip Bookmarklet button</h4>
                             <p className="text-[10px] text-text-dim leading-relaxed uppercase font-semibold">
-                              Drag the <strong className="text-emerald-400">📥 Drag Me To Bookmarks</strong> button from the "Output Preview" tab onto your browser's Favorites or Bookmarks toolbar (use Command+Shift+B or Ctrl+Shift+B to toggle the bookmarks bar).
+                              Click <strong className="text-emerald-400">📋 Copy Bookmarklet Address</strong> on the "Output Preview" tab. Right-click your browser bookmarks bar (press Command+Shift+B/Ctrl+Shift+B if hidden), select "Add Page" or "Add Bookmark", type "ESO Auto-fill", and paste into the URL / Address field.
                             </p>
                           </div>
                         </div>
