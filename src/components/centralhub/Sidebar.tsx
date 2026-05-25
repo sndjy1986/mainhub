@@ -26,7 +26,8 @@ import {
   Hash,
   Shield,
   BookOpen,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Bell
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../../lib/utils';
@@ -362,6 +363,19 @@ export function Sidebar() {
                <LogOut size={14} />
              </button>
           </motion.div>
+
+          {/* Admin Message Link */}
+          {(terminalUser?.role === 'admin' || terminalUser?.role === 'root' || firebaseUser) && (
+            <motion.div {...bouncyProps}>
+              <Link 
+                to="/admin/send-message"
+                className="flex items-center gap-3 px-4 py-3 rounded-2xl text-text-dim hover:text-emerald-400 transition-all border border-transparent hover:bg-emerald-500/5 group w-full"
+              >
+                <Bell className="w-4 h-4 group-hover:scale-110 transition-transform text-emerald-500" />
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-400">Admin Message</span>
+              </Link>
+            </motion.div>
+          )}
 
           <motion.div {...bouncyProps}>
             <Link 

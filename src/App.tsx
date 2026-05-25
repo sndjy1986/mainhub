@@ -19,6 +19,7 @@ const OperationalGuidelines = lazy(() => import('./pages/OperationalGuidelines')
 const CodesReference = lazy(() => import('./pages/CodesReference'));
 const DispatchTools = lazy(() => import('./pages/DispatchTools'));
 const ShiftTurnover = lazy(() => import('./pages/ShiftTurnover'));
+const SendAdminMessage = lazy(() => import('./pages/centralhub/SendAdminMessage'));
 
 export default function App() {
   const { terminalUser, firebaseUser } = useTerminal();
@@ -62,6 +63,23 @@ export default function App() {
             <Route path="/tools" element={<PageWrapper className="overflow-y-auto"><DispatchTools /></PageWrapper>} />
             <Route path="/turnover" element={<PageWrapper className="overflow-y-auto"><ShiftTurnover /></PageWrapper>} />
             <Route path="/admin/settings" element={<PageWrapper className="overflow-y-auto"><AdminPage /></PageWrapper>} />
+            <Route 
+              path="/admin/send-message" 
+              element={
+                (terminalUser?.role === 'admin' || terminalUser?.role === 'root' || firebaseUser) ? (
+                  <PageWrapper className="overflow-y-auto"><SendAdminMessage /></PageWrapper>
+                ) : (
+                  <PageWrapper className="flex items-center justify-center min-h-[60vh]">
+                    <div className="p-8 text-center bg-white/5 border border-white/10 rounded-2xl max-w-md shadow-2xl">
+                      <h2 className="text-xl font-black text-rose-500 uppercase tracking-widest mb-3">Unauthorized Operator</h2>
+                      <p className="text-xs text-slate-400 uppercase tracking-[0.15em] leading-relaxed">
+                        Access Key privileges for role "{terminalUser?.role || 'operator'}" do not authorize dispatch message broadcast configurations.
+                      </p>
+                    </div>
+                  </PageWrapper>
+                )
+              } 
+            />
           </Routes>
         </Suspense>
       </Layout>
