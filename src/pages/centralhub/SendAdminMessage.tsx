@@ -131,119 +131,86 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
     const subjValJson = JSON.stringify(getSubject());
     const bodyValJson = JSON.stringify(getBody());
 
-    return `(function(){
-      var subVal = ${subjValJson};
-      var bdyVal = ${bodyValJson};
-      var count = 0;
+    const lines = [
+      "(function(){",
+      `var subVal = ${subjValJson};`,
+      `var bdyVal = ${bodyValJson};`,
+      "var mg = document.getElementsByName('MessageGroup')[0];",
+      "if (mg) {",
+      "  mg.value = '74';",
+      "  if (typeof EmployeeListChange === 'function') {",
+      "    try { EmployeeListChange(); } catch(e){}",
+      "  } else {",
+      "    mg.dispatchEvent(new Event('change', { bubbles: true }));",
+      "  }",
+      "}",
+      "var reg = document.getElementsByName('Registered')[0];",
+      "if (reg) {",
+      "  reg.checked = true;",
+      "  if (typeof ChangeRequired === 'function') {",
+      "    try { ChangeRequired('Enable'); } catch(e){}",
+      "  } else {",
+      "    reg.click();",
+      "    reg.dispatchEvent(new Event('change', { bubbles: true }));",
+      "  }",
+      "}",
+      "var req = document.getElementsByName('Required')[0];",
+      "if (req) {",
+      "  req.removeAttribute('disabled');",
+      "  req.disabled = false;",
+      "  req.checked = true;",
+      "  req.click();",
+      "  req.dispatchEvent(new Event('change', { bubbles: true }));",
+      "}",
+      "var email = document.getElementsByName('SendByEMail')[0];",
+      "if (email) {",
+      "  email.checked = true;",
+      "  email.dispatchEvent(new Event('change', { bubbles: true }));",
+      "}",
+      "var text = document.getElementById('SendByText') || document.getElementsByName('SendByText')[0];",
+      "if (text) {",
+      "  text.checked = true;",
+      "  if (typeof TextCheck === 'function') {",
+      "    try { TextCheck(); } catch(e){}",
+      "  } else {",
+      "    text.dispatchEvent(new Event('change', { bubbles: true }));",
+      "  }",
+      "}",
+      "var title = document.getElementsByName('Title')[0];",
+      "if (title) {",
+      "  title.value = subVal;",
+      "  title.dispatchEvent(new Event('input', { bubbles: true }));",
+      "  title.dispatchEvent(new Event('change', { bubbles: true }));",
+      "}",
+      "var msg = document.getElementById('Message') || document.getElementsByName('Message')[0];",
+      "if (msg) {",
+      "  msg.value = bdyVal;",
+      "  msg.dispatchEvent(new Event('input', { bubbles: true }));",
+      "  msg.dispatchEvent(new Event('change', { bubbles: true }));",
+      "}",
+      "var msg2 = document.getElementById('Message2') || document.getElementsByName('Message2')[0];",
+      "if (msg2) {",
+      "  msg2.removeAttribute('disabled');",
+      "  msg2.disabled = false;",
+      "  msg2.value = bdyVal;",
+      "  msg2.dispatchEvent(new Event('input', { bubbles: true }));",
+      "  msg2.dispatchEvent(new Event('change', { bubbles: true }));",
+      "  if (typeof ValidTextCheck === 'function') {",
+      "    try { ValidTextCheck(); } catch(e){}",
+      "  }",
+      "}",
+      "})();"
+    ];
 
-      // 1. MessageGroup dropdown
-      var mg = document.getElementsByName('MessageGroup')[0];
-      if (mg) {
-        mg.value = '74';
-        if (typeof EmployeeListChange === 'function') {
-          try { EmployeeListChange(); } catch(e){}
-        } else {
-          mg.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-        count++;
-      }
-
-      // 2. Registered Yes radio
-      var reg = document.getElementsByName('Registered')[0];
-      if (reg) {
-        reg.checked = true;
-        if (typeof ChangeRequired === 'function') {
-          try { ChangeRequired('Enable'); } catch(e){}
-        } else {
-          reg.click();
-          reg.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-        count++;
-      }
-
-      // 3. Required Yes radio
-      var req = document.getElementsByName('Required')[0];
-      if (req) {
-        req.removeAttribute('disabled');
-        req.disabled = false;
-        req.checked = true;
-        req.click();
-        req.dispatchEvent(new Event('change', { bubbles: true }));
-        count++;
-      }
-
-      // 4. SendByEMail checkbox
-      var email = document.getElementsByName('SendByEMail')[0];
-      if (email) {
-        email.checked = true;
-        email.dispatchEvent(new Event('change', { bubbles: true }));
-        count++;
-      }
-
-      // 5. SendByText checkbox
-      var text = document.getElementById('SendByText') || document.getElementsByName('SendByText')[0];
-      if (text) {
-        text.checked = true;
-        if (typeof TextCheck === 'function') {
-          try { TextCheck(); } catch(e){}
-        } else {
-          text.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-        count++;
-      }
-
-      // 6. Title / Subject Box
-      var title = document.getElementsByName('Title')[0];
-      if (title) {
-        title.value = subVal;
-        title.dispatchEvent(new Event('input', { bubbles: true }));
-        title.dispatchEvent(new Event('change', { bubbles: true }));
-        count++;
-      }
-
-      // 7. Message textarea
-      var msg = document.getElementById('Message') || document.getElementsByName('Message')[0];
-      if (msg) {
-        msg.value = bdyVal;
-        msg.dispatchEvent(new Event('input', { bubbles: true }));
-        msg.dispatchEvent(new Event('change', { bubbles: true }));
-        count++;
-      }
-
-      // 8. Message2 textarea (SMS/Pagers)
-      var msg2 = document.getElementById('Message2') || document.getElementsByName('Message2')[0];
-      if (msg2) {
-        msg2.removeAttribute('disabled');
-        msg2.disabled = false;
-        msg2.value = bdyVal;
-        msg2.dispatchEvent(new Event('input', { bubbles: true }));
-        msg2.dispatchEvent(new Event('change', { bubbles: true }));
-        if (typeof ValidTextCheck === 'function') {
-          try { ValidTextCheck(); } catch(e){}
-        }
-        count++;
-      }
-
-      if (count > 0) {
-        alert("⚡ ESO Auto-Fill Successful! Populated " + count + " field inputs.");
-      } else {
-        alert("❌ Could not find standard ESO message input fields.");
-      }
-    })();`;
+    return lines.join('');
   };
 
   const getBookmarkletHref = (): string => {
-    const minimized = getRawBookmarkletCode()
-      .replace(/\s+/g, ' ')
-      .trim();
-    return `javascript:${encodeURIComponent(minimized)}`;
+    return `javascript:${encodeURIComponent(getRawBookmarkletCode())}`;
   };
 
   const getBookmarkletHrefClean = (): string => {
-    const minimized = getRawBookmarkletCode()
-      .replace(/\s+/g, ' ')
-      .trim();
-    return `javascript:${minimized}`;
+    return `javascript:${getRawBookmarkletCode()}`;
   };
 
   // Synchronize dynamic refs to bypass React's javascript: URL security verification
