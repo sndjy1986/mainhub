@@ -956,7 +956,7 @@ export default function ShiftReport() {
                 <div className="pt-8 border-t border-white/5 space-y-6">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Essential Resources</h4>
                   <nav className="flex flex-col gap-3">
-                    <ExternalLinkItem href="https://drive.google.com/file/d/1Lq3m5KIhkwP7zQZu9RTKlXRO18BPhx1A/view" label="Coroner On Call" meta="Google Drive Access" />
+                    <ExternalLinkItem href="https://drive.google.com/file/d/137BOp88NqFXFuoYJ-VBIR0n-xGfOq4_U/view?usp=drive_link" label="Coroner On Call" meta="Google Drive Access" />
                     <ExternalLinkItem href="https://drive.google.com/file/d/1YRmQRgyxRjqlGWiBLsNaiYhmssqDeCet/view" label="911 SOG'S County" meta="Regulation Handbook" />
                     <ExternalLinkItem href="https://drive.google.com/file/d/15IL2nx3foN5V4L2ue6OBAp8kmZkpWzma/view" label="Employee Handbook" meta="HR Policies" />
                     <ExternalLinkItem href="https://docs.google.com/spreadsheets/d/1ywTY-EVDLJYfPsxKPDGLdNJStJ63W-_yYS-Y4CU31Bw/edit" label="Shift Calendar" meta="Live Roster Sync" />

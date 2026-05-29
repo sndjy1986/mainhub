@@ -60,7 +60,7 @@ const TOOLS_LINKS = [
 const PORTAL_LINKS = [
   { icon: 'ClockIcon', label: 'Time Clock', path: '/time-clock', id: 'clock' },
   { icon: 'Phone', label: 'Directory', path: '/directory', id: 'dir' },
-  { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/1Lq3m5KIhkwP7zQZu9RTKlXRO18BPhx1A/view?usp=drive_link', external: true, id: 'coroner' },
+  { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/137BOp88NqFXFuoYJ-VBIR0n-xGfOq4_U/view?usp=drive_link', external: true, id: 'coroner' },
   { icon: 'Table', label: 'Daily Worksheet', path: 'https://docs.google.com/spreadsheets/d/1-4Uwh00g4orCaOQoOrLIcRkamAhdxrBNhVVOt2IEOoY/edit?gid=534085027#gid=534085027', external: true, id: 'worksheet' },
   { icon: 'CreditCard', label: 'PayCom Online', path: 'https://www.paycomonline.net/v4/ee/web.php/app/login', external: true, id: 'paycom' },
   { icon: 'Siren', label: 'Helicopter', path: 'https://andersoncounty911_sc.transport.net/#/login', external: true, id: 'helo' },

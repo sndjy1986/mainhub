@@ -603,7 +603,7 @@ export function AdminPage() {
       { icon: 'Camera', label: 'Cameras', path: '/cameras', external: false, id: 'cams' },
       { icon: 'ClockIcon', label: 'Time Clock', path: '/time-clock', external: false, id: 'clock' },
       { icon: 'Phone', label: 'Directory', path: '/directory', external: false, id: 'dir' },
-      { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/1Lq3m5KIhkwP7zQZu9RTKlXRO18BPhx1A/view?usp=drive_link', external: true, id: 'coroner' },
+      { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/137BOp88NqFXFuoYJ-VBIR0n-xGfOq4_U/view?usp=drive_link', external: true, id: 'coroner' },
       { icon: 'Table', label: 'Daily Worksheet', path: 'https://docs.google.com/spreadsheets/d/1-4Uwh00g4orCaOQoOrLIcRkamAhdxrBNhVVOt2IEOoY/edit?gid=534085027#gid=534085027', external: true, id: 'worksheet' },
       { icon: 'CreditCard', label: 'PayCom Online', path: 'https://www.paycomonline.net/v4/ee/web.php/app/login', external: true, id: 'paycom' },
     ];
@@ -1440,7 +1440,7 @@ export function AdminPage() {
                   { icon: 'Camera', label: 'Cameras', path: '/cameras', external: false, id: 'cams' },
                   { icon: 'ClockIcon', label: 'Time Clock', path: '/time-clock', external: false, id: 'clock' },
                   { icon: 'Phone', label: 'Directory', path: '/directory', external: false, id: 'dir' },
-                  { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/1Lq3m5KIhkwP7zQZu9RTKlXRO18BPhx1A/view?usp=drive_link', external: true, id: 'coroner' },
+                  { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/137BOp88NqFXFuoYJ-VBIR0n-xGfOq4_U/view?usp=drive_link', external: true, id: 'coroner' },
                   { icon: 'Table', label: 'Daily Worksheet', path: 'https://docs.google.com/spreadsheets/d/1-4Uwh00g4orCaOQoOrLIcRkamAhdxrBNhVVOt2IEOoY/edit?gid=534085027#gid=534085027', external: true, id: 'worksheet' },
                   { icon: 'CreditCard', label: 'PayCom Online', path: 'https://www.paycomonline.net/v4/ee/web.php/app/login', external: true, id: 'paycom' },
                 ]).map((link) => (
