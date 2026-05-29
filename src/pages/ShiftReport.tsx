@@ -93,6 +93,20 @@ import ShiftTurnover from './ShiftTurnover';
 
 const STORAGE_KEY = "shiftReportDraft_v2";
 
+const ZULU_UNIT_OPTIONS = [
+  "ZULU-1 - G. SHORE",
+  "ZULU-2 - D. MCCOWN",
+  "ZULU-3 - T. BLACKWELL",
+  "ZULU-4 - J. SHORE",
+  "ZULU-5 - K. WILLIAMSON",
+  "ZULU-6 - K. SHAW, MD",
+  "ZULU-7 - C. FREEMAN",
+  "ZULU-8 - R. ABLES",
+  "ZULU-9 - A. WHITFIELD",
+  "ZULU-10 - S. KAUFMAN",
+  "ZULU-11"
+];
+
 export default function ShiftReport() {
   const [data, setData] = useState<ShiftReportData>(() => {
     try {
@@ -689,10 +703,16 @@ export default function ShiftReport() {
                     <input type="number" name="truckGT" value={data.truckGT} onChange={handleChange} min="0" />
                   </Field>
                   <Field label="Zulu Primary" icon={Zap}>
-                    <input type="text" name="zuluPrimary" value={data.zuluPrimary} onChange={handleChange} placeholder="UNIT_ID" />
+                    <select name="zuluPrimary" value={data.zuluPrimary} onChange={handleChange}>
+                      <option value="">-- SELECT --</option>
+                      {ZULU_UNIT_OPTIONS.map(z => <option key={z} value={z}>{z}</option>)}
+                    </select>
                   </Field>
                   <Field label="Zulu Secondary" icon={Zap}>
-                    <input type="text" name="zuluSecondary" value={data.zuluSecondary} onChange={handleChange} placeholder="UNIT_ID" />
+                    <select name="zuluSecondary" value={data.zuluSecondary} onChange={handleChange}>
+                      <option value="">-- SELECT --</option>
+                      {ZULU_UNIT_OPTIONS.map(z => <option key={z} value={z}>{z}</option>)}
+                    </select>
                   </Field>
                   <Field label="ALS Transport" icon={Shield}>
                     <input type="text" name="truckALS" value={data.truckALS} onChange={handleChange} placeholder="UNIT_IDS" />
