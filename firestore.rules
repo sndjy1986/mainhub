@@ -5,8 +5,55 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Settings must be readable by anyone (including unauthenticated visitors)
+    // so that the background style and theme configuration load properly on start.
+    match /settings/global {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /units/{unitId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /unitAssignments/{assignmentId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /shiftReports/{reportId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /reports/{reportId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /toneTests/{testId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /calendar_events/{eventId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /terminal_users/{username} {
+      allow read: if true;
+      allow write: if isSignedIn() || request.auth != null;
+    }
+
+    match /users/{userId}/settings/terminal {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Default deny catch-all
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

@@ -145,52 +145,30 @@ export default function SendAdminMessage() {
 Thanks,
 Dispatch`;
       case 'hurt':
-        return `=== CONFIDENTIAL INJURY ON-DUTY (IOD) REPORT ===
-TIMESTAMP: ${timestamp}
-EMPLOYEE NAME: ${form.employeeName}
-EMPLOYEE ID: ${form.employeeId}
-TYPE OF INJURY: ${form.injuryType}
-EVENT LOCATION: ${form.injuryLocation}
-SUPERVISOR NOTIFIED: ${form.supervisorName}
-ACTIONS & TRANSPORT: ${form.actionsTaken}
-REPORTER OPERATOR: ${currentOperator.toUpperCase()}
-=================================================`;
+        return `Employee: ${form.employeeName} (${form.employeeId})
+Injury: ${form.injuryType}
+Location: ${form.injuryLocation}
+Supervisor: ${form.supervisorName}
+Actions: ${form.actionsTaken}`;
       case 'accident':
-        return `=== AC VEHICLE ACCIDENT FIELD TRANSMISSION ===
-TIMESTAMP: ${timestamp}
-ACCIDENT UNIT: ${form.vehicleUnit}
-CREW MEMBERS: ${form.crewMembers}
-MAP LOCATION: ${form.accidentLocation}
-POLICE DISPATCH ID: ${form.policeIncident}
-INJURY EVALUATION: ${form.injuriesReported}
-VEHICLE STATUS: ${form.vehicleStatus}
-INCIDENT DESCR: ${form.briefDescription}
-REPORTER OPERATOR: ${currentOperator.toUpperCase()}
-==============================================`;
+        return `Unit: ${form.vehicleUnit}
+Location: ${form.accidentLocation}
+Crew: ${form.crewMembers}
+Police ID: ${form.policeIncident}
+Injuries: ${form.injuriesReported}
+Status: ${form.vehicleStatus}
+Details: ${form.briefDescription}`;
       case 'high-acuity':
-        return `=== HIGH ACUITY CALL TRANSMISSION ===
-TIMESTAMP: ${timestamp}
-WHAT HAPPENED? ${form.haWhatHappened}
-UNITS EN ROUTE? ${form.haUnitsEnRoute}
-ANYONE HURT? ${form.haAnyoneHurt}
-BRIEF DETAILS: ${form.haBriefDetails}
-REPORTER OPERATOR: ${currentOperator.toUpperCase()}
-======================================`;
+        return `What Happened : ${form.haWhatHappened}
+Where: ${form.haBriefDetails}
+En-Route or On-Scene , Who? ${form.haUnitsEnRoute}`;
       case 'code-100-200':
-        return `=== CODE 100/200 TRANSMISSION ===
-TIMESTAMP: ${timestamp}
-UNIT INVOLVED IN MVA: ${form.cUnitInvolved}
-LOCATION: ${form.cLocation}
-PATIENTS? ${form.cPatients}
-ANYONE HURT? ${form.cAnyoneHurt}
-REPORTER OPERATOR: ${currentOperator.toUpperCase()}
-=================================`;
+        return `Unit Involved: ${form.cUnitInvolved}
+Location: ${form.cLocation}
+Patients: ${form.cPatients}
+Anyone Hurt: ${form.cAnyoneHurt}`;
       case 'severe-weather':
-        return `=== SEVERE WEATHER ALERT ===
-TIMESTAMP: ${timestamp}
-NWS ALERT MESSAGE:
-${form.weatherMsg}
-============================`;
+        return `Weather Alert: ${form.weatherMsg}`;
       case 'road-closed':
         return `${form.rcRoadName} is closed from ${form.rcFromRoad} to ${form.rcToRoad} - See Attached Image -`;
     }
@@ -603,46 +581,35 @@ ${form.weatherMsg}
                   key="form-high-acuity"
                 >
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">What Happened?</label>
+                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">What Happened :</label>
                     <input
                       type="text"
                       value={form.haWhatHappened}
                       onChange={(e) => handleFieldChange('haWhatHappened', e.target.value)}
-                      placeholder="e.g. Cardiac Arrest, Major Trauma, MVC with Entrapment"
+                      placeholder="e.g. Pedestrian Struck / Major Trauma"
                       className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Units En Route?</label>
+                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Where:</label>
+                    <input
+                      type="text"
+                      value={form.haBriefDetails}
+                      onChange={(e) => handleFieldChange('haBriefDetails', e.target.value)}
+                      placeholder="e.g. Active rescue operational scene near major intersection"
+                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">En-Route or On-Scene , Who?</label>
                     <input
                       type="text"
                       value={form.haUnitsEnRoute}
                       onChange={(e) => handleFieldChange('haUnitsEnRoute', e.target.value)}
-                      placeholder="e.g. Medic 2, QRV-5, Rescue 1"
+                      placeholder="e.g. Medic 2, Quick Response Vehicle 5 (QRV-5), Rescue 1"
                       className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Anyone Hurt?</label>
-                    <input
-                      type="text"
-                      value={form.haAnyoneHurt}
-                      onChange={(e) => handleFieldChange('haAnyoneHurt', e.target.value)}
-                      placeholder="e.g. 1 patient unconscious, crew uninjured"
-                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Brief Details</label>
-                    <textarea
-                      value={form.haBriefDetails}
-                      onChange={(e) => handleFieldChange('haBriefDetails', e.target.value)}
-                      rows={3}
-                      placeholder="Enter brief details..."
-                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors resize-none custom-scrollbar"
                     />
                   </div>
                 </motion.div>
