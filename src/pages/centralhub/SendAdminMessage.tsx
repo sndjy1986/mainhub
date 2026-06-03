@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useTerminal } from '../../context/TerminalContext';
 
-type MessageType = 'status' | 'hurt' | 'accident';
+type MessageType = 'status' | 'hurt' | 'accident' | 'high-acuity' | 'code-100-200' | 'severe-weather' | 'road-closed';
 
 interface FormState {
   // System Status fields
@@ -39,6 +39,26 @@ interface FormState {
   injuriesReported: string;
   vehicleStatus: string;
   briefDescription: string;
+
+  // High Acuity Call fields
+  haWhatHappened: string;
+  haUnitsEnRoute: string;
+  haAnyoneHurt: string;
+  haBriefDetails: string;
+
+  // Code100/200 fields
+  cUnitInvolved: string;
+  cLocation: string;
+  cPatients: string;
+  cAnyoneHurt: string;
+
+  // Severe Weather fields
+  weatherMsg: string;
+
+  // Road Closed fields
+  rcRoadName: string;
+  rcFromRoad: string;
+  rcToRoad: string;
 }
 
 export default function SendAdminMessage() {
@@ -73,7 +93,23 @@ export default function SendAdminMessage() {
     policeIncident: 'APD Incident #2026-5011A',
     injuriesReported: 'None for crew. Other vehicle driver complaining of wrist soreness.',
     vehicleStatus: 'OOS - Minor front bumper compression (Driveable)',
-    briefDescription: 'En route to non-emergency call when citizen vehicle failure caused low-speed rear-end contact.'
+    briefDescription: 'En route to non-emergency call when citizen vehicle failure caused low-speed rear-end contact.',
+
+    haWhatHappened: 'Pedestrian Struck / Major Trauma',
+    haUnitsEnRoute: 'Medic 2, Quick Response Vehicle 5 (QRV-5), Rescue 1',
+    haAnyoneHurt: 'Pedestrian unconscious with severe injuries, crew uninjured',
+    haBriefDetails: 'Active rescue operational scene near major intersection. Avoid area.',
+
+    cUnitInvolved: 'Medic 14',
+    cLocation: 'Highway 81 South near mile marker 14',
+    cPatients: 'Yes, 1 patient in secondary vehicle',
+    cAnyoneHurt: 'Medic 14 crew reporting uninjured. Police and fire en route.',
+
+    weatherMsg: 'Severe Thunderstorm Warning issued by NWS for Anderson County. Strong damaging wind gusts and heavy localized rainfall expected through 1900 hours. Stay indoors and secure loose items.',
+
+    rcRoadName: 'Hwy 178 / Liberty Highway',
+    rcFromRoad: 'Centerville Road',
+    rcToRoad: 'Airport Road'
   });
 
   const handleFieldChange = (key: keyof FormState, value: string) => {
@@ -89,6 +125,14 @@ export default function SendAdminMessage() {
         return `[URGENT] EMPLOYEE HURT - ${form.employeeName} (${form.employeeId})`;
       case 'accident':
         return `[CRITICAL] AC VEHICLE ACCIDENT - Unit: ${form.vehicleUnit}`;
+      case 'high-acuity':
+        return `High Acuity Call`;
+      case 'code-100-200':
+        return `Code100/200`;
+      case 'severe-weather':
+        return `Severe Weather Alert`;
+      case 'road-closed':
+        return `Road Closed`;
     }
   };
 
@@ -123,6 +167,32 @@ VEHICLE STATUS: ${form.vehicleStatus}
 INCIDENT DESCR: ${form.briefDescription}
 REPORTER OPERATOR: ${currentOperator.toUpperCase()}
 ==============================================`;
+      case 'high-acuity':
+        return `=== HIGH ACUITY CALL TRANSMISSION ===
+TIMESTAMP: ${timestamp}
+WHAT HAPPENED? ${form.haWhatHappened}
+UNITS EN ROUTE? ${form.haUnitsEnRoute}
+ANYONE HURT? ${form.haAnyoneHurt}
+BRIEF DETAILS: ${form.haBriefDetails}
+REPORTER OPERATOR: ${currentOperator.toUpperCase()}
+======================================`;
+      case 'code-100-200':
+        return `=== CODE 100/200 TRANSMISSION ===
+TIMESTAMP: ${timestamp}
+UNIT INVOLVED IN MVA: ${form.cUnitInvolved}
+LOCATION: ${form.cLocation}
+PATIENTS? ${form.cPatients}
+ANYONE HURT? ${form.cAnyoneHurt}
+REPORTER OPERATOR: ${currentOperator.toUpperCase()}
+=================================`;
+      case 'severe-weather':
+        return `=== SEVERE WEATHER ALERT ===
+TIMESTAMP: ${timestamp}
+NWS ALERT MESSAGE:
+${form.weatherMsg}
+============================`;
+      case 'road-closed':
+        return `${form.rcRoadName} is closed from ${form.rcFromRoad} to ${form.rcToRoad} - See Attached Image -`;
     }
   };
 
@@ -208,7 +278,19 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
     form.policeIncident,
     form.injuriesReported,
     form.vehicleStatus,
-    form.briefDescription
+    form.briefDescription,
+    form.haWhatHappened,
+    form.haUnitsEnRoute,
+    form.haAnyoneHurt,
+    form.haBriefDetails,
+    form.cUnitInvolved,
+    form.cLocation,
+    form.cPatients,
+    form.cAnyoneHurt,
+    form.weatherMsg,
+    form.rcRoadName,
+    form.rcFromRoad,
+    form.rcToRoad
   ]);
 
   const copyToClipboard = async (text: string, type: 'subject' | 'body' | 'bookmarklet' | 'bookmarklet_clean') => {
@@ -265,14 +347,18 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-white/5 pb-2 gap-4">
-        {['status', 'hurt', 'accident'].map((t) => {
+      <div className="flex flex-wrap border-b border-white/5 pb-2.5 gap-2.5 md:gap-4">
+        {['status', 'hurt', 'accident', 'high-acuity', 'code-100-200', 'severe-weather', 'road-closed'].map((t) => {
           const isSelected = selectedType === t;
           let label = "";
           let Icon = FileText;
           if (t === 'status') { label = "System Status"; Icon = Activity; }
           if (t === 'hurt') { label = "Employee Hurt"; Icon = UserMinus; }
           if (t === 'accident') { label = "AC Vehicle Accident"; Icon = AlertOctagon; }
+          if (t === 'high-acuity') { label = "High Acuity Call"; Icon = Activity; }
+          if (t === 'code-100-200') { label = "Code 100/200"; Icon = ShieldAlert; }
+          if (t === 'severe-weather') { label = "Severe Weather Alert"; Icon = AlertOctagon; }
+          if (t === 'road-closed') { label = "Road Closed"; Icon = ShieldAlert; }
           
           return (
             <button
@@ -503,6 +589,190 @@ REPORTER OPERATOR: ${currentOperator.toUpperCase()}
                       className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors resize-none custom-scrollbar"
                       placeholder="Describe what occurred on final report..."
                     />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* High Acuity Call form fields */}
+              {selectedType === 'high-acuity' && (
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  className="space-y-4"
+                  key="form-high-acuity"
+                >
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">What Happened?</label>
+                    <input
+                      type="text"
+                      value={form.haWhatHappened}
+                      onChange={(e) => handleFieldChange('haWhatHappened', e.target.value)}
+                      placeholder="e.g. Cardiac Arrest, Major Trauma, MVC with Entrapment"
+                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Units En Route?</label>
+                    <input
+                      type="text"
+                      value={form.haUnitsEnRoute}
+                      onChange={(e) => handleFieldChange('haUnitsEnRoute', e.target.value)}
+                      placeholder="e.g. Medic 2, QRV-5, Rescue 1"
+                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Anyone Hurt?</label>
+                    <input
+                      type="text"
+                      value={form.haAnyoneHurt}
+                      onChange={(e) => handleFieldChange('haAnyoneHurt', e.target.value)}
+                      placeholder="e.g. 1 patient unconscious, crew uninjured"
+                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Brief Details</label>
+                    <textarea
+                      value={form.haBriefDetails}
+                      onChange={(e) => handleFieldChange('haBriefDetails', e.target.value)}
+                      rows={3}
+                      placeholder="Enter brief details..."
+                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors resize-none custom-scrollbar"
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Code 100/200 form fields */}
+              {selectedType === 'code-100-200' && (
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  className="space-y-4"
+                  key="form-code-100-200"
+                >
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Unit Involved in MVA</label>
+                      <input
+                        type="text"
+                        value={form.cUnitInvolved}
+                        onChange={(e) => handleFieldChange('cUnitInvolved', e.target.value)}
+                        placeholder="e.g. Medic 14"
+                        className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Patients?</label>
+                      <input
+                        type="text"
+                        value={form.cPatients}
+                        onChange={(e) => handleFieldChange('cPatients', e.target.value)}
+                        placeholder="e.g. Yes, 2 patients"
+                        className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Location</label>
+                    <input
+                      type="text"
+                      value={form.cLocation}
+                      onChange={(e) => handleFieldChange('cLocation', e.target.value)}
+                      placeholder="e.g. Highway 81 South near mile marker 14"
+                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Anyone Hurt?</label>
+                    <input
+                      type="text"
+                      value={form.cAnyoneHurt}
+                      onChange={(e) => handleFieldChange('cAnyoneHurt', e.target.value)}
+                      placeholder="e.g. Medic 14 crew reporting uninjured"
+                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Severe Weather Alert form fields */}
+              {selectedType === 'severe-weather' && (
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  className="space-y-4"
+                  key="form-severe-weather"
+                >
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">NWS Alert Message</label>
+                    <textarea
+                      value={form.weatherMsg}
+                      onChange={(e) => handleFieldChange('weatherMsg', e.target.value)}
+                      rows={6}
+                      placeholder="Paste/copy alert message from the National Weather Service..."
+                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors resize-none custom-scrollbar font-mono leading-relaxed"
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Road Closed form fields */}
+              {selectedType === 'road-closed' && (
+                <motion.div 
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  className="space-y-4"
+                  key="form-road-closed"
+                >
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">Closed Road Name (X Road)</label>
+                    <input
+                      type="text"
+                      value={form.rcRoadName}
+                      onChange={(e) => handleFieldChange('rcRoadName', e.target.value)}
+                      placeholder="e.g. Hwy 178 / Liberty Highway"
+                      className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">From Intersecting Road (X Road)</label>
+                      <input
+                        type="text"
+                        value={form.rcFromRoad}
+                        onChange={(e) => handleFieldChange('rcFromRoad', e.target.value)}
+                        placeholder="e.g. Centerville Road"
+                        className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black uppercase tracking-widest text-text-dim">To Intersecting Road (X Road)</label>
+                      <input
+                        type="text"
+                        value={form.rcToRoad}
+                        onChange={(e) => handleFieldChange('rcToRoad', e.target.value)}
+                        placeholder="e.g. Airport Road"
+                        className="w-full px-4 py-2.5 bg-brand-field border border-white/5 rounded-xl text-xs font-bold text-text-main focus:outline-none focus:border-emerald-500/50 transition-colors"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="pt-2">
+                    <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">
+                      📷 Auto-appends "- See Attached Image -" to the message template!
+                    </p>
                   </div>
                 </motion.div>
               )}
