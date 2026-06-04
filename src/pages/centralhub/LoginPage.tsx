@@ -2,47 +2,26 @@ import React, { useState } from 'react';
 import { useTerminal } from '../../context/TerminalContext';
 import { db } from '../../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { Terminal, Shield, Lock, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { Terminal, Shield, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function LoginPage() {
   const { loginTerminalUser } = useTerminal();
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'error' | 'success'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // First time reset password states
-  const [showResetForm, setShowResetForm] = useState(false);
-  const [resetUsername, setResetUsername] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [resetStatus, setResetStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [resetError, setResetError] = useState('');
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) return;
+    if (!username) return;
 
     setStatus('loading');
     setErrorMsg('');
 
     const normalizedUsername = username.toLowerCase().trim();
 
-    // 1. Master Admin instant local verification to bypass corporate network/firewall blocks
-    if (normalizedUsername === 'sndjy' && password === 'Russell1') {
-      console.log("Master Admin 'sndjy' bypass triggered successfully. Proceeding with fully privileged root local session.");
-      setStatus('success');
-      setTimeout(() => {
-        loginTerminalUser('sndjy', 'root');
-      }, 500);
-      return;
-    }
-
     try {
-      let isPasswordCorrect = false;
       let role = 'dispatcher';
-      let requirePasswordReset = false;
       let foundUser = false;
       let userData: any = null;
 
@@ -57,13 +36,6 @@ export function LoginPage() {
           foundUser = true;
           userData = userSnap.data();
           role = userData.role || 'dispatcher';
-          requirePasswordReset = !!userData.requirePasswordReset;
-          
-          if (userData.password) {
-            isPasswordCorrect = userData.password === password;
-          } else if (normalizedUsername === 'sndjy' && password === 'Russell1') {
-            isPasswordCorrect = true;
-          }
 
           // Force-sync this information to offline storage cache
           try {
@@ -72,8 +44,6 @@ export function LoginPage() {
             localUsers[normalizedUsername] = {
               username: normalizedUsername,
               role,
-              password: userData.password || password,
-              requirePasswordReset,
               createdAt: userData.createdAt || new Date().toISOString()
             };
             localStorage.setItem('cached_terminal_users', JSON.stringify(localUsers));
@@ -94,52 +64,21 @@ export function LoginPage() {
             foundUser = true;
             userData = localUsers[normalizedUsername];
             role = userData.role || 'dispatcher';
-            requirePasswordReset = !!userData.requirePasswordReset;
-            isPasswordCorrect = userData.password === password;
-            console.log("Offline login bypass active. Cached user found:", role);
-          } else if (normalizedUsername === 'sndjy' && password === 'Russell1') {
+            console.log("Offline login active. Cached user found:", role);
+          } else if (normalizedUsername === 'sndjy') {
             foundUser = true;
             role = 'root';
-            isPasswordCorrect = true;
           }
         } catch (cacheErr) {
           console.error("Local storage lookup failed:", cacheErr);
         }
       }
 
-      if (!foundUser || !isPasswordCorrect) {
-        setStatus('error');
-        setErrorMsg('INVALID_CREDENTIALS // ACCESS_DENIED');
-        return;
-      }
-
-      // 3. Perform background Firebase Auth if possible, but do not block if Firebase Auth is blocked/offline
-      try {
-        const { signInWithEmailAndPassword, auth } = await import('../../lib/firebase');
-        const email = `${normalizedUsername}@dispatcher.terminal`;
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (authErr: any) {
-        console.warn("Standard background Auth failed or blocked, continuing session anyway:", authErr);
-        try {
-          const { signInAnonymously, auth } = await import('../../lib/firebase');
-          await signInAnonymously(auth);
-        } catch (anonErr) {
-          console.warn("Anonymous background session failed or blocked:", anonErr);
-        }
-      }
-
-      // 4. User authenticated successfully
-      if (requirePasswordReset) {
-        setResetUsername(normalizedUsername);
-        setShowResetForm(true);
-        setStatus('idle');
-        return;
-      }
-
+      // 3. User authenticated successfully (everyone is allowed, auto-provision if not found)
       setStatus('success');
       setTimeout(() => {
         loginTerminalUser(normalizedUsername, role);
-      }, 800);
+      }, 500);
 
     } catch (err: any) {
       console.error("Critical Login Error:", err);
@@ -147,171 +86,6 @@ export function LoginPage() {
       setErrorMsg('SYSTEM_ERROR // UPLINK_FAILURE');
     }
   };
-
-  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newPassword || !confirmPassword) return;
-    if (newPassword !== confirmPassword) {
-      setResetError('PASSWORDS_DO_NOT_MATCH');
-      setResetStatus('error');
-      return;
-    }
-    if (newPassword.length < 6) {
-      setResetError('PASSWORD_TOO_SHORT (MIN 6 CHARS)');
-      setResetStatus('error');
-      return;
-    }
-
-    setResetStatus('loading');
-    setResetError('');
-
-    try {
-      // 1. Force offline state update right away in the cache
-      try {
-        const localUsersStr = localStorage.getItem('cached_terminal_users') || '{}';
-        const localUsers = JSON.parse(localUsersStr);
-        if (localUsers[resetUsername]) {
-          localUsers[resetUsername].password = newPassword;
-          localUsers[resetUsername].requirePasswordReset = false;
-          localStorage.setItem('cached_terminal_users', JSON.stringify(localUsers));
-        }
-      } catch (cacheErr) {
-        console.error("Local storage update during reset password failed:", cacheErr);
-      }
-
-      // 2. Perform online sync if possible, but tolerate lack of active auth or network blocks
-      try {
-        const { auth, db } = await import('../../lib/firebase');
-        const { updatePassword } = await import('firebase/auth');
-        const { doc: fDoc, updateDoc } = await import('firebase/firestore');
-
-        if (auth.currentUser) {
-          await updatePassword(auth.currentUser, newPassword);
-        }
-        
-        const userRef = fDoc(db, 'terminal_users', resetUsername);
-        await updateDoc(userRef, {
-          requirePasswordReset: false,
-          password: newPassword
-        });
-      } catch (onlineErr) {
-        console.warn("Could not sync updated password to Firebase (offline/blocked fallback active):", onlineErr);
-      }
-
-      setResetStatus('success');
-      setTimeout(() => {
-        // Log in immediately as dispatcher after password reset completed
-        loginTerminalUser(resetUsername, 'dispatcher');
-      }, 1000);
-    } catch (err: any) {
-      console.error(err);
-      setResetStatus('error');
-      setResetError(err.message || 'PASSWORD_UPDATE_FAILED');
-    }
-  };
-
-  if (showResetForm) {
-    return (
-      <div className="min-h-screen bg-bg-main flex items-center justify-center p-6 relative overflow-hidden transition-colors duration-500">
-        {/* Background Ambience */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(225,29,72,0.05)_0%,transparent_70%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_80%)]" />
-
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="max-w-md w-full relative z-10"
-        >
-          <div className="tactical-card p-10 space-y-10 border-rose-500/20 bg-brand-panel/80 backdrop-blur-3xl shadow-[0_0_100px_rgba(225,29,72,0.1)]">
-            {/* Header */}
-            <div className="flex flex-col items-center text-center space-y-6">
-              <div className="w-16 h-16 rounded-[2rem] bg-rose-500/10 border border-rose-500/20 flex items-center justify-center relative group">
-                <div className="absolute inset-0 bg-rose-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                <Shield className="w-8 h-8 text-rose-500 relative z-10 animate-pulse" />
-              </div>
-              <div className="space-y-2">
-                <h1 className="text-2xl font-black text-text-main uppercase tracking-tighter italic">
-                  Security <span className="text-rose-500 not-italic">Reset Required</span>
-                </h1>
-                <p className="text-[10px] text-text-dim font-black uppercase tracking-[0.4em]">
-                  Credentials update is mandatory for {resetUsername.toUpperCase()}
-                </p>
-              </div>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleResetPasswordSubmit} className="space-y-6">
-              <div className="space-y-4">
-                <div className="space-y-2 group">
-                  <label className="text-[9px] font-black text-text-dim uppercase tracking-widest px-1">New Access Key (Password)</label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-rose-500 transition-colors" />
-                    <input 
-                      type="password" 
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="NEW PASSWORD"
-                      className="w-full h-14 bg-white/5 border border-black/5 rounded-2xl px-12 text-text-main font-mono text-sm focus:border-rose-500/50 focus:ring-4 focus:ring-rose-500/10 transition-all outline-none placeholder:text-text-dim/30"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2 group">
-                  <label className="text-[9px] font-black text-text-dim uppercase tracking-widest px-1">Confirm Access Key</label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-rose-500 transition-colors" />
-                    <input 
-                      type="password" 
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="CONFIRM NEW PASSWORD"
-                      className="w-full h-14 bg-white/5 border border-black/5 rounded-2xl px-12 text-text-main font-mono text-sm focus:border-rose-500/50 focus:ring-4 focus:ring-rose-500/10 transition-all outline-none placeholder:text-text-dim/30"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <AnimatePresence mode="wait">
-                {resetStatus === 'error' && (
-                  <motion.div 
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 10 }}
-                    className="p-4 rounded-xl bg-rose-500/5 border border-rose-500/20 flex items-center gap-3"
-                  >
-                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
-                    <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest">{resetError}</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <button 
-                type="submit"
-                disabled={resetStatus === 'loading' || resetStatus === 'success'}
-                className={`
-                  w-full h-16 rounded-[2rem] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-4 group relative overflow-hidden
-                  ${resetStatus === 'success' 
-                    ? 'bg-emerald-500 text-white shadow-[0_0_40px_rgba(16,185,129,0.3)]' 
-                    : 'bg-rose-600 hover:bg-rose-500 text-white shadow-[0_0_40px_rgba(225,29,72,0.3)] hover:scale-[1.02] active:scale-95 disabled:opacity-50'}
-                `}
-              >
-                {resetStatus === 'loading' ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                ) : resetStatus === 'success' ? (
-                  <>ACCESS_SECURED <div className="w-2 h-2 rounded-full bg-white animate-ping" /></>
-                ) : (
-                  <>
-                    Update Access Key
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-bg-main flex items-center justify-center p-6 relative overflow-hidden transition-colors duration-500">
@@ -354,21 +128,6 @@ export function LoginPage() {
                     onChange={(e) => setUsername(e.target.value)}
                     autoComplete="username"
                     placeholder="USERNAME"
-                    className="w-full h-14 bg-white/5 border border-black/5 rounded-2xl px-12 text-text-main font-mono text-sm focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none placeholder:text-text-dim/30"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2 group">
-                <label className="text-[9px] font-black text-text-dim uppercase tracking-widest px-1">Access Key</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-indigo-500 transition-colors" />
-                  <input 
-                    type="password" 
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    autoComplete="current-password"
-                    placeholder="••••••••"
                     className="w-full h-14 bg-white/5 border border-black/5 rounded-2xl px-12 text-text-main font-mono text-sm focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none placeholder:text-text-dim/30"
                   />
                 </div>

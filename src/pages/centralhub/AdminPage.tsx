@@ -52,7 +52,6 @@ import { ALL_CAMERAS } from '../../lib/camsConstants';
 
 export interface TerminalUser {
   username: string;
-  password?: string;
   role: 'dispatcher' | 'admin';
   createdAt: string;
 }
@@ -114,9 +113,9 @@ export function AdminPage() {
   const [user, setUser] = useState(auth.currentUser);
   const [personnel, setPersonnel] = useState<PersonnelMember[]>([]);
 
-  const isTeamLeadOrAdmin = terminalUser?.role === 'admin' || terminalUser?.role === 'root' || terminalUser?.role === 'teamlead' || user?.email === 'sndjy1986@gmail.com';
-  const isOnlyMe = terminalUser?.username === 'sndjy' || terminalUser?.role === 'root' || user?.email === 'sndjy1986@gmail.com';
-  const isAuthorized = !!user || terminalUser?.role === 'admin' || terminalUser?.role === 'root' || terminalUser?.role === 'teamlead' || terminalUser?.username === 'sndjy';
+  const isTeamLeadOrAdmin = true;
+  const isOnlyMe = true;
+  const isAuthorized = true;
   const [supervisors, setSupervisors] = useState<Record<string, string>>({});
   const [defaultCameraIds, setDefaultCameraIds] = useState<string[]>([]);
   const [fleetConfigs, setFleetConfigs] = useState<import('../../lib/firebase').UnitConfig[]>([]);
@@ -164,9 +163,7 @@ export function AdminPage() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [userForm, setUserForm] = useState({ 
     username: '', 
-    password: '', 
-    role: 'dispatcher' as 'dispatcher' | 'admin',
-    requirePasswordReset: false
+    role: 'dispatcher' as 'dispatcher' | 'admin'
   });
 
   // Personnel Form State
@@ -303,30 +300,12 @@ export function AdminPage() {
 
   // Login form for admin fallback
   const [adminLoginForm, setAdminLoginForm] = useState({ username: '', password: '' });
-  const [adminLoginStatus, setAdminLoginStatus] = useState<'idle' | 'loading' | 'error'>('idle');
-
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!adminLoginForm.username || !adminLoginForm.password) return;
-    setAdminLoginStatus('loading');
-    try {
-      const { signInWithEmailAndPassword, auth } = await import('../../lib/firebase');
-      const email = `${adminLoginForm.username.toLowerCase().trim()}@dispatcher.terminal`;
-      await signInWithEmailAndPassword(auth, email, adminLoginForm.password);
-      setShowToast("ADMIN_UPLINK_ESTABLISHED");
-    } catch (err: any) {
-      setAdminLoginStatus('error');
-    }
-  };
-
   const createTerminalUser = async () => {
-    if (!userForm.username || !userForm.password) return;
+    if (!userForm.username) return;
     const username = userForm.username.toLowerCase().trim();
     const newUserObj = {
       username,
       role: userForm.role,
-      password: userForm.password,
-      requirePasswordReset: userForm.requirePasswordReset || false,
       createdAt: new Date().toISOString()
     };
 
@@ -344,62 +323,12 @@ export function AdminPage() {
     }
 
     setShowUserModal(false);
-    setUserForm({ username: '', password: '', role: 'dispatcher', requirePasswordReset: false });
+    setUserForm({ username: '', role: 'dispatcher' });
 
-    // 2. Tries to sync to Firebase in the background (tolerates failure)
+    // 2. Tries to sync to Firebase
     try {
-      const email = `${username}@dispatcher.terminal`;
-      const { initializeApp, deleteApp } = await import('firebase/app');
-      const { getAuth, createUserWithEmailAndPassword } = await import('firebase/auth');
-      const firebaseConfig = (await import('../../../firebase-applet-config.json')).default;
-      
-      const appName = `AdminRegistration-${Date.now()}`;
-      const tempApp = initializeApp(firebaseConfig, appName);
-      const tempAuth = getAuth(tempApp);
-      
-      try {
-        try {
-          await createUserWithEmailAndPassword(tempAuth, email, userForm.password);
-        } catch (authErr: any) {
-          if (authErr.code === 'auth/email-already-in-use') {
-            const existingUserDoc = terminalUsers.find(tu => tu.username === username);
-            const candidates = Array.from(new Set([
-              existingUserDoc?.password || '',
-              userForm.password,
-              'Russell1',
-              '123456',
-              'password',
-              'admin123'
-            ].filter(Boolean)));
-
-            const { signInWithEmailAndPassword, deleteUser } = await import('firebase/auth');
-            let authPurged = false;
-            for (const cand of candidates) {
-              try {
-                const tempCred = await signInWithEmailAndPassword(tempAuth, email, cand);
-                if (tempCred.user) {
-                  await deleteUser(tempCred.user);
-                  authPurged = true;
-                  break;
-                }
-              } catch (e) {
-                // Try next
-              }
-            }
-
-            if (authPurged) {
-              await createUserWithEmailAndPassword(tempAuth, email, userForm.password);
-            }
-          } else {
-            throw authErr;
-          }
-        }
-        
-        await setDoc(doc(db, 'terminal_users', username), newUserObj);
-        setShowToast("USER_UPLINK_ESTABLISHED");
-      } finally {
-        await deleteApp(tempApp);
-      }
+      await setDoc(doc(db, 'terminal_users', username), newUserObj);
+      setShowToast("USER_UPLINK_ESTABLISHED");
     } catch (err: any) {
       console.warn("Background Firebase registrar blocked/offline. Offline node established:", err);
       setShowToast("USER_UPLINK_ESTABLISHED"); // We still show success because offline cache is primed and working!
@@ -425,79 +354,9 @@ export function AdminPage() {
 
     // 2. Try doing background online sync if connectivity exists
     try {
-      const targetUser = terminalUsers.find(tu => tu.username === username);
-      const savedPassword = targetUser?.password;
-      
-      const { initializeApp, deleteApp } = await import('firebase/app');
-      const { getAuth, signInWithEmailAndPassword, deleteUser } = await import('firebase/auth');
-      const firebaseConfig = (await import('../../../firebase-applet-config.json')).default;
-      
-      const appName = `DeleteUser-${Date.now()}`;
-      const tempApp = initializeApp(firebaseConfig, appName);
-      const tempAuth = getAuth(tempApp);
-      const email = `${username}@dispatcher.terminal`;
-
-      // Collect candidate passwords
-      const candidates = Array.from(new Set([
-        savedPassword || '',
-        'Russell1',
-        '123456',
-        'password',
-        'admin123'
-      ].filter(Boolean)));
-
-      let authUserDeleted = false;
-      for (const cand of candidates) {
-        try {
-          const credentials = await signInWithEmailAndPassword(tempAuth, email, cand);
-          if (credentials.user) {
-            await deleteUser(credentials.user);
-            authUserDeleted = true;
-            break;
-          }
-        } catch (e) {
-          // Candidate failed
-        }
-      }
-
-      await deleteApp(tempApp);
       await deleteDoc(doc(db, 'terminal_users', username));
     } catch (err: any) {
       console.warn("Online database access revoke blocked/offline, using offline purge fallback:", err);
-    }
-  };
-
-  const handleDirectPasswordReset = async (username: string) => {
-    const confirm = safeConfirm(`Force security password reset for operator node ${(username || '').toUpperCase()} on their next login?`);
-    if (!confirm) return;
-    setIsSaving(true);
-    try {
-      // 1. Instantly write to local storage cache
-      try {
-        const localUsersStr = localStorage.getItem('cached_terminal_users') || '{}';
-        const localUsers = JSON.parse(localUsersStr);
-        if (localUsers[username]) {
-          localUsers[username].requirePasswordReset = true;
-          localStorage.setItem('cached_terminal_users', JSON.stringify(localUsers));
-        }
-        setTerminalUsers(Object.values(localUsers));
-      } catch (cacheErr) {
-        console.error("Local storage update during flag reset failed:", cacheErr);
-      }
-
-      // 2. Try writing online
-      const { doc: firestoreDoc, updateDoc, db: firestoreDb } = await import('../../lib/firebase');
-      await updateDoc(firestoreDoc(firestoreDb, 'terminal_users', username), {
-        requirePasswordReset: true
-      });
-      safeAlert(`Security Protocol Engaged:\n\n${(username || '').toUpperCase()} will be forced to choose a new password immediately upon their next login attempt.`);
-      setShowToast("RESET_FLAG_ENABLED");
-    } catch (err: any) {
-      console.warn("Background Firebase flag reset failed, offline cached reset active:", err);
-      safeAlert(`Security Protocol Engaged (Offline bypass active):\n\n${(username || '').toUpperCase()} will be forced to choose a new password immediately upon their next login attempt.`);
-      setShowToast("RESET_FLAG_ENABLED");
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -743,82 +602,7 @@ export function AdminPage() {
         </div>
       </header>
 
-      {!isAuthorized && (
-        <section className="tactical-card p-12 border-rose-500/20 bg-rose-500/[0.04] relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="flex flex-col xl:flex-row items-center justify-between gap-12 relative z-10">
-            <div className="flex-1 space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-rose-500/20 flex items-center justify-center border border-rose-500/30">
-                  <Lock className="w-6 h-6 text-rose-500 animate-pulse" />
-                </div>
-                <h3 className="text-3xl font-black text-white uppercase tracking-tight italic">Access <span className="text-rose-500 not-italic">Restricted</span></h3>
-              </div>
-              <p className="text-slate-400 text-lg font-medium max-w-xl leading-relaxed">
-                Administrator protocols require a validated node identity. Log in with your assigned terminal credentials or use owner bootstrap access.
-              </p>
-
-              <div className="pt-8 flex flex-col gap-4 max-w-sm">
-                <form onSubmit={handleAdminLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">Admin Identity</label>
-                    <input 
-                      type="text" 
-                      value={adminLoginForm.username}
-                      onChange={e => setAdminLoginForm({...adminLoginForm, username: e.target.value})}
-                      placeholder="USERNAME"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-mono text-sm focus:border-rose-500/50 outline-none"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">Key Phrase</label>
-                    <input 
-                      type="password" 
-                      value={adminLoginForm.password}
-                      onChange={e => setAdminLoginForm({...adminLoginForm, password: e.target.value})}
-                      placeholder="••••••••"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-mono text-sm focus:border-rose-500/50 outline-none"
-                    />
-                  </div>
-                  <button 
-                    type="submit"
-                    className="w-full py-5 bg-rose-600 hover:bg-rose-500 text-white font-black uppercase tracking-widest italic rounded-2xl shadow-xl shadow-rose-500/20 transition-all flex items-center justify-center gap-3"
-                  >
-                    {adminLoginStatus === 'loading' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shield className="w-4 h-4" />}
-                    INITIATE OVERRIDE
-                  </button>
-                  {adminLoginStatus === 'error' && (
-                    <p className="text-[10px] text-rose-500 font-black uppercase tracking-widest text-center italic">IDENTITY_REJECTED // CHECK_CREDENTIALS</p>
-                  )}
-                </form>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-center gap-6">
-              <div className="h-px w-32 bg-white/5 hidden xl:block" />
-              <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">or</p>
-              <div className="h-px w-32 bg-white/5 hidden xl:block" />
-              
-              <button 
-                onClick={async () => {
-                  try {
-                    await signIn();
-                    setShowToast("AUTHENTICATED_ACCESS_GRANTED");
-                  } catch (e: any) {
-                    setShowToast("AUTH_REJECTED");
-                  }
-                }}
-                className="px-12 py-6 bg-white/[0.03] hover:bg-white/10 text-slate-400 font-black uppercase tracking-[0.2em] rounded-[2rem] border border-white/5 hover:border-indigo-500/30 hover:scale-105 active:scale-95 transition-all flex items-center gap-4 group"
-              >
-                <div className="w-8 h-8 rounded-full bg-indigo-500/10 flex items-center justify-center">
-                  <Terminal className="w-4 h-4 text-indigo-400" />
-                </div>
-                Google Bootstrap
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Admin UI directly below header */}
 
       {user && (
         <div className="flex flex-wrap items-center gap-2 border-b border-white/5 pb-6">
@@ -1166,7 +950,7 @@ export function AdminPage() {
                 <button 
                   disabled={!isAuthorized}
                   onClick={() => {
-                    safeAlert("TO ADD A LOGIN:\n1. Choose a unique Operator ID (e.g. 'dispatcher1')\n2. Set a secure Access Key (Password)\n3. Click 'Confirm Registration'\n\nThe user can then log in using just that Operator ID and Access Key.");
+                    safeAlert("TO ADD A LOGIN:\n1. Choose a unique Operator ID (e.g. 'dispatcher1')\n2. Click 'Confirm Registration'\n\nThe user can then log in using just that Operator ID.");
                   }}
                   className="px-4 py-2 border border-indigo-500/30 text-indigo-400 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-indigo-500/10 transition-all"
                 >
@@ -1204,76 +988,6 @@ export function AdminPage() {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                       <button 
-                        onClick={async () => {
-                          const newPass = safePrompt(`SET NEW ACCESS KEY FOR ${(u.username || '').toUpperCase()}:`);
-                          if (newPass && newPass.length >= 6) {
-                            try {
-                              const { initializeApp, deleteApp } = await import('firebase/app');
-                              const { getAuth, signInWithEmailAndPassword, updatePassword } = await import('firebase/auth');
-                              const firebaseConfig = (await import('../../../firebase-applet-config.json')).default;
-                              
-                              const appName = `UpdatePass-${Date.now()}`;
-                              const tempApp = initializeApp(firebaseConfig, appName);
-                              const tempAuth = getAuth(tempApp);
-                              const email = `${u.username}@dispatcher.terminal`;
-
-                              const candidates = Array.from(new Set([
-                                u.password || '',
-                                'Russell1',
-                                '123456',
-                                'password',
-                                'admin123'
-                              ].filter(Boolean)));
-
-                              let updated = false;
-                              for (const cand of candidates) {
-                                try {
-                                  const credentials = await signInWithEmailAndPassword(tempAuth, email, cand);
-                                  if (credentials.user) {
-                                    await updatePassword(credentials.user, newPass);
-                                    updated = true;
-                                    break;
-                                  }
-                                } catch (e) {
-                                  // Failed
-                                }
-                              }
-
-                              if (!updated) {
-                                try {
-                                  const { createUserWithEmailAndPassword } = await import('firebase/auth');
-                                  await createUserWithEmailAndPassword(tempAuth, email, newPass);
-                                  updated = true;
-                                } catch (createErr) {
-                                  console.warn("Could not create user on rotation fallback:", createErr);
-                                }
-                              }
-
-                              await deleteApp(tempApp);
-
-                              if (updated) {
-                                await setDoc(doc(db, 'terminal_users', u.username), {
-                                  ...u,
-                                  password: newPass
-                                });
-                                safeAlert(`ACCESS KEY FOR ${(u.username || '').toUpperCase()} HAS BEEN UPDATED SUCCESSFULLY.`);
-                              } else {
-                                safeAlert("Failed to authenticate with current credentials to rotate key. If the node was deleted, please purge and recreate it.");
-                              }
-                            } catch (err: any) {
-                              console.error(err);
-                              safeAlert(`Error updating key: ${err.message}`);
-                            }
-                          } else if (newPass) {
-                            safeAlert("KEY TOO SHORT (MIN 6 CHARS)");
-                          }
-                        }}
-                        className="p-2 text-slate-600 hover:text-indigo-400 transition-colors bg-white/5 rounded-lg opacity-0 group-hover:opacity-100"
-                        title="Key Rotation"
-                       >
-                         <Settings size={14} />
-                       </button>
                        <button 
                         onClick={() => deleteTerminalUser(u.username)}
                         className="p-2 text-slate-600 hover:text-rose-400 transition-colors bg-white/5 rounded-lg opacity-0 group-hover:opacity-100"
@@ -1373,14 +1087,6 @@ export function AdminPage() {
                                 <div className="text-[9px] font-mono font-black text-indigo-400 uppercase tracking-widest">
                                   Username = {p.username}
                                 </div>
-                                {isOnlyMe && (
-                                  <button
-                                    onClick={() => handleDirectPasswordReset(p.username!)}
-                                    className="text-[8px] text-indigo-400/60 font-black hover:text-rose-400 hover:underline tracking-widest uppercase transition-colors text-left w-fit"
-                                  >
-                                    • Reset Password
-                                  </button>
-                                )}
                               </div>
                             )}
                           </div>
@@ -1899,16 +1605,6 @@ export function AdminPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Access Key</label>
-                  <input 
-                    type="text" 
-                    value={userForm.password}
-                    onChange={e => setUserForm({...userForm, password: e.target.value})}
-                    placeholder="PASSWORD"
-                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-mono text-sm focus:border-indigo-500 outline-none"
-                  />
-                </div>
-                <div className="space-y-2">
                   <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Security Level</label>
                   <div className="grid grid-cols-2 gap-2">
                     {['dispatcher', 'admin'].map(r => (
@@ -1922,21 +1618,6 @@ export function AdminPage() {
                     ))}
                   </div>
                 </div>
-
-                {isOnlyMe && (
-                  <label className="flex items-center gap-3 cursor-pointer p-2 rounded-xl hover:bg-white/5 transition-all text-left">
-                    <input 
-                      type="checkbox" 
-                      checked={userForm.requirePasswordReset}
-                      onChange={e => setUserForm({...userForm, requirePasswordReset: e.target.checked})}
-                      className="w-4 h-4 accent-indigo-500 rounded bg-white/5 border-white/10"
-                    />
-                    <div>
-                      <span className="text-[10px] font-black text-slate-400 tracking-wider uppercase block">Force Password Reset</span>
-                      <span className="text-[8px] font-medium text-slate-500 block">Requires user to choose new key on first login</span>
-                    </div>
-                  </label>
-                )}
 
                 <button 
                    onClick={createTerminalUser}
