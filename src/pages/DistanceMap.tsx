@@ -61,7 +61,7 @@ export default function DistanceMap() {
     };
   }, []);
 
-  // Compute active units and their effective coordinates
+  // Compute active units and their effective coordinates from home stations
   const activeTransportUnits = useMemo(() => {
     if (toneTestMode) {
       // Only MED- units that are UP according to Tone Test
@@ -74,34 +74,18 @@ export default function DistanceMap() {
       return upUnits.map(tr => {
         const unitId = tr.unit || '';
         const config = fleetConfigs.find(c => c.id.toLowerCase() === unitId.toLowerCase());
-        const assignment = assignments.find(a => a.unitId.toLowerCase() === unitId.toLowerCase());
         
         let coords: [number, number] | null = null;
-        let addr = config?.address || TRANSPORT_ADDRS[unitId] || "";
+        let addr = "";
 
-        if (assignment && globalSettings?.postAssignmentsEnabled !== false) {
-          const masterPost = MASTER_POSTS[assignment.postName] || Object.values(MASTER_POSTS).find(mp => mp.name === assignment.postName);
-          const postLogistics = POST_DATA.find(p => p.name === assignment.postName || (assignment.postName === 'Headquarters' && p.name === 'Headquarters') || (assignment.postName === 'Medshore HQ' && p.name === 'Headquarters'));
-          
-          if (masterPost) {
-            coords = [masterPost.lon, masterPost.lat];
-            addr = masterPost.address;
-          } else if (postLogistics) {
-            coords = [postLogistics.lon, postLogistics.lat];
-            addr = postLogistics.name;
-          }
+        const homePostName = config?.homePost || INITIAL_UNITS.find(iu => iu.id.toLowerCase() === unitId.toLowerCase())?.home || "Headquarters";
+        const post = homePostName ? POST_DATA.find(p => p.name.toLowerCase() === homePostName.toLowerCase()) : null;
+        
+        if (post) {
+          coords = [post.lon, post.lat];
+          addr = `Home @ ${post.name}`;
         } else {
-          // If NOT assigned, check if we have a valid post name to use for fixed coords
-          const homePostName = config?.homePost || INITIAL_UNITS.find(iu => iu.id.toLowerCase() === unitId.toLowerCase())?.home;
-          const post = homePostName ? POST_DATA.find(p => p.name === homePostName) : null;
-          
-          if (post) {
-            coords = [post.lon, post.lat];
-            // If the user hasn't provided a custom address in config, show the post name
-            if (!config?.address) {
-              addr = `Home @ ${post.name}`;
-            }
-          }
+          addr = config?.address || TRANSPORT_ADDRS[unitId] || "Headquarters";
         }
 
         return {
@@ -117,32 +101,18 @@ export default function DistanceMap() {
       return medUnits.map(u => {
         const unitId = u.id;
         const config = fleetConfigs.find(c => c.id.toLowerCase() === unitId.toLowerCase());
-        const assignment = assignments.find(a => a.unitId.toLowerCase() === unitId.toLowerCase());
         
         let coords: [number, number] | null = null;
-        let addr = config?.address || TRANSPORT_ADDRS[unitId] || "";
+        let addr = "";
 
-        if (assignment && globalSettings?.postAssignmentsEnabled !== false) {
-          const masterPost = MASTER_POSTS[assignment.postName] || Object.values(MASTER_POSTS).find(mp => mp.name === assignment.postName);
-          const postLogistics = POST_DATA.find(p => p.name === assignment.postName || (assignment.postName === 'Headquarters' && p.name === 'Headquarters') || (assignment.postName === 'Medshore HQ' && p.name === 'Headquarters'));
-          
-          if (masterPost) {
-            coords = [masterPost.lon, masterPost.lat];
-            addr = masterPost.address;
-          } else if (postLogistics) {
-            coords = [postLogistics.lon, postLogistics.lat];
-            addr = postLogistics.name;
-          }
+        const homePostName = config?.homePost || u.home || "Headquarters";
+        const post = homePostName ? POST_DATA.find(p => p.name.toLowerCase() === homePostName.toLowerCase()) : null;
+        
+        if (post) {
+          coords = [post.lon, post.lat];
+          addr = `Home @ ${post.name}`;
         } else {
-          const homePostName = config?.homePost || u.home;
-          const post = homePostName ? POST_DATA.find(p => p.name === homePostName) : null;
-          
-          if (post) {
-            coords = [post.lon, post.lat];
-            if (!config?.address) {
-              addr = `Home @ ${post.name}`;
-            }
-          }
+          addr = config?.address || TRANSPORT_ADDRS[unitId] || "Headquarters";
         }
 
         return {
@@ -152,7 +122,7 @@ export default function DistanceMap() {
         };
       });
     }
-  }, [toneRecords, assignments, toneTestMode, globalSettings]);
+  }, [toneRecords, fleetConfigs, toneTestMode]);
 
   // QRVs are always active for now, or we could filter them too if needed
   const activeQrvUnits = useMemo(() => {

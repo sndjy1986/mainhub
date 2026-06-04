@@ -36,7 +36,10 @@ export default function UnitTable({ title, units, loading }: UnitTableProps) {
                   transition={{ delay: idx * 0.05 }}
                   className={`border-b border-brand-border/30 transition-colors hover:bg-brand-indigo/5 ${idx === 0 ? 'bg-brand-indigo/10 border-l-2 border-l-brand-indigo' : ''}`}
                 >
-                  <td className="px-4 py-3 font-bold text-text-main">{unit.name}</td>
+                  <td className="px-4 py-3 text-text-main">
+                    <div className="font-bold">{unit.name}</div>
+                    <div className="text-[10px] text-text-dim truncate max-w-[170px] uppercase font-semibold mt-0.5 tracking-wider">{unit.addr}</div>
+                  </td>
                   <td className="px-4 py-3 text-text-dim font-mono text-xs">
                     {unit.distance !== undefined ? `${unit.distance.toFixed(2)}mi` : '--'}
                   </td>
