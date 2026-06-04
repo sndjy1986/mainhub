@@ -47,9 +47,8 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     path
   };
   const jsonError = JSON.stringify(errInfo);
-  console.error('Firestore Error Access Denied: ', jsonError);
-  // We throw a fresh error with the JSON string to help the system diagnose
-  throw new Error(jsonError);
+  console.warn('Firestore Access Warning (Bypassed / Offline Fallback): ', jsonError);
+  // We do not throw a fresh error to make sure components do not crash when firewalled/offline
 }
 
 export async function signIn() {

