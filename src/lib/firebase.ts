@@ -154,6 +154,17 @@ export type GlobalSettings = {
 };
 
 export async function updateGlobalSettings(settings: Partial<GlobalSettings>) {
+  // 1. Instantly update the local storage cache first
+  try {
+    const existingCache = localStorage.getItem('cached_global_settings');
+    const existingObj = existingCache ? JSON.parse(existingCache) : {};
+    const merged = { ...existingObj, ...settings };
+    localStorage.setItem('cached_global_settings', JSON.stringify(merged));
+  } catch (err) {
+    console.warn("Could not save settings to offline cache:", err);
+  }
+
+  // 2. Perform online Firestore update
   try {
     const settingsRef = doc(db, 'settings', 'global');
     await setDoc(settingsRef, {

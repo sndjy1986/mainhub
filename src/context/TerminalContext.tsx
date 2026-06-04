@@ -60,10 +60,16 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
 
   // 2. Function declarations (hoisted within the functional component scope)
   async function updateUserSettings(key: string, value: any) {
-    // Update local state first for responsiveness
-    setUserSettings((prev: any) => ({ ...prev, [key]: value }));
-    
     const userKey = firebaseUser?.uid || (terminalUser ? `terminal_${terminalUser.username}` : null);
+    // Update local state first for responsiveness
+    setUserSettings((prev: any) => {
+      const merged = { ...prev, [key]: value };
+      if (userKey) {
+        localStorage.setItem(`userSettings_${userKey}`, JSON.stringify(merged));
+      }
+      return merged;
+    });
+    
     if (userKey) {
       try {
         const { db, doc, setDoc } = await import('../lib/firebase');
@@ -141,17 +147,34 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       document.documentElement.setAttribute('data-theme', savedLocal);
     }
   }, [userSettings?.appTheme]);
-  // Sync user settings from Firestore
+  // Sync user settings from Firestore with offline local storage fallbacks
   useEffect(() => {
     let unsub: any = null;
     const userKey = firebaseUser?.uid || (terminalUser ? `terminal_${terminalUser.username}` : null);
     if (userKey) {
+      // 1. Load instantly from offline cache
+      const cached = localStorage.getItem(`userSettings_${userKey}`);
+      if (cached) {
+        try {
+          setUserSettings(JSON.parse(cached));
+        } catch (e) {
+          console.warn("Error parsing local offline cache settings:", e);
+        }
+      }
+
+      // 2. Dynamically subscribe to Firebase
       import('../lib/firebase').then(({ db, doc, onSnapshot }) => {
         unsub = onSnapshot(doc(db, 'users', userKey, 'settings', 'terminal'), (s) => {
           if (s.exists()) {
-            setUserSettings(s.data());
+            const data = s.data();
+            setUserSettings(data);
+            localStorage.setItem(`userSettings_${userKey}`, JSON.stringify(data));
           }
+        }, (err) => {
+          console.warn("Firestore settings listen offline or blocked:", err);
         });
+      }).catch(err => {
+        console.warn("Firebase import failed during userSettings listen:", err);
       });
     } else {
       setUserSettings(null);
