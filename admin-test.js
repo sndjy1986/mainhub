@@ -1,12 +1,13 @@
 import { initializeApp, applicationDefault } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import firebaseConfig from './firebase-applet-config.json' with { type: 'json' };
 
 const app = initializeApp({
   credential: applicationDefault(),
-  projectId: "gen-lang-client-0286011656"
+  projectId: firebaseConfig.projectId
 });
 
-const db = getFirestore(app, "ai-studio-057bbc3f-888f-4671-8ac4-ddcfe33c1602");
+const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 async function run() {
   try {
@@ -19,12 +20,19 @@ async function run() {
       console.log("Document settings/global does not exist yet!");
     }
     
-    // Attempt a write to a test collection
-    await db.collection('test_connection').doc('status').set({
-      connected: true,
-      timestamp: new Date()
-    });
-    console.log("Admin SDK successfully wrote to test_connection!");
+    // Let's seed /settings/global with default settings so that the app doesn't crash on start!
+    const defaultSettings = {
+      backgroundStyle: 'glow',
+      lightIntensity: 0.5,
+      employees: [],
+      personnel: [],
+      supervisors: {},
+      defaultCameraIds: [],
+      fleetConfigs: [],
+      sidebarLinks: []
+    };
+    await docRef.set(defaultSettings, { merge: true });
+    console.log("Admin SDK successfully initialized settings/global!");
     
     process.exit(0);
   } catch (err) {

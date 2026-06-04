@@ -18,6 +18,24 @@ interface UnitAssignment {
   postName: string;
 }
 
+const QRV_HOME_POSTS: Record<string, string> = {
+  "A-5": "Centerville",
+  "A-8": "Headquarters",
+  "ALS-2": "Pendleton",
+  "ALS-3": "Homeland Park",
+  "ALS-4": "81 & Fred Dean",
+  "ALS-6": "Pelzer",
+  "ALS-7": "Powdersville",
+  "ALS-11": "West Anderson - P5",
+  "ALS-12": "Belton City",
+  "ALS-17": "TownVille",
+  "ALS-19": "Hopewell",
+  "ALS-21": "Honea Path",
+  "ALS-23": "Headquarters",
+  "ALS-24": "Wren",
+  "ALS-27": "Zion"
+};
+
 export default function DistanceMap() {
   const { toneTestMode } = useTerminal();
   const [address, setAddress] = useState('');
@@ -87,6 +105,9 @@ export default function DistanceMap() {
         addr = `Home @ ${post.name}`;
       } else {
         addr = config?.address || TRANSPORT_ADDRS[unitId] || "Headquarters";
+        // Fallback fallback: search POST_DATA for HQ
+        const hqPost = POST_DATA.find(p => p.name.toLowerCase() === 'headquarters');
+        if (hqPost) coords = [hqPost.lon, hqPost.lat];
       }
 
       return {
@@ -94,25 +115,36 @@ export default function DistanceMap() {
         addr: addr,
         coords: coords
       };
-    });
+    }).filter(u => u.coords !== null); // Ensure only valid coords are used
   }, [fleetConfigs]);
 
-  // QRVs are always active for now, or we could filter them too if needed
+  // QRVs are mapped to home stations as well to support zero-geocoding distances
   const activeQrvUnits = useMemo(() => {
     const qrvConfigs = fleetConfigs.filter(c => c.type === 'qrv');
-    if (qrvConfigs.length > 0) {
-      return qrvConfigs.map(q => ({
-        name: q.name,
-        addr: q.address,
-        coords: null as [number, number] | null
-      }));
-    }
+    const items = qrvConfigs.length > 0 
+      ? qrvConfigs.map(q => ({ name: q.name, addr: q.address || "" }))
+      : DISPATCH_QRV.map(q => ({ name: q.name, addr: q.addr || "" }));
 
-    return DISPATCH_QRV.map(q => ({
-      name: q.name,
-      addr: q.addr,
-      coords: null as [number, number] | null
-    }));
+    return items.map(q => {
+      let coords: [number, number] | null = null;
+      let addr = q.addr;
+
+      const homePostName = QRV_HOME_POSTS[q.name] || "Headquarters";
+      const post = POST_DATA.find(p => p.name.toLowerCase() === homePostName.toLowerCase());
+      if (post) {
+        coords = [post.lon, post.lat];
+        addr = `Home @ ${post.name}`;
+      } else {
+        const hqPost = POST_DATA.find(p => p.name.toLowerCase() === 'headquarters');
+        if (hqPost) coords = [hqPost.lon, hqPost.lat];
+      }
+
+      return {
+        name: q.name,
+        addr: addr,
+        coords: coords
+      };
+    }).filter(u => u.coords !== null); // Ensure only valid coords are used
   }, [fleetConfigs]);
 
   const handleSearch = async (e: React.FormEvent) => {
