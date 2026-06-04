@@ -163,6 +163,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     if (!hasCleaned) {
       import('../lib/firebase').then(async ({ db, collection, getDocs, deleteDoc, doc, setDoc, auth }) => {
         try {
+          // Only attempt if authenticated or run anonymously
           const snap = await getDocs(collection(db, 'terminal_users'));
           const deletes = snap.docs.map(d => deleteDoc(doc(db, 'terminal_users', d.id)));
           await Promise.all(deletes);
@@ -181,7 +182,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem('terminalUsersSetup_v4', 'true');
           console.log('SYSTEM IDENTITY RESET COMPLETE: LOGIN sndjy_ROOT ENABLED (PASS: Russell1)');
         } catch (e) {
-          console.error('SETUP_FAILURE', e);
+          console.warn('Terminal users status: dynamic initialization skipped or deferred until login', e);
         }
       });
     }

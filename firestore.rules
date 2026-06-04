@@ -51,6 +51,25 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
+    match /users/{userId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /shift_updates/{updateId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /shift_turnovers/{turnoverId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /test/{docId} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
     // Default deny catch-all
     match /{document=**} {
       allow read, write: if false;
