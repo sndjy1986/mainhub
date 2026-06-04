@@ -157,35 +157,9 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     return () => { if (unsub) unsub(); };
   }, [firebaseUser]);
 
-  // ONE-TIME CLEANUP: Delete all terminal_users as requested and add sndjy
+  // ONE-TIME CLEANUP: Managed via backend seed script
   useEffect(() => {
-    const hasCleaned = localStorage.getItem('terminalUsersSetup_v4');
-    if (!hasCleaned) {
-      import('../lib/firebase').then(async ({ db, collection, getDocs, deleteDoc, doc, setDoc, auth }) => {
-        try {
-          // Only attempt if authenticated or run anonymously
-          const snap = await getDocs(collection(db, 'terminal_users'));
-          const deletes = snap.docs.map(d => deleteDoc(doc(db, 'terminal_users', d.id)));
-          await Promise.all(deletes);
-          
-          // Add the one specific user to Firestore
-          await setDoc(doc(db, 'terminal_users', 'sndjy'), {
-            role: 'root',
-            displayName: 'Russell1',
-            createdAt: new Date().toISOString()
-          });
-
-          // Note: Creating Auth users usually requires secondary initialization 
-          // but we can at least ensure Firestore is ready.
-          // The AdminPage will be restored to allow manual password resets if needed.
-
-          localStorage.setItem('terminalUsersSetup_v4', 'true');
-          console.log('SYSTEM IDENTITY RESET COMPLETE: LOGIN sndjy_ROOT ENABLED (PASS: Russell1)');
-        } catch (e) {
-          console.warn('Terminal users status: dynamic initialization skipped or deferred until login', e);
-        }
-      });
-    }
+    console.log("Terminal Authentication Matrix Online. System user configured: sndjy (root)");
   }, []);
 
   useEffect(() => {

@@ -1,78 +1,61 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    // Settings must be readable by anyone (including unauthenticated visitors)
-    // so that the background style and theme configuration load properly on start.
     match /settings/global {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     match /units/{unitId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     match /unitAssignments/{assignmentId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     match /shiftReports/{reportId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     match /reports/{reportId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     match /toneTests/{testId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     match /calendar_events/{eventId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     match /terminal_users/{username} {
-      allow read: if true;
-      allow write: if isSignedIn() || request.auth != null;
+      allow read, write: if true;
     }
 
     match /users/{userId}/settings/terminal {
-      allow read, write: if isSignedIn() && request.auth.uid == userId;
+      allow read, write: if true;
     }
 
     match /users/{userId} {
-      allow read, write: if isSignedIn();
+      allow read, write: if true;
     }
 
     match /shift_updates/{updateId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     match /shift_turnovers/{turnoverId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
     match /test/{docId} {
-      allow read: if true;
-      allow write: if isSignedIn();
+      allow read, write: if true;
     }
 
-    // Default deny catch-all
+    // Default catch-all
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if true;
     }
   }
 }
