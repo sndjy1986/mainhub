@@ -157,7 +157,7 @@ export default function ShiftReport() {
     return () => unsubscribe();
   }, []);
 
-  // Compute shift teams from personnel
+  // Compute shift teams from personnel with robust static fallbacks if Firestore/Uplink is offline
   const shiftTeams = useMemo(() => {
     const teams: Record<string, { lead: string; members: string[] }> = {
       'A': { lead: '', members: [] },
@@ -167,15 +167,44 @@ export default function ShiftReport() {
       'Other': { lead: '', members: [] }
     };
 
-    personnel.forEach(p => {
-      if (teams[p.shift]) {
-        if (!teams[p.shift].lead) {
-          teams[p.shift].lead = p.name;
-        } else {
-          teams[p.shift].members.push(p.name);
+    if (personnel && personnel.length > 0) {
+      personnel.forEach(p => {
+        // Support shifts like A, B, C, D, Alpha, Bravo, etc
+        let targetKey: string = p.shift;
+        if (targetKey === 'Alpha' || targetKey === 'A-Shift' || targetKey === 'A') targetKey = 'A';
+        else if (targetKey === 'Bravo' || targetKey === 'B-Shift' || targetKey === 'B') targetKey = 'B';
+        else if (targetKey === 'Charlie' || targetKey === 'C-Shift' || targetKey === 'C') targetKey = 'C';
+        else if (targetKey === 'Delta' || targetKey === 'D-Shift' || targetKey === 'D') targetKey = 'D';
+        else targetKey = 'Other';
+
+        if (teams[targetKey]) {
+          if (!teams[targetKey].lead) {
+            teams[targetKey].lead = p.name;
+          } else {
+            teams[targetKey].members.push(p.name);
+          }
+        }
+      });
+    }
+
+    // If teams are still empty (e.g. offline or blocked), populate them with high-fidelity static fallbacks from shiftConstants to prevent empty selects
+    const isTeamsEmpty = !teams['A'].lead && !teams['B'].lead && !teams['C'].lead && !teams['D'].lead;
+    if (isTeamsEmpty) {
+      if (SHIFT_TEAMS) {
+        if (SHIFT_TEAMS['Alpha']) {
+          teams['A'] = { lead: SHIFT_TEAMS['Alpha'].lead, members: SHIFT_TEAMS['Alpha'].members };
+        }
+        if (SHIFT_TEAMS['Bravo']) {
+          teams['B'] = { lead: SHIFT_TEAMS['Bravo'].lead, members: SHIFT_TEAMS['Bravo'].members };
+        }
+        if (SHIFT_TEAMS['Charlie']) {
+          teams['C'] = { lead: SHIFT_TEAMS['Charlie'].lead, members: SHIFT_TEAMS['Charlie'].members };
+        }
+        if (SHIFT_TEAMS['Delta']) {
+          teams['D'] = { lead: SHIFT_TEAMS['Delta'].lead, members: SHIFT_TEAMS['Delta'].members };
         }
       }
-    });
+    }
 
     return teams;
   }, [personnel]);

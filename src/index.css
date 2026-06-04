@@ -357,6 +357,10 @@
   .tactical-input {
     @apply bg-black/40 border-white/10 text-white font-mono focus:border-indigo-500/50 focus:ring-0 rounded-xl transition-all placeholder:text-slate-600;
   }
+  .tactical-input option, .tactical-input optgroup {
+    background-color: #1a1d23 !important;
+    color: #ffffff !important;
+  }
 
   .tactical-btn-indigo {
     @apply bg-indigo-600 hover:bg-indigo-500 text-white font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:active:scale-100;
