@@ -60,6 +60,7 @@ export type ShiftReportData = {
   name: string;
   date: string;
   shift: string;
+  reportType: string;
   channel1: string;
   channel2: string;
   thirdPerson: string;
@@ -82,6 +83,7 @@ export const INITIAL_DATA: ShiftReportData = {
   name: "",
   date: new Date().toISOString().split('T')[0],
   shift: "C-Shift",
+  reportType: "Mid-Shift Report",
   channel1: "",
   channel2: "",
   thirdPerson: "",

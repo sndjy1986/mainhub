@@ -63,10 +63,11 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     // Update local state first for responsiveness
     setUserSettings((prev: any) => ({ ...prev, [key]: value }));
     
-    if (firebaseUser) {
+    const userKey = firebaseUser?.uid || (terminalUser ? `terminal_${terminalUser.username}` : null);
+    if (userKey) {
       try {
         const { db, doc, setDoc } = await import('../lib/firebase');
-        await setDoc(doc(db, 'users', firebaseUser.uid, 'settings', 'terminal'), {
+        await setDoc(doc(db, 'users', userKey, 'settings', 'terminal'), {
           [key]: value
         }, { merge: true });
       } catch (err) {
@@ -143,9 +144,10 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   // Sync user settings from Firestore
   useEffect(() => {
     let unsub: any = null;
-    if (firebaseUser) {
+    const userKey = firebaseUser?.uid || (terminalUser ? `terminal_${terminalUser.username}` : null);
+    if (userKey) {
       import('../lib/firebase').then(({ db, doc, onSnapshot }) => {
-        unsub = onSnapshot(doc(db, 'users', firebaseUser.uid, 'settings', 'terminal'), (s) => {
+        unsub = onSnapshot(doc(db, 'users', userKey, 'settings', 'terminal'), (s) => {
           if (s.exists()) {
             setUserSettings(s.data());
           }
@@ -155,7 +157,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       setUserSettings(null);
     }
     return () => { if (unsub) unsub(); };
-  }, [firebaseUser]);
+  }, [firebaseUser, terminalUser]);
 
   // ONE-TIME CLEANUP: Managed via backend seed script
   useEffect(() => {

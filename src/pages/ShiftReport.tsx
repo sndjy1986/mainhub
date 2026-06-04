@@ -346,6 +346,7 @@ export default function ShiftReport() {
     };
 
     addSection("Info", [
+      `Report Subject: ${data.reportType || "Mid-Shift Report"}`,
       `Name: ${data.name || "N/A"}`,
       `Date: ${data.date || "N/A"}`,
       `Shift: ${data.shift}`
@@ -450,6 +451,7 @@ export default function ShiftReport() {
     };
 
     addHtmlSection("Info", [
+      `Report Subject: ${data.reportType || "Mid-Shift Report"}`,
       `Name: ${data.name || "N/A"}`,
       `Date: ${data.date || "N/A"}`,
       `Shift: ${data.shift}`
@@ -528,7 +530,7 @@ export default function ShiftReport() {
       return `${parseInt(m)}/${parseInt(d)}/${y.slice(2)}`;
     };
 
-    const subject = `${data.shift} Shift Report - ${formatDateForSubject(data.date)}`;
+    const subject = `${data.shift} ${data.reportType || "Mid-Shift Report"} - ${formatDateForSubject(data.date)}`;
     const body = `*** FULL REPORT COPIED TO CLIPBOARD ***\n\nSummary:\n- Supervisor: ${data.name}\n- Date: ${data.date}\n\nClick here and press Ctrl+V to paste the detailed report.`;
     
     let cc = CC_EMAIL;
@@ -620,6 +622,12 @@ export default function ShiftReport() {
                    </h2>
                 </div>
                 <div className="space-y-6">
+                  <Field label="Report Subject Type" icon={FileText}>
+                    <select name="reportType" value={data.reportType || "Mid-Shift Report"} onChange={handleChange}>
+                      <option value="Mid-Shift Report">Mid-Shift Report</option>
+                      <option value="End of Shift Report">End Of Shift Report</option>
+                    </select>
+                  </Field>
                   <Field label="Name" icon={UserCheck}>
                     <select name="name" value={data.name} onChange={handleChange}>
                       <option value="">-- SELECT --</option>
