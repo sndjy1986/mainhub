@@ -44,15 +44,21 @@ export default function DistanceMap() {
         setGlobalSettings(data);
         if (data.fleetConfigs) setFleetConfigs(data.fleetConfigs);
       }
-    }, (error) => handleFirestoreError(error, OperationType.GET, 'settings/global'));
+    }, (error) => {
+      console.warn('Firestore settings/global read error:', error);
+    });
 
     const unsubTone = onSnapshot(query(collection(db, 'toneTests')), (snapshot) => {
       setToneRecords(snapshot.docs.map(doc => doc.data() as ToneTestRecord));
-    }, (error) => handleFirestoreError(error, OperationType.GET, 'toneTests'));
+    }, (error) => {
+      console.warn('Firestore toneTests read error:', error);
+    });
 
     const unsubAssign = onSnapshot(query(collection(db, 'unitAssignments')), (snapshot) => {
       setAssignments(snapshot.docs.map(doc => doc.data() as UnitAssignment));
-    }, (error) => handleFirestoreError(error, OperationType.GET, 'unitAssignments'));
+    }, (error) => {
+      console.warn('Firestore unitAssignments read error:', error);
+    });
 
     return () => {
       unsubSettings();
@@ -63,66 +69,33 @@ export default function DistanceMap() {
 
   // Compute active units and their effective coordinates from home stations
   const activeTransportUnits = useMemo(() => {
-    if (toneTestMode) {
-      // Only MED- units that are UP according to Tone Test
-      const upUnits = toneRecords.filter(r => 
-        (r.unit || '').toUpperCase().startsWith('MED') && 
-        r.time && 
-        !r.tenFortyTwo
-      );
-
-      return upUnits.map(tr => {
-        const unitId = tr.unit || '';
-        const config = fleetConfigs.find(c => c.id.toLowerCase() === unitId.toLowerCase());
-        
-        let coords: [number, number] | null = null;
-        let addr = "";
-
-        const homePostName = config?.homePost || INITIAL_UNITS.find(iu => iu.id.toLowerCase() === unitId.toLowerCase())?.home || "Headquarters";
-        const post = homePostName ? POST_DATA.find(p => p.name.toLowerCase() === homePostName.toLowerCase()) : null;
-        
-        if (post) {
-          coords = [post.lon, post.lat];
-          addr = `Home @ ${post.name}`;
-        } else {
-          addr = config?.address || TRANSPORT_ADDRS[unitId] || "Headquarters";
-        }
-
-        return {
-          name: unitId,
-          addr: addr,
-          coords: coords
-        };
-      });
-    } else {
-      // Pull ALL trucks if Tone Test is NOT in use
-      const medUnits = INITIAL_UNITS.filter(u => u.id.toUpperCase().startsWith('MED'));
+    // Pull ALL trucks representing home stations, as requested by the user
+    const medUnits = INITIAL_UNITS.filter(u => u.id.toUpperCase().startsWith('MED'));
+    
+    return medUnits.map(u => {
+      const unitId = u.id;
+      const config = fleetConfigs.find(c => c.id.toLowerCase() === unitId.toLowerCase());
       
-      return medUnits.map(u => {
-        const unitId = u.id;
-        const config = fleetConfigs.find(c => c.id.toLowerCase() === unitId.toLowerCase());
-        
-        let coords: [number, number] | null = null;
-        let addr = "";
+      let coords: [number, number] | null = null;
+      let addr = "";
 
-        const homePostName = config?.homePost || u.home || "Headquarters";
-        const post = homePostName ? POST_DATA.find(p => p.name.toLowerCase() === homePostName.toLowerCase()) : null;
-        
-        if (post) {
-          coords = [post.lon, post.lat];
-          addr = `Home @ ${post.name}`;
-        } else {
-          addr = config?.address || TRANSPORT_ADDRS[unitId] || "Headquarters";
-        }
+      const homePostName = config?.homePost || u.home || "Headquarters";
+      const post = homePostName ? POST_DATA.find(p => p.name.toLowerCase() === homePostName.toLowerCase()) : null;
+      
+      if (post) {
+        coords = [post.lon, post.lat];
+        addr = `Home @ ${post.name}`;
+      } else {
+        addr = config?.address || TRANSPORT_ADDRS[unitId] || "Headquarters";
+      }
 
-        return {
-          name: unitId,
-          addr: addr,
-          coords: coords
-        };
-      });
-    }
-  }, [toneRecords, fleetConfigs, toneTestMode]);
+      return {
+        name: unitId,
+        addr: addr,
+        coords: coords
+      };
+    });
+  }, [fleetConfigs]);
 
   // QRVs are always active for now, or we could filter them too if needed
   const activeQrvUnits = useMemo(() => {
