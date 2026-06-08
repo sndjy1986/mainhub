@@ -409,7 +409,14 @@ export default function ShiftReport() {
       
       if (Array.isArray(content)) {
         content.forEach(line => {
-          parts.push(`<div style="${dataStyle}">${line}</div>`);
+          const colonIndex = line.indexOf(': ');
+          if (colonIndex !== -1) {
+            const label = line.substring(0, colonIndex);
+            const value = line.substring(colonIndex + 2);
+            parts.push(`<div style="${dataStyle}"><strong style="font-size: 20pt;">${label}:</strong> ${value}</div>`);
+          } else {
+            parts.push(`<div style="${dataStyle}">${line}</div>`);
+          }
         });
       } else {
         const text = (typeof content === 'string' ? content : "");
@@ -426,7 +433,7 @@ export default function ShiftReport() {
                 const cell = row[i] || "";
                 const cellStyle = `border: 1px solid #000; padding: 4px 8px; text-align: left; width: ${widths[i] || "auto"}; min-width: 50px;`;
                 if (rowIndex === 0) {
-                  table += `<th style="${cellStyle} background-color: #D9D9D9; font-weight: bold;">${cell}</th>`;
+                  table += `<th style="${cellStyle} background-color: #D9D9D9; font-weight: bold; font-size: 20pt;">${cell}</th>`;
                 } else {
                   table += `<td style="${cellStyle}">${cell}</td>`;
                 }
