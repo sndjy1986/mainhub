@@ -221,34 +221,31 @@ export function StartPage() {
     const savedLocal = localStorage.getItem("start-page-widgets-v7");
     const savedRemote = userSettings?.startPageWidgets;
 
+    let initialWidgets: WidgetItem[] = DEFAULT_WIDGETS;
+
     if (savedRemote) {
-      // Filter out widget-time if it exists since it's now in the sidebar
-      const filtered = savedRemote.filter((w: WidgetItem) => w.type !== "time");
-      setWidgets(filtered);
-      setHasInitialized(true);
+      initialWidgets = savedRemote;
     } else if (savedLocal) {
-      const parsed = JSON.parse(savedLocal);
-      const filtered = parsed.filter((w: WidgetItem) => w.type !== "time");
-      const hasNews = filtered.some((w: WidgetItem) => w.type === "news");
-      const final = hasNews
-        ? filtered
-        : [
-            ...filtered,
-            {
-              id: "widget-news",
-              type: "news",
-              title: "Global Intel Feed",
-              size: "lg",
-              isVisible: true,
-              newsSettings: DEFAULT_NEWS_SETTINGS,
-            },
-          ];
-      setWidgets(final);
-      setHasInitialized(true);
-    } else {
-      setWidgets(DEFAULT_WIDGETS);
-      setHasInitialized(true);
+      try {
+        initialWidgets = JSON.parse(savedLocal);
+      } catch {
+        initialWidgets = DEFAULT_WIDGETS;
+      }
     }
+
+    // Filter out obsolete 'time' widget (now in sidebar)
+    initialWidgets = initialWidgets.filter((w: WidgetItem) => w.type !== "time");
+
+    // Ensure all DEFAULT_WIDGETS are present so users get new additions
+    const activeWidgetIds = new Set(initialWidgets.map((w) => w.id));
+    const missingWidgets = DEFAULT_WIDGETS.filter((w) => !activeWidgetIds.has(w.id));
+    
+    if (missingWidgets.length > 0) {
+      initialWidgets = [...initialWidgets, ...missingWidgets];
+    }
+
+    setWidgets(initialWidgets);
+    setHasInitialized(true);
   }, [userSettings?.startPageWidgets, hasInitialized, isUserSettingsLoaded]);
 
   // Sync back to local and remote
@@ -402,7 +399,7 @@ export function StartPage() {
           items={visibleWidgets.map((w) => w.id)}
           strategy={rectSortingStrategy}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10 auto-rows-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-8 relative z-10 auto-rows-auto px-4 lg:px-8">
             {visibleWidgets.map((widget) => (
               <SortableWidget
                 key={widget.id}
@@ -953,11 +950,11 @@ function SortableWidget({
   const getColSpan = () => {
     switch (widget.size) {
       case "xl":
-        return "col-span-1 md:col-span-2 lg:col-span-4";
+        return "col-span-1 md:col-span-2 lg:col-span-4 xl:col-span-6";
       case "lg":
-        return "col-span-1 md:col-span-2 lg:col-span-3";
+        return "col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-4";
       case "md":
-        return "col-span-1 md:col-span-2";
+        return "col-span-1 md:col-span-2 xl:col-span-2";
       default:
         return "col-span-1";
     }
