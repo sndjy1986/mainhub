@@ -84,6 +84,28 @@ export default function ShiftTurnover({ isEmbedded = false }: { isEmbedded?: boo
       };
 
       await addDoc(collection(db, 'shift_turnovers'), finalData);
+      
+      const copyText = `TURNOVER REPORT
+Name: ${finalData.meta.name}
+ALSSUP: ${finalData.meta.alssup}
+MEDSUP: ${finalData.meta.medsup}
+Date: ${finalData.meta.date}
+Shift: ${finalData.meta.shift}
+Zulu Units: ${finalData.meta.zuluUnits}
+
+CHECKS
+Times Completed: ${finalData.checks.timesCompleted ? "Yes" : "No"}
+DQC Completed: ${finalData.checks.dqcCompleted ? "Yes" : "No"}
+Trash Taken Out: ${finalData.checks.trashTakenOut ? "Yes" : "No"}
+Computers Restarted: ${finalData.checks.computersRestarted ? "Yes" : "No"}
+System Level: ${finalData.systemStatusLevel}
+
+SPECIAL EVENTS & BRIEFING
+${finalData.specialEvents || "None"}
+`;
+      await navigator.clipboard.writeText(copyText);
+      alert("Turnover report has been copied to the clipboard!\n\nPlease paste this into Slack.");
+
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (e) {

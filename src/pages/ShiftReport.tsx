@@ -629,12 +629,7 @@ export default function ShiftReport() {
                    </h2>
                 </div>
                 <div className="space-y-6">
-                  <Field label="Report Subject Type" icon={FileText}>
-                    <select name="reportType" value={data.reportType || "Mid-Shift Report"} onChange={handleChange}>
-                      <option value="Mid-Shift Report">Mid-Shift Report</option>
-                      <option value="End of Shift Report">End Of Shift Report</option>
-                    </select>
-                  </Field>
+
                   <Field label="Name" icon={UserCheck}>
                     <select name="name" value={data.name} onChange={handleChange}>
                       <option value="">-- SELECT --</option>
@@ -915,10 +910,22 @@ export default function ShiftReport() {
                  >
                    Manual Uplink
                  </button>
+                 <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-2 py-1 shadow-inner h-[52px]">
+                   <FileText className="w-4 h-4 text-indigo-400 ml-2" />
+                   <select 
+                     name="reportType" 
+                     value={data.reportType || "Mid-Shift Report"} 
+                     onChange={handleChange}
+                     className="bg-transparent border-none px-2 py-2 text-xs font-black uppercase text-white outline-none"
+                   >
+                     <option value="Mid-Shift Report">Mid-Shift Report</option>
+                     <option value="End of Shift Report">End Of Shift Report</option>
+                   </select>
+                 </div>
                  <button 
                    type="button"
                    onClick={handleSend}
-                   className="tactical-btn-indigo px-10 py-4 shadow-xl shadow-indigo-500/20 active:scale-95"
+                   className="tactical-btn-indigo px-10 py-4 shadow-xl shadow-indigo-500/20 active:scale-95 h-[52px]"
                  >
                    <Mail className="w-5 h-5" /> Deploy Report
                  </button>

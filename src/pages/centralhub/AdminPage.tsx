@@ -113,9 +113,9 @@ export function AdminPage() {
   const [user, setUser] = useState(auth.currentUser);
   const [personnel, setPersonnel] = useState<PersonnelMember[]>([]);
 
-  const isTeamLeadOrAdmin = true;
-  const isOnlyMe = true;
-  const isAuthorized = true;
+  const isTeamLeadOrAdmin = terminalUser?.role === 'admin' || terminalUser?.role === 'root' || terminalUser?.username === 'sndjy';
+  const isOnlyMe = terminalUser?.username === 'sndjy' || terminalUser?.role === 'root';
+  const isAuthorized = terminalUser?.username === 'sndjy';
   const [supervisors, setSupervisors] = useState<Record<string, string>>({});
   const [defaultCameraIds, setDefaultCameraIds] = useState<string[]>([]);
   const [fleetConfigs, setFleetConfigs] = useState<import('../../lib/firebase').UnitConfig[]>([]);
@@ -604,33 +604,31 @@ export function AdminPage() {
 
       {/* Admin UI directly below header */}
 
-      {user && (
-        <div className="flex flex-wrap items-center gap-2 border-b border-white/5 pb-6">
-          {[
-            { id: 'general', label: 'System & Theme', icon: <Settings className="w-4 h-4" /> },
-            ...(isTeamLeadOrAdmin ? [
-              { id: 'fleet', label: 'Fleet Configuration', icon: <Truck className="w-4 h-4" /> },
-              { id: 'personnel', label: 'Personnel & Access', icon: <User className="w-4 h-4" /> }
-            ] : []),
-            { id: 'links', label: 'Nav & Feeds', icon: <Camera className="w-4 h-4" /> },
-            { id: 'archive', label: 'Archives', icon: <History className="w-4 h-4" /> },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              className={`
-                px-6 py-3 rounded-xl flex items-center gap-3 text-[10px] font-black uppercase tracking-widest transition-all
-                ${activeTab === tab.id 
-                  ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
-                  : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'}
-              `}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-2 border-b border-white/5 pb-6">
+        {[
+          { id: 'general', label: 'System & Theme', icon: <Settings className="w-4 h-4" /> },
+          ...(isTeamLeadOrAdmin ? [
+            { id: 'fleet', label: 'Fleet Configuration', icon: <Truck className="w-4 h-4" /> },
+            { id: 'personnel', label: 'Personnel & Access', icon: <User className="w-4 h-4" /> }
+          ] : []),
+          { id: 'links', label: 'Nav & Feeds', icon: <Camera className="w-4 h-4" /> },
+          { id: 'archive', label: 'Archives', icon: <History className="w-4 h-4" /> },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as typeof activeTab)}
+            className={`
+              px-6 py-3 rounded-xl flex items-center gap-3 text-[10px] font-black uppercase tracking-widest transition-all
+              ${activeTab === tab.id 
+                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
+                : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'}
+            `}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       <div className="space-y-12">
         {/* GENERAL TAB */}
@@ -936,12 +934,13 @@ export function AdminPage() {
         {/* PERSONNEL & ACCESS TAB */}
         {activeTab === 'personnel' && (
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 animate-in fade-in duration-500">
+          
           {/* User Access Management */}
           <section className="tactical-card p-10 space-y-10 xl:col-span-4 bg-indigo-500/[0.02]">
             <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/5">
               <div>
                 <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4">
-                  <Cpu className="w-5 h-5 text-indigo-400" />
+                  <Terminal className="w-5 h-5 text-indigo-400" />
                   Terminal <span className="text-indigo-400 not-italic">Nodes</span>
                 </h3>
                 <p className="text-[9px] text-slate-500 uppercase tracking-[0.3em] font-black mt-2">Access Credentials & Privileges</p>
@@ -1005,7 +1004,7 @@ export function AdminPage() {
               <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 flex gap-4">
                 <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
                 <p className="text-[10px] text-amber-200/40 font-bold uppercase tracking-tight leading-relaxed">
-                  Notice: These credentials bypass standard Google authentication. Use unique identifiers and manage rotation frequency.
+                  Notice: These credentials bypass standard Google authentication.
                 </p>
               </div>
             </div>

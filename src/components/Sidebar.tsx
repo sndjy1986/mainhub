@@ -80,44 +80,7 @@ export function Sidebar() {
         <div className="mb-2 flex flex-col items-center justify-center p-4 bg-white/5 border border-white/5 rounded-2xl group cursor-default">
           <ClockDisplay />
         </div>
-        {/* Emergency Controls in Sidebar */}
-        <div className="p-4 bg-white/5 border border-white/10 rounded-2xl space-y-4">
-           <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className="text-[8px] font-black uppercase tracking-widest text-slate-500">Strobes</span>
-                <span className={`text-[10px] font-bold uppercase transition-colors ${manualEmergencyMode ? 'text-rose-400' : 'text-slate-400'}`}>
-                  {manualEmergencyMode ? 'Overdrive' : 'Standby'}
-                </span>
-              </div>
-              <button
-                onClick={() => setManualEmergencyMode(!manualEmergencyMode)}
-                className={`
-                  w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-300
-                  ${manualEmergencyMode 
-                    ? 'bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)]' 
-                    : 'bg-white/5 text-slate-400 hover:bg-white/10'}
-                `}
-              >
-                <Siren className={`w-5 h-5 ${manualEmergencyMode ? 'animate-pulse' : ''}`} />
-              </button>
-           </div>
-           
-           <div className="space-y-1.5">
-              <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-widest text-slate-500">
-                <span>Intensity</span>
-                <span className="font-mono text-indigo-400">{(emergencyOpacity * 100).toFixed(0)}%</span>
-              </div>
-              <input
-                type="range"
-                min="0.05"
-                max="0.8"
-                step="0.05"
-                value={emergencyOpacity}
-                onChange={(e) => setEmergencyOpacity(parseFloat(e.target.value))}
-                className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-indigo-500"
-              />
-           </div>
-        </div>
+
 
         {/* User Profile & Admin Access */}
         <div className="flex flex-col gap-3">

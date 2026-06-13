@@ -8,8 +8,15 @@ import { motion, AnimatePresence } from 'motion/react';
 export function LoginPage() {
   const { loginTerminalUser } = useTerminal();
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'error' | 'success'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
+
+  React.useEffect(() => {
+    try {
+       localStorage.removeItem('cached_terminal_users');
+    } catch(e) {}
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,65 +28,15 @@ export function LoginPage() {
     const normalizedUsername = username.toLowerCase().trim();
 
     try {
-      let role = 'dispatcher';
-      let foundUser = false;
-      let userData: any = null;
-
-      // 1. Fetch user data directly from Firestore (wrapped to tolerate network blocking)
-      try {
-        const { db } = await import('../../lib/firebase');
-        const { doc, getDoc } = await import('firebase/firestore');
-        const userRef = doc(db, 'terminal_users', normalizedUsername);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          foundUser = true;
-          userData = userSnap.data();
-          role = userData.role || 'dispatcher';
-
-          // Force-sync this information to offline storage cache
-          try {
-            const localUsersStr = localStorage.getItem('cached_terminal_users') || '{}';
-            const localUsers = JSON.parse(localUsersStr);
-            localUsers[normalizedUsername] = {
-              username: normalizedUsername,
-              role,
-              createdAt: userData.createdAt || new Date().toISOString()
-            };
-            localStorage.setItem('cached_terminal_users', JSON.stringify(localUsers));
-          } catch (e) {
-            console.warn("Saving user to offline cache failed:", e);
-          }
-        }
-      } catch (dbErr) {
-        console.warn("Firestore collection lookup blocked or offline, using cache:", dbErr);
+      if (normalizedUsername === 'sndjy' && password === 'Russell1') {
+         setStatus('success');
+         setTimeout(() => {
+           loginTerminalUser('sndjy', 'root');
+         }, 500);
+      } else {
+         setStatus('error');
+         setErrorMsg('ACCESS_DENIED // INVALID_CREDENTIALS');
       }
-
-      // 2. Offline Fallback: If not found in live DB or DB lookup failed, check offline cached credentials
-      if (!foundUser) {
-        try {
-          const localUsersStr = localStorage.getItem('cached_terminal_users') || '{}';
-          const localUsers = JSON.parse(localUsersStr);
-          if (localUsers[normalizedUsername]) {
-            foundUser = true;
-            userData = localUsers[normalizedUsername];
-            role = userData.role || 'dispatcher';
-            console.log("Offline login active. Cached user found:", role);
-          } else if (normalizedUsername === 'sndjy') {
-            foundUser = true;
-            role = 'root';
-          }
-        } catch (cacheErr) {
-          console.error("Local storage lookup failed:", cacheErr);
-        }
-      }
-
-      // 3. User authenticated successfully (everyone is allowed, auto-provision if not found)
-      setStatus('success');
-      setTimeout(() => {
-        loginTerminalUser(normalizedUsername, role);
-      }, 500);
-
     } catch (err: any) {
       console.error("Critical Login Error:", err);
       setStatus('error');
@@ -128,6 +85,20 @@ export function LoginPage() {
                     onChange={(e) => setUsername(e.target.value)}
                     autoComplete="username"
                     placeholder="USERNAME"
+                    className="w-full h-14 bg-white/5 border border-black/5 rounded-2xl px-12 text-text-main font-mono text-sm focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none placeholder:text-text-dim/30"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2 group">
+                <label className="text-[9px] font-black text-text-dim uppercase tracking-widest px-1">Access Key</label>
+                <div className="relative">
+                  <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim group-focus-within:text-indigo-500 transition-colors" />
+                  <input 
+                    type="password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    placeholder="••••••••"
                     className="w-full h-14 bg-white/5 border border-black/5 rounded-2xl px-12 text-text-main font-mono text-sm focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all outline-none placeholder:text-text-dim/30"
                   />
                 </div>

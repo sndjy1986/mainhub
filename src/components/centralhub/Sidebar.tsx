@@ -283,50 +283,7 @@ export function Sidebar() {
         <div className="px-4">
           <span className="text-[9px] font-black uppercase tracking-[0.3em] text-text-dim">System Link</span>
         </div>
-        {/* Emergency Controls in Sidebar */}
-        <div className="p-4 bg-black/5 border border-white/10 rounded-2xl space-y-4 shadow-inner">
-           <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className="text-[8px] font-black uppercase tracking-[0.3em] text-text-dim">Strobes</span>
-                <span className={`text-[10px] font-bold uppercase tracking-widest transition-colors ${manualEmergencyMode ? 'text-rose-500 glow-text-indigo' : 'text-text-dim'}`}>
-                  {manualEmergencyMode ? 'Overdrive' : 'Standby'}
-                </span>
-              </div>
-              <button
-                onClick={() => setManualEmergencyMode(!manualEmergencyMode)}
-                className={`
-                  w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-500 border
-                  ${manualEmergencyMode 
-                    ? 'bg-rose-500 text-white border-rose-400 shadow-[0_0_20px_rgba(244,63,94,0.4)]' 
-                    : 'bg-white/5 border-white/5 text-text-dim hover:border-white/10 hover:text-text-main'}
-                `}
-              >
-                <Siren className={`w-4 h-4 ${manualEmergencyMode ? 'animate-pulse' : ''}`} />
-              </button>
-           </div>
-           
-           <div className="space-y-2">
-              <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-[0.3em] text-text-dim">
-                <span>Power Level</span>
-                <span className="font-mono text-indigo-500">{(emergencyOpacity * 100).toFixed(0)}%</span>
-              </div>
-              <div className="relative h-1 w-full bg-white/10 rounded-full overflow-hidden">
-                <motion.div 
-                  className="absolute top-0 left-0 h-full bg-indigo-500 shadow-[0_0_100px_rgba(99,102,241,0.5)]"
-                  animate={{ width: `${emergencyOpacity * 100}%` }}
-                />
-                <input
-                  type="range"
-                  min="0.05"
-                  max="0.8"
-                  step="0.05"
-                  value={emergencyOpacity}
-                  onChange={(e) => setEmergencyOpacity(parseFloat(e.target.value))}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
-              </div>
-           </div>
-        </div>
+
 
         {/* User Profile & Admin Access */}
         <div className="flex flex-col gap-2">
