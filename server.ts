@@ -80,7 +80,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/scanner/latest', async (req, res) => {
+  app.get('/api/scanner/latest-v2', async (req, res) => {
     try {
       const response = await fetch('https://radioapi.sndjy.us/latest');
       if (!response.ok) {
