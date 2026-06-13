@@ -300,3 +300,5 @@ export function ScannerVFD() {
   );
 }
 
+// UI optimizations and VFD scrolling layout fixes
+
