@@ -64,6 +64,20 @@ async function startServer() {
     }
   });
 
+  app.get('/api/scanner/latest', async (req, res) => {
+    try {
+      const response = await fetch('https://radioapi.sndjy.us/latest');
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      console.error('Scanner proxy error:', error);
+      res.status(500).json({ error: 'Failed to fetch scanner data' });
+    }
+  });
+
   // Health check
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });

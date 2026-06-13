@@ -4,36 +4,54 @@ import {
   Play, 
   Square, 
   Volume2, 
-  Radio, 
-  ChevronDown, 
-  ChevronUp, 
-  Wifi, 
   Activity,
   Layers,
-  Search,
-  Maximize2
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-interface Talkgroup {
+interface RadioCall {
   id: number;
-  alpha: string;
-  description: string;
-  tag: string;
-}
-
-interface System {
-  id: number;
+  dateTime: string;
+  groupId: number;
+  groupLabel: string;
   label: string;
-  talkgroups?: Talkgroup[];
+  name: string;
+  talkgroup: number;
 }
 
-interface Call {
-  id: number;
-  system: number;
-  talkgroup: number;
-  freq?: number;
-  length?: number;
+const VFDLine = ({ text = "", length, sizeClass = "text-3xl md:text-5xl lg:text-6xl" }: { text?: string, length: number, sizeClass?: string }) => {
+  const safeText = typeof text === 'string' ? text : String(text || "");
+  let s = safeText.substring(0, length).toUpperCase();
+  const padLeft = Math.floor((length - s.length) / 2);
+  const padRight = length - s.length - padLeft;
+  const chars = (' '.repeat(padLeft) + s + ' '.repeat(padRight)).split('');
+
+  return (
+    <div className="flex gap-[2px] md:gap-1 justify-center w-full max-w-full overflow-hidden">
+      {chars.map((char, i) => {
+        const isSpace = char === ' ';
+        return (
+          <div key={i} className={cn(
+            "relative flex items-center justify-center bg-[#020a0c] rounded-[2px] md:rounded-md border border-[#00ffd0]/10 px-1 md:px-2 py-1 md:py-2 font-mono leading-none shadow-inner", 
+            sizeClass
+          )}>
+            {/* Unlit Segment */}
+            <span className="absolute inset-0 flex items-center justify-center text-[#00ffd0] opacity-[0.25] select-none font-bold">8</span>
+            
+            {/* Lit Segment */}
+            <span 
+              className={cn(
+                "relative z-10 transition-all duration-75 font-bold", 
+                isSpace ? 'opacity-0 text-transparent' : 'opacity-100 text-[#00ffd0] drop-shadow-[0_0_8px_rgba(0,255,208,0.8)]'
+              )} 
+            >
+                {isSpace ? '8' : char}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  )
 }
 
 export function ScannerVFD() {
@@ -41,99 +59,94 @@ export function ScannerVFD() {
   const [volume, setVolume] = useState(70);
   const [isExpanded, setIsExpanded] = useState(false);
   
-  const [wsStatus, setWsStatus] = useState<'DISCONNECTED' | 'CONNECTED'>('DISCONNECTED');
-  const [config, setConfig] = useState<{ systems: System[] } | null>(null);
-  const [activeCall, setActiveCall] = useState<{ call: Call, url: string, tg: Talkgroup | null, sys: System | null } | null>(null);
-  const [activeGroup, setActiveGroup] = useState<string>('SYS');
+  const [status, setStatus] = useState<'STANDBY' | 'CONNECTING' | 'CONNECTED' | 'ERROR'>('STANDBY');
+  const [activeCall, setActiveCall] = useState<RadioCall | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string>('');
   
-  const wsRef = useRef<WebSocket | null>(null);
+  const lastPlayedIdRef = useRef<number>(0);
+  const pollIntervalRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     if (!isPlaying) {
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
+      if (pollIntervalRef.current) {
+        window.clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
       }
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
-      setWsStatus('DISCONNECTED');
+      setStatus('STANDBY');
       setActiveCall(null);
       return;
     }
 
-    const connectWS = () => {
-      const ws = new WebSocket('wss://scanner.sndjy.us/');
-      wsRef.current = ws;
+    setStatus('CONNECTING');
+    
+    // Initial fetch to get the current latest ID so we don't play the past calls wildly
+    fetch('/api/scanner/latest')
+      .then(res => {
+         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+         return res.json();
+      })
+      .then((data: RadioCall[]) => {
+         setStatus('CONNECTED');
+         setErrorMsg('');
+         if (data && data.length > 0) {
+            lastPlayedIdRef.current = data[0].id;
+            setActiveCall(data[0]); // Just display the latest call immediately
+         }
+      })
+      .catch(e => {
+         console.warn("API init error:", e);
+         setStatus('ERROR');
+         setErrorMsg(e instanceof Error ? e.message : String(e));
+      });
 
-      ws.onopen = () => {
-        setWsStatus('CONNECTED');
-        ws.send(JSON.stringify(["VER"]));
-        ws.send(JSON.stringify(["CFG"]));
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (Array.isArray(data)) {
-            if (data[0] === 'CFG' && data[1]) {
-              setConfig(data[1]);
-            } else if (data[0] === 'CAL' && data[1]) {
-               const callStr = data[1];
-               handleNewCall(callStr);
-            }
+    const poll = async () => {
+      try {
+        const res = await fetch('/api/scanner/latest');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data: RadioCall[] = await res.json();
+        
+        setErrorMsg('');
+        if (data && data.length > 0) {
+          const latest = data[0];
+          
+          if (latest.id > lastPlayedIdRef.current) {
+             lastPlayedIdRef.current = latest.id;
+             handleNewCall(latest);
           }
-        } catch (e) {
-          console.warn("WS Parse Error", e);
         }
-      };
-
-      ws.onclose = () => {
-        setWsStatus('DISCONNECTED');
-        if (isPlaying) {
-           setTimeout(connectWS, 3000); // Reconnect loop
-        }
-      };
+      } catch (err) {
+        console.warn("Polling error:", err);
+        setErrorMsg(err instanceof Error ? err.message : String(err));
+      }
     };
 
-    connectWS();
+    pollIntervalRef.current = window.setInterval(poll, 3000);
 
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
+      if (pollIntervalRef.current) {
+        window.clearInterval(pollIntervalRef.current);
       }
     };
   }, [isPlaying]);
 
-  const handleNewCall = (call: Call) => {
-    // Attempt to lookup
-    let sysData: System | null = null;
-    let tgData: Talkgroup | null = null;
+  const handleNewCall = (call: RadioCall) => {
+    setActiveCall(call);
 
-    setConfig(prevConfig => {
-      if (prevConfig?.systems) {
-         sysData = prevConfig.systems.find((s) => s.id === call.system) || null;
-         if (sysData?.talkgroups) {
-           tgData = sysData.talkgroups.find((t) => t.id === call.talkgroup) || null;
-         }
-      }
-      return prevConfig;
-    });
-
-    const audioUrl = `https://scanner.sndjy.us/audio/${call.id}.m4a`;
-    setActiveCall({ call, url: audioUrl, sys: sysData, tg: tgData });
-
-    if (tgData?.alpha) setActiveGroup(tgData.alpha.substring(0, 5));
-
-    // Play Audio
     if (audioRef.current) {
       audioRef.current.pause();
     }
+    
+    // We construct the audio endpoint to the scanner URL
+    const audioUrl = `https://scanner.sndjy.us/audio/${call.id}.m4a`;
     const audio = new Audio(audioUrl);
     audio.volume = volume / 100;
+    
+    // Listen for ended so we can clear active UI if desired, but retaining it looks cooler
     audio.play().catch(e => console.warn("Audio play blocked", e));
     audioRef.current = audio;
   };
@@ -150,41 +163,41 @@ export function ScannerVFD() {
       <div className="relative group">
         <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-[2rem] blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
         
-        <div className="relative bg-[#0a0a0c] border border-white/5 rounded-[2rem] p-8 shadow-2xl overflow-hidden">
+        <div className="relative bg-[#0a0a0c] border border-white/5 rounded-[2rem] p-4 md:p-8 shadow-2xl overflow-hidden">
           {/* Subtle grid pattern for extra "tech" feel */}
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
 
           {/* VFD Display Surface */}
-          <div className="relative z-10 vfd-panel rounded-lg p-10 min-h-[220px] flex flex-col justify-center items-center">
+          <div className="relative z-10 vfd-panel rounded-lg p-6 md:p-10 min-h-[220px] flex flex-col justify-center items-center">
             {/* VFD Scanline Overlay */}
             <div className="vfd-overlay" />
 
             {/* Matrix Text Area */}
-            <div className="overflow-hidden relative z-10 w-full flex flex-col items-center">
+            <div className="relative z-10 w-full flex flex-col items-center gap-4">
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={activeCall ? activeCall.call.id : 'idle'}
+                  key={activeCall ? activeCall.id : 'idle'}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="flex flex-col items-center gap-2 text-center"
+                  className="flex flex-col items-center gap-4 w-full"
                 >
-                  <div className="text-5xl md:text-7xl font-black tracking-[4px] md:tracking-[8px] vfd-text font-mono uppercase" style={{ textShadow: activeCall ? '0 0 20px #00ffd0, 0 0 40px #00ffd0' : 'none' }}>
-                    {activeCall && activeCall.tg ? activeCall.tg.alpha : activeCall ? `SYS:${activeCall.sys?.label || activeCall.call.system}` : activeGroup}
-                  </div>
-                  <div className="text-lg md:text-xl vfd-text opacity-50 font-mono tracking-[4px] uppercase mt-2">
-                    {activeCall ? (
-                       <span>TG:{activeCall.call.talkgroup} {activeCall.tg?.tag ? `:: ${activeCall.tg.tag}` : ''}</span>
-                    ) : (
-                       <span>STANDBY :: SCANNING</span>
-                    )}
-                  </div>
+                  <VFDLine 
+                    text={activeCall ? (activeCall.name || activeCall.label || 'VOICE UPLINK') : 'STANDBY'} 
+                    length={16} 
+                    sizeClass="text-2xl sm:text-4xl md:text-5xl"
+                  />
+                  <VFDLine 
+                    text={activeCall ? `TG:${activeCall.talkgroup} ${activeCall.groupLabel || ''}` : 'AWAITING UPLINK'} 
+                    length={20} 
+                    sizeClass="text-lg sm:text-lg md:text-2xl"
+                  />
                 </motion.div>
               </AnimatePresence>
             </div>
 
             {/* Bottom Status Indicators - VFD Style */}
-            <div className="absolute bottom-4 left-10 right-10 flex items-center justify-between z-10">
+            <div className="absolute bottom-4 left-6 right-6 flex items-center justify-between z-10">
                <div className="flex items-center gap-1">
                  {[1,2,3,4,5,6,7,8,9,10,11,12].map(i => (
                    <div 
@@ -197,8 +210,8 @@ export function ScannerVFD() {
                    />
                  ))}
                </div>
-               <div className="text-[9px] font-black vfd-text opacity-40 uppercase tracking-[0.3em]">
-                  SCANNER_UPLINK :: {wsStatus}
+               <div className="text-[9px] font-black text-[#00ffd0] opacity-40 uppercase tracking-[0.3em] font-mono">
+                  UPLINK :: {status}
                </div>
             </div>
           </div>
@@ -211,7 +224,7 @@ export function ScannerVFD() {
                 className={cn(
                   "h-14 px-8 rounded-2xl flex items-center gap-4 transition-all duration-500 border shadow-2xl active:scale-95 group",
                   isPlaying 
-                    ? "bg-cyan-500 text-black border-cyan-400 shadow-cyan-500/40" 
+                    ? "bg-cyan-500 text-black border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.4)]" 
                     : "bg-white/5 border-white/10 text-cyan-400/60 hover:text-cyan-400 hover:border-cyan-400/50"
                 )}
               >
@@ -237,7 +250,7 @@ export function ScannerVFD() {
             </div>
 
             {/* Volume Slider - VFD Style */}
-            <div className="flex-1 flex items-center gap-4 px-6 py-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+            <div className="hidden md:flex flex-1 items-center gap-4 px-6 py-4 bg-white/[0.02] border border-white/5 rounded-2xl">
                <Volume2 size={16} className="text-slate-600" />
                <div className="relative flex-1 h-1 bg-slate-800 rounded-full overflow-hidden">
                  <motion.div 
@@ -272,17 +285,19 @@ export function ScannerVFD() {
                  <Activity size={12} /> Live API Diagnostic Stream
               </div>
               <div className="space-y-1">
-                 <div>Systems Parsed: <span className="text-white">{config?.systems?.length || 0}</span></div>
-                 {activeCall && (
-                    <div className="mt-4 space-y-1 border-t border-white/10 pt-4">
+                 {errorMsg && <div className="text-red-400 mb-2">ERR: {errorMsg}</div>}
+                 {activeCall ? (
+                    <div className="mt-4 space-y-1 border-white/10">
                       <div className="text-white">Active Intercept Data:</div>
-                      <div>ID: {activeCall.call.id}</div>
-                      <div>SYS: {activeCall.call.system} / {activeCall.sys?.label || "Unknown"}</div>
-                      <div>TG: {activeCall.call.talkgroup} / {activeCall.tg?.alpha || "Generic"}</div>
-                      <div>TAG: {activeCall.tg?.tag || "N/A"}</div>
+                      <div>ID: {activeCall.id}</div>
+                      <div>SYS_ID: {activeCall.groupId} / {activeCall.groupLabel || "Unknown"}</div>
+                      <div>TG: {activeCall.talkgroup}</div>
+                      <div>DATE: {activeCall.dateTime}</div>
+                      <div>TAG: {activeCall.label || "N/A"} / {activeCall.name || "N/A"}</div>
                     </div>
+                 ) : (
+                    <div className="mt-4 opacity-50 italic">Awaiting transmission packets...</div>
                  )}
-                 {!activeCall && <div className="mt-4 opacity-50 italic">Awaiting transmission packets...</div>}
               </div>
             </div>
           </motion.div>
@@ -291,3 +306,4 @@ export function ScannerVFD() {
     </div>
   );
 }
+
