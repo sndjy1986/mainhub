@@ -64,6 +64,22 @@ async function startServer() {
     }
   });
 
+  app.get('/api/scanner/audio/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const response = await fetch(`https://radioapi.sndjy.us/audio/${id}`);
+      if (!response.ok) {
+         return res.status(response.status).end();
+      }
+      res.setHeader('Content-Type', 'audio/mp4');
+      const arrayBuffer = await response.arrayBuffer();
+      res.send(Buffer.from(arrayBuffer));
+    } catch (error) {
+      console.error('Audio proxy error:', error);
+      res.status(500).end();
+    }
+  });
+
   app.get('/api/scanner/latest', async (req, res) => {
     try {
       const response = await fetch('https://radioapi.sndjy.us/latest');

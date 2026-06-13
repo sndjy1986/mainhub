@@ -145,8 +145,8 @@ export function ScannerVFD() {
       audioRef.current.pause();
     }
     
-    // We construct the audio endpoint to the scanner URL
-    const audioUrl = `https://scanner.sndjy.us/audio/${call.id}.m4a`;
+    // We use the direct radio api endpoint to avoid dev environment cookie interception for media elements
+    const audioUrl = `https://radioapi.sndjy.us/audio/${call.id}`;
     const audio = new Audio(audioUrl);
     audio.volume = volume / 100;
     
