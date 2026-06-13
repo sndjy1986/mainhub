@@ -389,37 +389,66 @@
     background-color: var(--bg-main);
   }
 
-  /* Custom VFD effect */
-  .vfd-panel {
-    background: #001a1a;
-    border: 4px solid #1a1a1a;
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.05), inset 0 0 25px rgba(0, 0, 0, 0.9);
+  .vfd-case {
+    background-color: #1a2230;
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 
+      inset 0 4px 10px rgba(0,0,0,0.8),
+      0 10px 20px rgba(0,0,0,0.5),
+      0 0 40px rgba(0, 255, 128, 0.1);
+    border: 3px solid #334155;
+    position: relative;
+    width: 100%;
+  }
+
+  .vfd-display {
+    background-color: #05080c;
+    color: #26e680;
+    font-size: 3rem;
+    font-weight: bold;
+    letter-spacing: 0.15em;
+    padding: 20px;
+    border-radius: 4px;
+    border: 2px solid #000;
     position: relative;
     overflow: hidden;
+    text-shadow: 0 0 10px #26e680, 0 0 20px #26e680;
+    box-shadow: inset 0 0 20px rgba(0,0,0,1);
+    display: flex;
+    justify-content: center;
   }
 
-  .vfd-text {
-    font-family: 'JetBrains Mono', monospace;
-    color: #00ffd0;
-    letter-spacing: 2px;
-  }
-
-  .vfd-overlay {
+  /* Scanline filter overlay */
+  .vfd-display::after {
+    content: "";
     position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%), 
-                linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-    background-size: 100% 3px, 3px 100%;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 4px;
     pointer-events: none;
-    z-index: 5;
+    z-index: 10;
   }
 
-  @keyframes vfd-glow-pulse {
-    0%, 100% { filter: brightness(1); }
-    50% { filter: brightness(1.1); }
+  .ticker-container {
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    display: flex;
+    align-items: center;
   }
 
-  .vfd-glow-anim {
-    animation: vfd-glow-pulse 4s ease-in-out infinite;
+  .ticker-text {
+    display: inline-block;
+  }
+
+  .vfd-scroll {
+    animation: vfd-marquee 12s linear infinite;
+  }
+
+  @keyframes vfd-marquee {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
   }
 }

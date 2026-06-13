@@ -19,40 +19,44 @@ interface RadioCall {
   talkgroup: number;
 }
 
-const VFDLine = ({ text = "", length, sizeClass = "text-3xl md:text-5xl lg:text-6xl" }: { text?: string, length: number, sizeClass?: string }) => {
+const VFDLineTicker = ({ text = "", sizeClass = "text-3xl" }: { text?: string, sizeClass?: string }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [shouldScroll, setShouldScroll] = useState(false);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (containerRef.current && textRef.current) {
+        setShouldScroll(textRef.current.offsetWidth > containerRef.current.offsetWidth);
+      }
+    };
+    
+    // Check overflow after a brief delay to allow text rendering
+    const timer = setTimeout(checkOverflow, 50);
+    window.addEventListener('resize', checkOverflow);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkOverflow);
+    };
+  }, [text]);
+
   const safeText = typeof text === 'string' ? text : String(text || "");
-  let s = safeText.substring(0, length).toUpperCase();
-  const padLeft = Math.floor((length - s.length) / 2);
-  const padRight = length - s.length - padLeft;
-  const chars = (' '.repeat(padLeft) + s + ' '.repeat(padRight)).split('');
 
   return (
-    <div className="flex gap-[2px] md:gap-1 justify-center w-full max-w-full overflow-hidden">
-      {chars.map((char, i) => {
-        const isSpace = char === ' ';
-        return (
-          <div key={i} className={cn(
-            "relative flex items-center justify-center bg-[#020a0c] rounded-[2px] md:rounded-md border border-[#00ffd0]/10 px-1 md:px-2 py-1 md:py-2 font-mono leading-none shadow-inner", 
-            sizeClass
-          )}>
-            {/* Unlit Segment */}
-            <span className="absolute inset-0 flex items-center justify-center text-[#00ffd0] opacity-[0.25] select-none font-bold">8</span>
-            
-            {/* Lit Segment */}
-            <span 
-              className={cn(
-                "relative z-10 transition-all duration-75 font-bold", 
-                isSpace ? 'opacity-0 text-transparent' : 'opacity-100 text-[#00ffd0] drop-shadow-[0_0_8px_rgba(0,255,208,0.8)]'
-              )} 
-            >
-                {isSpace ? '8' : char}
-            </span>
-          </div>
-        );
-      })}
+    <div 
+      ref={containerRef} 
+      className={cn("ticker-container", shouldScroll ? "!justify-start" : "!justify-center")}
+    >
+      <span 
+        ref={textRef} 
+        className={cn("ticker-text uppercase font-mono tracking-widest", sizeClass, shouldScroll ? "vfd-scroll" : "")}
+      >
+        {safeText}
+      </span>
     </div>
-  )
-}
+  );
+};
 
 export function ScannerVFD() {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -160,63 +164,53 @@ export function ScannerVFD() {
   return (
     <div className="flex flex-col gap-4">
       {/* VFD Container */}
-      <div className="relative group">
-        <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-[2rem] blur opacity-0 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-        
-        <div className="relative bg-[#0a0a0c] border border-white/5 rounded-[2rem] p-4 md:p-8 shadow-2xl overflow-hidden">
-          {/* Subtle grid pattern for extra "tech" feel */}
-          <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-
-          {/* VFD Display Surface */}
-          <div className="relative z-10 vfd-panel rounded-lg p-6 md:p-10 min-h-[220px] flex flex-col justify-center items-center">
-            {/* VFD Scanline Overlay */}
-            <div className="vfd-overlay" />
-
+      <div className="relative group w-full max-w-4xl mx-auto">
+        <div className="vfd-case">
+          <div className="vfd-display min-h-[160px] md:min-h-[200px] flex-col items-center justify-center">
             {/* Matrix Text Area */}
-            <div className="relative z-10 w-full flex flex-col items-center gap-4">
+            <div className="relative z-10 w-full flex flex-col items-center gap-2 md:gap-4">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeCall ? activeCall.id : 'idle'}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="flex flex-col items-center gap-4 w-full"
+                  className="flex flex-col items-center gap-2 md:gap-4 w-full px-2"
                 >
-                  <VFDLine 
+                  <VFDLineTicker 
                     text={activeCall ? (activeCall.name || activeCall.label || 'VOICE UPLINK') : 'STANDBY'} 
-                    length={16} 
                     sizeClass="text-2xl sm:text-4xl md:text-5xl"
                   />
-                  <VFDLine 
+                  <VFDLineTicker 
                     text={activeCall ? `TG:${activeCall.talkgroup} ${activeCall.groupLabel || ''}` : 'AWAITING UPLINK'} 
-                    length={20} 
-                    sizeClass="text-lg sm:text-lg md:text-2xl"
+                    sizeClass="text-lg sm:text-xl md:text-2xl opacity-70"
                   />
                 </motion.div>
               </AnimatePresence>
             </div>
-
-            {/* Bottom Status Indicators - VFD Style */}
-            <div className="absolute bottom-4 left-6 right-6 flex items-center justify-between z-10">
-               <div className="flex items-center gap-1">
-                 {[1,2,3,4,5,6,7,8,9,10,11,12].map(i => (
-                   <div 
-                    key={i} 
-                    className={cn(
-                      "w-1.5 h-1.5 transition-all duration-300",
-                      isPlaying && i <= (volume / 8) ? "bg-[#00ffd0] shadow-[0_0_8px_#00ffd0]" : "bg-black/40",
-                      activeCall && isPlaying && i <= (volume / 8) && i % 2 === 0 ? "animate-pulse" : ""
-                    )} 
-                   />
-                 ))}
-               </div>
-               <div className="text-[9px] font-black text-[#00ffd0] opacity-40 uppercase tracking-[0.3em] font-mono">
-                  UPLINK :: {status}
-               </div>
-            </div>
           </div>
 
-          {/* Tactical Controls */}
+          {/* Bottom Status Indicators - VFD Style */}
+          <div className="absolute bottom-4 left-8 right-8 flex items-center justify-between z-10">
+             <div className="flex items-center gap-1.5 md:gap-2">
+               {[1,2,3,4,5,6,7,8,9,10,11,12].map(i => (
+                 <div 
+                  key={i} 
+                  className={cn(
+                    "w-1.5 h-1.5 md:w-2 md:h-2 rounded-sm transition-all duration-300",
+                    isPlaying && i <= (volume / 8) ? "bg-[#26e680] shadow-[0_0_8px_#26e680]" : "bg-black/40",
+                    activeCall && isPlaying && i <= (volume / 8) && i % 2 === 0 ? "animate-pulse" : ""
+                  )} 
+                 />
+               ))}
+             </div>
+             <div className="text-[10px] font-black text-[#26e680] opacity-50 uppercase tracking-[0.3em] font-mono">
+                UPLINK :: {status}
+             </div>
+          </div>
+        </div>
+
+        {/* Tactical Controls */}
           <div className="mt-8 flex items-center justify-between gap-6">
             <div className="flex gap-3">
               <button
@@ -268,7 +262,6 @@ export function ScannerVFD() {
                </div>
             </div>
           </div>
-        </div>
       </div>
 
       {/* Expanded Data Parser Diagnostics */}
