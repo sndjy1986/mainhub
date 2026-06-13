@@ -39,6 +39,7 @@ interface WeatherSettings {
   showTimeline?: boolean;
   showTomorrow?: boolean;
   showCurrent?: boolean;
+  zipCode?: string;
 }
 
 interface WeatherData {
@@ -141,8 +142,9 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
         let latitude: number;
         let longitude: number;
 
-        if (weatherZip) {
-          const zipRes = await fetch(`https://api.zippopotam.us/us/${weatherZip}`, {
+        const targetZip = settings?.zipCode || weatherZip;
+        if (targetZip) {
+          const zipRes = await fetch(`https://api.zippopotam.us/us/${targetZip}`, {
             headers: { 'User-Agent': 'Dispatch Ops Central (sndjy1986@gmail.com)' }
           });
           if (!zipRes.ok) throw new Error('Invalid or unrecognized Zip Code.');
@@ -243,7 +245,7 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
     getWeatherData();
     const interval = setInterval(getWeatherData, 15 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [retryCount, weatherZip, forecastDays]);
+  }, [retryCount, weatherZip, forecastDays, settings?.zipCode]);
 
   const AnimatedWeatherIcon = ({ condition, size = 24, className = "" }: { condition: string, size?: number, className?: string }) => {
     const c = condition.toLowerCase();

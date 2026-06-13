@@ -33,7 +33,7 @@ export default function App() {
       <Layout>
         <Suspense fallback={<div className="w-full h-full bg-bg-main flex items-center justify-center"><div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>}>
           <Routes>
-            <Route path="/" element={<PageWrapper><StartPage /></PageWrapper>} />
+            <Route path="/" element={<PageWrapper fullWidth className="p-6 md:p-10 max-w-[1920px] mx-auto overflow-y-auto"><StartPage /></PageWrapper>} />
             <Route path="/tone-test" element={<PageWrapper className="overflow-y-auto"><ToneTest /></PageWrapper>} />
             <Route path="/unit-posting" element={<PageWrapper fullWidth className="overflow-hidden"><UnitPosting /></PageWrapper>} />
             <Route path="/distance-map" element={<PageWrapper fullWidth className="overflow-hidden"><DistanceMap /></PageWrapper>} />

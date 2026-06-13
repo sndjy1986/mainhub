@@ -35,6 +35,7 @@ interface TerminalContextType {
   logoutTerminalUser: () => void;
   firebaseUser: any | null;
   userSettings: any | null;
+  isUserSettingsLoaded: boolean;
   updateUserSettings: (key: string, value: any) => Promise<void>;
   isSavingGlobal: boolean;
   setIsSavingGlobal: (val: boolean) => void;
@@ -45,6 +46,7 @@ const TerminalContext = createContext<TerminalContextType | undefined>(undefined
 export function TerminalProvider({ children }: { children: React.ReactNode }) {
   // 1. All state declarations first to avoid TDZ (Temporal Dead Zone) issues
   const [userSettings, setUserSettings] = useState<any | null>(null);
+  const [isUserSettingsLoaded, setIsUserSettingsLoaded] = useState(false);
   const [firebaseUser, setFirebaseUser] = useState<any | null>(null);
   const [emergencyLevel, setEmergencyLevel] = useState<EmergencyLevel>('NORMAL');
   const [manualEmergencyMode, setManualEmergencyMode] = useState(false);
@@ -178,6 +180,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       if (cached) {
         try {
           setUserSettings(JSON.parse(cached));
+          setIsUserSettingsLoaded(true);
         } catch (e) {
           console.warn("Error parsing local offline cache settings:", e);
         }
@@ -191,14 +194,18 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
             setUserSettings(data);
             localStorage.setItem(`userSettings_${userKey}`, JSON.stringify(data));
           }
+          setIsUserSettingsLoaded(true);
         }, (err) => {
           console.warn("Firestore settings listen offline or blocked:", err);
+          setIsUserSettingsLoaded(true);
         });
       }).catch(err => {
         console.warn("Firebase import failed during userSettings listen:", err);
+        setIsUserSettingsLoaded(true);
       });
     } else {
       setUserSettings(null);
+      setIsUserSettingsLoaded(true);
     }
     return () => { if (unsub) unsub(); };
   }, [firebaseUser, terminalUser]);
@@ -344,7 +351,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
               '--global-scale': overrides.globalScale?.toString(),
             };
 
-            if (data.appTheme && data.appTheme !== appTheme) {
+            if (data.appTheme && !localStorage.getItem('appTheme')) {
               setAppTheme(data.appTheme);
               document.documentElement.setAttribute('data-theme', data.appTheme);
             }
@@ -392,6 +399,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       logoutTerminalUser,
       firebaseUser,
       userSettings,
+      isUserSettingsLoaded,
       updateUserSettings,
       isSavingGlobal,
       setIsSavingGlobal
