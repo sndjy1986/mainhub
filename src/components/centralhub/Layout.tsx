@@ -12,7 +12,7 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
-  const { emergencyLevel, notifications, removeNotification, appTheme } = useTerminal();
+  const { emergencyLevel, notifications, removeNotification, appTheme, appBackgroundImage } = useTerminal();
   const [user, setUser] = useState<any>(auth.currentUser);
   const [authError, setAuthError] = useState<string | null>(null);
   const location = useLocation();
@@ -36,9 +36,21 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="h-screen bg-brand-bg text-text-main relative overflow-hidden font-sans transition-colors duration-500" data-theme={appTheme}>
+      {/* Optional User Background Image */}
+      {appBackgroundImage && (
+        <>
+          <div 
+            className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-opacity duration-1000"
+            style={{ backgroundImage: `url(${appBackgroundImage})` }}
+          />
+          {/* Subtle overlay to ensure UI elements remain legible */}
+          <div className="fixed inset-0 z-0 bg-brand-bg/50 backdrop-blur-[2px] pointer-events-none" />
+        </>
+      )}
+
       {/* Decorative Background Elements (Original) */}
-      <div className="fixed top-[-10%] left-[-10%] w-[400px] h-[400px] bg-brand-indigo/10 rounded-full blur-[100px] pointer-events-none transition-colors duration-500"></div>
-      <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-brand-emerald/05 rounded-full blur-[120px] pointer-events-none transition-colors duration-500"></div>
+      <div className="fixed top-[-10%] left-[-10%] w-[400px] h-[400px] bg-brand-indigo/10 rounded-full blur-[100px] pointer-events-none transition-colors duration-500 z-0"></div>
+      <div className="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-brand-emerald/05 rounded-full blur-[120px] pointer-events-none transition-colors duration-500 z-0"></div>
 
       <EmergencyBackground />
       

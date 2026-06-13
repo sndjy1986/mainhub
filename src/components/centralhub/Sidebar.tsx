@@ -76,7 +76,8 @@ export function Sidebar() {
     terminalUser,
     logoutTerminalUser,
     firebaseUser,
-    appTheme
+    appTheme,
+    appBackgroundImage
   } = useTerminal();
 
   const [isToolsOpen, setIsToolsOpen] = React.useState(false);
@@ -101,7 +102,10 @@ export function Sidebar() {
 
   return (
     <div 
-      className="w-64 h-screen bg-bg-main border-r border-white/5 flex flex-col fixed left-0 top-0 z-50 transition-colors duration-500 shadow-2xl"
+      className={cn(
+        "w-64 h-screen border-r border-white/5 flex flex-col fixed left-0 top-0 z-50 transition-colors duration-500 shadow-2xl",
+        appBackgroundImage ? "bg-bg-main/50 backdrop-blur-md" : "bg-bg-main"
+      )}
       data-theme={appTheme}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/5 to-transparent pointer-events-none" />

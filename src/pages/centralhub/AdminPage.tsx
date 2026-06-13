@@ -63,6 +63,8 @@ export function AdminPage() {
     requestNotificationPermission, 
     appTheme, 
     setAppTheme, 
+    appBackgroundImage,
+    setAppBackgroundImage,
     toneTestMode, 
     setToneTestMode,
     logoutTerminalUser,
@@ -676,6 +678,17 @@ export function AdminPage() {
                   </span>
                 </button>
               ))}
+            </div>
+
+            <div className="pt-6 border-t border-white/5 space-y-3">
+               <label className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500">Global Background Image URL</label>
+               <input
+                 type="text"
+                 value={appBackgroundImage || ''}
+                 onChange={(e) => setAppBackgroundImage(e.target.value)}
+                 className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                 placeholder="Leave empty for clear bg (https://content.com/image.jpg)"
+               />
             </div>
           </section>
 

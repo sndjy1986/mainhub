@@ -21,6 +21,8 @@ interface TerminalContextType {
   setWeatherZip: (zip: string | null) => void;
   appTheme: AppTheme;
   setAppTheme: (theme: AppTheme) => void;
+  appBackgroundImage: string | null;
+  setAppBackgroundImage: (url: string | null) => void;
   toneTestMode: boolean;
   setToneTestMode: (val: boolean) => void;
   notifications: Notification[];
@@ -49,6 +51,7 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   const [emergencyOpacity, setEmergencyOpacity] = useState(0.2);
   const [weatherZip, setWeatherZip] = useState<string | null>(null);
   const [appTheme, setAppTheme] = useState<AppTheme>('paper');
+  const [appBackgroundImage, setAppBackgroundImage] = useState<string | null>(null);
   const [isSyncingTheme, setIsSyncingTheme] = useState(false);
   const [isSavingGlobal, setIsSavingGlobal] = useState(false);
   const [toneTestMode, setToneTestMode] = useState<boolean>(() => localStorage.getItem('toneTestMode') !== 'false');
@@ -113,6 +116,13 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function setAppBackgroundImageGlobal(url: string | null) {
+    setAppBackgroundImage(url);
+    if (url) localStorage.setItem('appBackgroundImage', url);
+    else localStorage.removeItem('appBackgroundImage');
+    updateUserSettings('appBackgroundImage', url);
+  }
+
   function loginTerminalUser(username: string, role: string) {
     const user = { username, role };
     setTerminalUser(user);
@@ -125,6 +135,17 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
   }
 
   // 3. Effects last
+  useEffect(() => {
+    const savedLocal = localStorage.getItem('appBackgroundImage');
+    const savedRemote = userSettings?.appBackgroundImage;
+    
+    if (savedRemote !== undefined && savedRemote !== appBackgroundImage) {
+      setAppBackgroundImage(savedRemote);
+    } else if (savedLocal && !savedRemote && savedLocal !== appBackgroundImage) {
+      setAppBackgroundImage(savedLocal);
+    }
+  }, [userSettings?.appBackgroundImage]);
+
   useEffect(() => {
     const savedLocal = localStorage.getItem('weatherZip');
     const savedRemote = userSettings?.weatherZip;
@@ -357,6 +378,8 @@ export function TerminalProvider({ children }: { children: React.ReactNode }) {
       setWeatherZip: setWeatherZipGlobal,
       appTheme,
       setAppTheme: setAppThemeGlobal,
+      appBackgroundImage,
+      setAppBackgroundImage: setAppBackgroundImageGlobal,
       toneTestMode,
       setToneTestMode,
       notifications,
