@@ -1,0 +1,12 @@
+import https from 'https';
+https.get('https://scanner.sndjy.us/main.be3cde93dccb84d2.js', (res) => {
+  let data = '';
+  res.on('data', chunk => data += chunk);
+  res.on('end', () => {
+    let index = data.indexOf('WebSocket(');
+    if (index === -1) index = data.indexOf('WebSocket');
+    if (index !== -1) {
+       console.log('websocket context:', data.slice(Math.max(0, index-200), index+200));
+    }
+  });
+}).on('error', err => console.log('error:', err.message));
