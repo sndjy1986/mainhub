@@ -89,7 +89,7 @@ export function ScannerVFD() {
     setStatus('CONNECTING');
     
     // Initial fetch to get the current latest ID so we don't play the past calls wildly
-    fetch('/api/scanner/latest-v2')
+    fetch('https://api.allorigins.win/raw?url=https://radioapi.sndjy.us/latest')
       .then(res => {
          if (!res.ok) throw new Error(`HTTP ${res.status}`);
          return res.json();
@@ -110,7 +110,7 @@ export function ScannerVFD() {
 
     const poll = async () => {
       try {
-        const res = await fetch('/api/scanner/latest-v2');
+        const res = await fetch('https://api.allorigins.win/raw?url=https://radioapi.sndjy.us/latest');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data: RadioCall[] = await res.json();
         
