@@ -3,8 +3,11 @@ import path from 'path';
 import cors from 'cors';
 import { createServer as createViteServer } from 'vite';
 import Parser from 'rss-parser';
+import { GoogleGenAI, Type } from "@google/genai";
 
 const parser = new Parser();
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 const NEWS_FEEDS: Record<string, string> = {
   cnn: 'http://rss.cnn.com/rss/cnn_topstories.rss',
@@ -20,7 +23,7 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(cors());
-  app.use(express.json());
+  app.use(express.json({ limit: '10mb' }));
 
   // API Routes
   app.get('/api/news', async (req, res) => {
@@ -97,6 +100,78 @@ async function startServer() {
   // Health check
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
+  });
+
+  app.post('/api/analyze-frame', async (req, res) => {
+    try {
+      const { image } = req.body;
+      if (!image) {
+        return res.status(400).json({ error: 'Missing image data' });
+      }
+
+      const prompt = `
+        Analyze this traffic camera frame. 
+        1. Detect all vehicles (cars, trucks, buses, motorcycles).
+        2. Provide bounding boxes in [ymin, xmin, ymax, xmax] format (normalized 0-1000).
+        3. Estimate confidence for each.
+        4. Provide a brief summary of traffic conditions (e.g., "Heavy traffic southbound").
+        5. Estimate the traffic "flow" as one of: "LOW", "MODERATE", "HIGH", "STAMPEDE".
+      `;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              {
+                inlineData: {
+                  mimeType: "image/jpeg",
+                  data: image,
+                },
+              },
+            ],
+          },
+        ],
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              detections: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    label: { type: Type.STRING },
+                    confidence: { type: Type.NUMBER },
+                    box_2d: {
+                      type: Type.ARRAY,
+                      items: { type: Type.NUMBER },
+                      description: "[ymin, xmin, ymax, xmax]"
+                    },
+                  },
+                  required: ["label", "confidence", "box_2d"],
+                },
+              },
+              summary: { type: Type.STRING },
+              flow: { 
+                type: Type.STRING,
+                enum: ["LOW", "MODERATE", "HIGH", "STAMPEDE"]
+              },
+            },
+            required: ["detections", "summary", "flow"],
+          },
+        },
+      });
+
+      const result = JSON.parse(response.text || '{}');
+      // Fix potential format issues from JSON parsing
+      res.json(result);
+    } catch (error) {
+      console.error('AI analysis proxy error:', error);
+      res.status(500).json({ error: 'Failed to analyze frame' });
+    }
   });
 
   // Vite middleware for development
