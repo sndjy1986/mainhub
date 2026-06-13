@@ -248,24 +248,19 @@ export function StartPage() {
     setHasInitialized(true);
   }, [userSettings?.startPageWidgets, hasInitialized, isUserSettingsLoaded]);
 
-  // Sync back to local and remote
+  // Sync back to local storage
   useEffect(() => {
     if (!hasInitialized) return;
-
     localStorage.setItem("start-page-widgets-v7", JSON.stringify(widgets));
+  }, [widgets, hasInitialized]);
 
-    // Only update remote if different to avoid noise
-    if (
-      JSON.stringify(userSettings?.startPageWidgets) !== JSON.stringify(widgets)
-    ) {
-      updateUserSettings("startPageWidgets", widgets);
-    }
-  }, [
-    widgets,
-    hasInitialized,
-    userSettings?.startPageWidgets,
-    updateUserSettings,
-  ]);
+  const updateWidgets = (newWidgetsOrUpdater: WidgetItem[] | ((prev: WidgetItem[]) => WidgetItem[])) => {
+    setWidgets((prev) => {
+      const result = typeof newWidgetsOrUpdater === 'function' ? newWidgetsOrUpdater(prev) : newWidgetsOrUpdater;
+      updateUserSettings("startPageWidgets", result);
+      return result;
+    });
+  };
 
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [editingClock, setEditingClock] = useState<WidgetItem | null>(null);
@@ -274,25 +269,25 @@ export function StartPage() {
   const [showFullWeather, setShowFullWeather] = useState(false);
 
   const updateWidgetSize = (id: string, size: "sm" | "md" | "lg" | "xl") => {
-    setWidgets((prev) => prev.map((w) => (w.id === id ? { ...w, size } : w)));
+    updateWidgets((prev) => prev.map((w) => (w.id === id ? { ...w, size } : w)));
   };
 
   const updateClockSettings = (id: string, settings: ClockSettings) => {
-    setWidgets((prev) =>
+    updateWidgets((prev) =>
       prev.map((w) => (w.id === id ? { ...w, clockSettings: settings } : w)),
     );
     setEditingClock(null);
   };
 
   const updateWeatherSettings = (id: string, settings: WeatherSettings) => {
-    setWidgets((prev) =>
+    updateWidgets((prev) =>
       prev.map((w) => (w.id === id ? { ...w, weatherSettings: settings } : w)),
     );
     setEditingWeather(null);
   };
 
   const updateNewsSettings = (id: string, settings: NewsSettings) => {
-    setWidgets((prev) =>
+    updateWidgets((prev) =>
       prev.map((w) => (w.id === id ? { ...w, newsSettings: settings } : w)),
     );
     setEditingNews(null);
@@ -312,7 +307,7 @@ export function StartPage() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (active.id !== over?.id) {
-      setWidgets((items) => {
+      updateWidgets((items) => {
         const oldIndex = items.findIndex((i) => i.id === active.id);
         const newIndex = items.findIndex((i) => i.id === over?.id);
         return arrayMove(items, oldIndex, newIndex);
@@ -321,7 +316,7 @@ export function StartPage() {
   };
 
   const removeWidget = (id: string) => {
-    setWidgets((prev) => prev.filter((w) => w.id !== id));
+    updateWidgets((prev) => prev.filter((w) => w.id !== id));
   };
 
   const addWidget = (
@@ -342,7 +337,7 @@ export function StartPage() {
       newWidget.weatherSettings = DEFAULT_WEATHER_SETTINGS;
     if (type === "news") newWidget.newsSettings = DEFAULT_NEWS_SETTINGS;
 
-    setWidgets((prev) => [...prev, newWidget]);
+    updateWidgets((prev) => [...prev, newWidget]);
     setShowAddMenu(false);
   };
 

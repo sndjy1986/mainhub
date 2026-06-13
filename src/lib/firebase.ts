@@ -1,11 +1,41 @@
-import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser, signInAnonymously } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer, collection, addDoc, query, orderBy, limit, getDocs, Timestamp, onSnapshot, setDoc, updateDoc, terminate, clearIndexedDbPersistence, serverTimestamp, deleteDoc } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+import { initializeApp, getApp, getApps } from "firebase/app";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  deleteUser,
+  signInAnonymously,
+} from "firebase/auth";
+import {
+  getFirestore,
+  doc,
+  getDocFromServer,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  limit,
+  getDocs,
+  Timestamp,
+  onSnapshot as firebaseOnSnapshot,
+  setDoc,
+  updateDoc,
+  terminate,
+  clearIndexedDbPersistence,
+  serverTimestamp,
+  deleteDoc,
+} from "firebase/firestore";
+import firebaseConfig from "../../firebase-applet-config.json";
 
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 // Use the specific database ID from the config if available
-export const db = getFirestore(app, (firebaseConfig as any).firestoreDatabaseId || '(default)');
+export const db = getFirestore(
+  app,
+  (firebaseConfig as any).firestoreDatabaseId || "(default)",
+);
 
 // Attempt to clear persistence to avoid "INTERNAL ASSERTION FAILED"
 clearIndexedDbPersistence(db).catch(() => {});
@@ -14,12 +44,12 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
 export enum OperationType {
-  CREATE = 'create',
-  UPDATE = 'update',
-  DELETE = 'delete',
-  LIST = 'list',
-  GET = 'get',
-  WRITE = 'write',
+  CREATE = "create",
+  UPDATE = "update",
+  DELETE = "delete",
+  LIST = "list",
+  GET = "get",
+  WRITE = "write",
 }
 
 interface FirestoreErrorInfo {
@@ -31,10 +61,14 @@ interface FirestoreErrorInfo {
     email?: string | null;
     emailVerified?: boolean | null;
     isAnonymous?: boolean | null;
-  }
+  };
 }
 
-export function handleFirestoreError(error: unknown, operationType: OperationType | string, path: string | null) {
+export function handleFirestoreError(
+  error: unknown,
+  operationType: OperationType | string,
+  path: string | null,
+) {
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
@@ -44,10 +78,13 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
       isAnonymous: auth.currentUser?.isAnonymous,
     },
     operationType,
-    path
+    path,
   };
   const jsonError = JSON.stringify(errInfo);
-  console.warn('Firestore Access Warning (Bypassed / Offline Fallback): ', jsonError);
+  console.warn(
+    "Firestore Access Warning (Bypassed / Offline Fallback): ",
+    jsonError,
+  );
   // We do not throw a fresh error to make sure components do not crash when firewalled/offline
 }
 
@@ -56,12 +93,16 @@ export async function signIn() {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: any) {
-    if (error.code === 'auth/unauthorized-domain') {
+    if (error.code === "auth/unauthorized-domain") {
       const currentDomain = window.location.hostname;
-      console.error(`Firebase Error: Unauthorized Domain. Please add "${currentDomain}" to your authorized domains in the Firebase Console (Authentication > Settings > Authorized Domains).`);
-      alert(`Firebase Error: Unauthorized Domain. \n\nPlease add "${currentDomain}" to your authorized domains in the Firebase Console (Authentication > Settings > Authorized Domains).`);
+      console.error(
+        `Firebase Error: Unauthorized Domain. Please add "${currentDomain}" to your authorized domains in the Firebase Console (Authentication > Settings > Authorized Domains).`,
+      );
+      alert(
+        `Firebase Error: Unauthorized Domain. \n\nPlease add "${currentDomain}" to your authorized domains in the Firebase Console (Authentication > Settings > Authorized Domains).`,
+      );
     }
-    console.error('Error signing in:', error);
+    console.error("Error signing in:", error);
     throw error;
   }
 }
@@ -73,9 +114,12 @@ export async function logOut() {
 // Test connection as required by instructions
 async function testConnection() {
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
+    await getDocFromServer(doc(db, "test", "connection"));
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
+    if (
+      error instanceof Error &&
+      error.message.includes("the client is offline")
+    ) {
       console.error("Please check your Firebase configuration.");
     }
   }
@@ -92,7 +136,7 @@ export type Certification = {
 export type PersonnelMember = {
   id: string;
   name: string;
-  shift: 'A' | 'B' | 'C' | 'D' | 'Other';
+  shift: "A" | "B" | "C" | "D" | "Other";
   phone?: string;
   email?: string;
   username?: string;
@@ -104,7 +148,7 @@ export type UnitConfig = {
   name: string;
   homePost: string;
   address: string;
-  type: 'transport' | 'qrv';
+  type: "transport" | "qrv";
 };
 
 export type SidebarLink = {
@@ -134,7 +178,7 @@ export type ThemeOverrides = {
 };
 
 export type GlobalSettings = {
-  backgroundStyle: 'glow' | 'emergency';
+  backgroundStyle: "glow" | "emergency";
   lightIntensity: number;
   employees?: string[];
   personnel?: PersonnelMember[];
@@ -156,24 +200,29 @@ export type GlobalSettings = {
 export async function updateGlobalSettings(settings: Partial<GlobalSettings>) {
   // 1. Instantly update the local storage cache first
   try {
-    const existingCache = localStorage.getItem('cached_global_settings');
+    const existingCache = localStorage.getItem("cached_global_settings");
     const existingObj = existingCache ? JSON.parse(existingCache) : {};
     const merged = { ...existingObj, ...settings };
-    localStorage.setItem('cached_global_settings', JSON.stringify(merged));
+    localStorage.setItem("cached_global_settings", JSON.stringify(merged));
   } catch (err) {
     console.warn("Could not save settings to offline cache:", err);
   }
 
   // 2. Perform online Firestore update
   try {
-    const settingsRef = doc(db, 'settings', 'global');
-    await setDoc(settingsRef, {
-      ...settings,
-      updatedAt: Timestamp.now(),
-      updatedBy: auth.currentUser?.email || auth.currentUser?.uid || 'anonymous'
-    }, { merge: true });
+    const settingsRef = doc(db, "settings", "global");
+    await setDoc(
+      settingsRef,
+      {
+        ...settings,
+        updatedAt: Timestamp.now(),
+        updatedBy:
+          auth.currentUser?.email || auth.currentUser?.uid || "anonymous",
+      },
+      { merge: true },
+    );
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, 'settings/global');
+    handleFirestoreError(error, OperationType.WRITE, "settings/global");
   }
 }
 
@@ -188,27 +237,103 @@ export type ShiftReport = {
   plainReport: string;
 };
 
-export async function saveReport(report: Omit<ShiftReport, 'id' | 'createdAt'>) {
+export async function saveReport(
+  report: Omit<ShiftReport, "id" | "createdAt">,
+) {
   try {
-    const docRef = await addDoc(collection(db, 'reports'), {
+    const docRef = await addDoc(collection(db, "reports"), {
       ...report,
-      createdAt: Timestamp.now()
+      createdAt: Timestamp.now(),
     });
     return docRef.id;
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, 'reports');
+    handleFirestoreError(error, OperationType.WRITE, "reports");
   }
 }
 
 export async function getReports(limitCount: number = 50) {
   try {
-    const q = query(collection(db, 'reports'), orderBy('createdAt', 'desc'), limit(limitCount));
+    const q = query(
+      collection(db, "reports"),
+      orderBy("createdAt", "desc"),
+      limit(limitCount),
+    );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ShiftReport));
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as ShiftReport);
   } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, 'reports');
+    handleFirestoreError(error, OperationType.LIST, "reports");
   }
 }
 
-export { signInAnonymously, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, deleteUser, doc, onSnapshot, query, orderBy, collection, addDoc, updateDoc, Timestamp, serverTimestamp, setDoc, deleteDoc, getDocs };
+export const onSnapshot = (...args: any[]) => {
+  const errorHandler = (err: any) => {
+    console.warn("Firestore onSnapshot error (Quota Exceeded / Offline):", err);
+  };
 
+  try {
+    // If the 2nd arg is an object with 'next' (observer)
+    if (
+      args.length === 2 &&
+      typeof args[1] === "object" &&
+      args[1] !== null &&
+      "next" in args[1]
+    ) {
+      const observer = args[1];
+      if (!observer.error) observer.error = errorHandler;
+      return (firebaseOnSnapshot as any)(args[0], observer);
+    }
+    // If the 3rd arg is an object with 'next' (options + observer)
+    if (
+      args.length === 3 &&
+      typeof args[2] === "object" &&
+      args[2] !== null &&
+      "next" in args[2]
+    ) {
+      const observer = args[2];
+      if (!observer.error) observer.error = errorHandler;
+      return (firebaseOnSnapshot as any)(args[0], args[1], observer);
+    }
+
+    // For standalone callbacks: (ref, next, error?, cb?) or (ref, options, next, error?, cb?)
+    if (args.length === 2 && typeof args[1] === "function") {
+      return (firebaseOnSnapshot as any)(args[0], args[1], errorHandler);
+    }
+    if (
+      args.length === 3 &&
+      typeof args[1] === "object" &&
+      typeof args[2] === "function"
+    ) {
+      return (firebaseOnSnapshot as any)(
+        args[0],
+        args[1],
+        args[2],
+        errorHandler,
+      );
+    }
+
+    return (firebaseOnSnapshot as any)(...args);
+  } catch (err) {
+    errorHandler(err);
+    return () => {}; // return dummy unsub
+  }
+};
+
+export {
+  signInAnonymously,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  deleteUser,
+  doc,
+  query,
+  orderBy,
+  collection,
+  addDoc,
+  updateDoc,
+  Timestamp,
+  serverTimestamp,
+  setDoc,
+  deleteDoc,
+  getDocs,
+};
