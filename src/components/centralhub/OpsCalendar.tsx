@@ -30,8 +30,12 @@ import { getShiftForDate, isPayday, getUpcomingShifts } from '../../lib/opsUtils
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
 
+import { useTerminal } from '../../context/TerminalContext';
+
 export function OpsCalendar() {
   const { isAdmin } = useAuthRole();
+  const { terminalUser } = useTerminal();
+  const isElevatedTerminal = terminalUser?.role === 'admin' || terminalUser?.role === 'root' || terminalUser?.role === 'shift_lead';
   const [events, setEvents] = useState<any[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -217,7 +221,7 @@ export function OpsCalendar() {
 
       {/* Daily Detail View */}
       <div className="xl:col-span-4 tactical-card p-6 flex flex-col">
-        <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
+            <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
           <div>
             <h4 className="text-sm font-black text-white uppercase tracking-widest">
               {format(selectedDate, 'MMM d, yyyy')}
@@ -235,15 +239,16 @@ export function OpsCalendar() {
                )}
             </div>
           </div>
-          {isAdmin && (
+          {(isAdmin || isElevatedTerminal) && (
             <button 
               onClick={() => {
                 setNewEvent(prev => ({ ...prev, eventDate: format(selectedDate, 'yyyy-MM-dd') }));
                 setShowAddModal(true);
               }}
-              className="w-10 h-10 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white flex items-center justify-center transition-all shadow-lg shadow-indigo-500/20"
+              className="px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white flex items-center justify-center transition-all shadow-lg shadow-indigo-500/20 gap-2"
             >
-              <Plus size={20} />
+              <Plus size={16} />
+              <span className="text-[10px] font-black uppercase tracking-widest leading-none mt-0.5">Add to Calendar</span>
             </button>
           )}
         </div>
@@ -266,7 +271,7 @@ export function OpsCalendar() {
                     )} />
                     <h5 className="text-xs font-bold text-white uppercase tracking-tight">{event.title}</h5>
                   </div>
-                  {isAdmin && (
+                  {(isAdmin || isElevatedTerminal) && (
                     <button 
                       onClick={() => handleDeleteEvent(event.id)}
                       className="p-1.5 text-slate-500 hover:text-red-500 transition-colors bg-white/5 rounded-lg"

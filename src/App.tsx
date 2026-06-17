@@ -3,8 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/centralhub/Layout';
 import { StartPage } from './pages/centralhub/StartPage';
 import { PageWrapper } from './components/centralhub/PageWrapper';
-import { useTerminal } from './context/TerminalContext';
-import { LoginPage } from './pages/centralhub/LoginPage';
+import { MatrixPasscodeGate } from './components/centralhub/MatrixPasscodeGate';
 
 const ToneTest = lazy(() => import('./pages/ToneTest'));
 const ShiftReport = lazy(() => import('./pages/ShiftReport'));
@@ -22,12 +21,6 @@ const ShiftTurnover = lazy(() => import('./pages/ShiftTurnover'));
 const SendAdminMessage = lazy(() => import('./pages/centralhub/SendAdminMessage'));
 
 export default function App() {
-  const { terminalUser, firebaseUser } = useTerminal();
-
-  if (!terminalUser && !firebaseUser) {
-    return <LoginPage />;
-  }
-
   return (
     <Router>
       <Layout>
@@ -41,18 +34,11 @@ export default function App() {
             <Route 
               path="/shift-report" 
               element={
-                terminalUser?.role?.toLowerCase() === 'dispatcher' ? (
-                  <PageWrapper className="flex items-center justify-center min-h-[60vh]">
-                    <div className="p-8 text-center bg-white/5 border border-white/10 rounded-2xl max-w-md shadow-2xl">
-                      <h2 className="text-xl font-black text-rose-500 uppercase tracking-widest mb-3">Access Denied</h2>
-                      <p className="text-xs text-slate-400 uppercase tracking-[0.15em] leading-relaxed">
-                        Dispatcher privileges do not permit access to the Shift Report log. Please contact your system administrator.
-                      </p>
-                    </div>
-                  </PageWrapper>
-                ) : (
-                  <PageWrapper className="overflow-y-auto"><ShiftReport /></PageWrapper>
-                )
+                <PageWrapper className="overflow-y-auto">
+                  <MatrixPasscodeGate allowedRoles={['root', 'admin', 'shift_lead']}>
+                    <ShiftReport />
+                  </MatrixPasscodeGate>
+                </PageWrapper>
               } 
             />
             <Route path="/time-clock" element={<PageWrapper fullWidth className="overflow-hidden"><TimeClock /></PageWrapper>} />
@@ -66,18 +52,11 @@ export default function App() {
             <Route 
               path="/admin/send-message" 
               element={
-                (terminalUser?.role === 'admin' || terminalUser?.role === 'root' || firebaseUser) ? (
-                  <PageWrapper className="overflow-y-auto"><SendAdminMessage /></PageWrapper>
-                ) : (
-                  <PageWrapper className="flex items-center justify-center min-h-[60vh]">
-                    <div className="p-8 text-center bg-white/5 border border-white/10 rounded-2xl max-w-md shadow-2xl">
-                      <h2 className="text-xl font-black text-rose-500 uppercase tracking-widest mb-3">Unauthorized Operator</h2>
-                      <p className="text-xs text-slate-400 uppercase tracking-[0.15em] leading-relaxed">
-                        Access Key privileges for role "{terminalUser?.role || 'operator'}" do not authorize dispatch message broadcast configurations.
-                      </p>
-                    </div>
-                  </PageWrapper>
-                )
+                <PageWrapper className="overflow-y-auto">
+                  <MatrixPasscodeGate allowedRoles={['root', 'admin']}>
+                    <SendAdminMessage />
+                  </MatrixPasscodeGate>
+                </PageWrapper>
               } 
             />
           </Routes>

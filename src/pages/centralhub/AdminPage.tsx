@@ -33,6 +33,7 @@ import {
   Gauge
 } from 'lucide-react';
 import { useTerminal, AppTheme } from '../../context/TerminalContext';
+import { MatrixPasscodeGate } from '../../components/centralhub/MatrixPasscodeGate';
 import { 
   auth, 
   signIn, 
@@ -115,9 +116,9 @@ export function AdminPage() {
   const [user, setUser] = useState(auth.currentUser);
   const [personnel, setPersonnel] = useState<PersonnelMember[]>([]);
 
-  const isTeamLeadOrAdmin = terminalUser?.role === 'admin' || terminalUser?.role === 'root' || terminalUser?.username === 'sndjy';
-  const isOnlyMe = terminalUser?.username === 'sndjy' || terminalUser?.role === 'root';
-  const isAuthorized = terminalUser?.username === 'sndjy';
+  const isTeamLeadOrAdmin = terminalUser?.role === 'admin' || terminalUser?.role === 'root' || terminalUser?.role === 'shift_lead' || terminalUser?.username === 'sndjy' || !!user;
+  const isOnlyMe = terminalUser?.username === 'sndjy' || terminalUser?.role === 'root' || !!user;
+  const isAuthorized = terminalUser?.username === 'sndjy' || terminalUser?.role === 'root' || terminalUser?.role === 'shift_lead' || !!user;
   const [supervisors, setSupervisors] = useState<Record<string, string>>({});
   const [defaultCameraIds, setDefaultCameraIds] = useState<string[]>([]);
   const [fleetConfigs, setFleetConfigs] = useState<import('../../lib/firebase').UnitConfig[]>([]);
@@ -609,10 +610,8 @@ export function AdminPage() {
       <div className="flex flex-wrap items-center gap-2 border-b border-white/5 pb-6">
         {[
           { id: 'general', label: 'System & Theme', icon: <Settings className="w-4 h-4" /> },
-          ...(isTeamLeadOrAdmin ? [
-            { id: 'fleet', label: 'Fleet Configuration', icon: <Truck className="w-4 h-4" /> },
-            { id: 'personnel', label: 'Personnel & Access', icon: <User className="w-4 h-4" /> }
-          ] : []),
+          { id: 'fleet', label: 'Fleet Configuration', icon: <Truck className="w-4 h-4" /> },
+          { id: 'personnel', label: 'Personnel & Access', icon: <User className="w-4 h-4" /> },
           { id: 'links', label: 'Nav & Feeds', icon: <Camera className="w-4 h-4" /> },
           { id: 'archive', label: 'Archives', icon: <History className="w-4 h-4" /> },
         ].map(tab => (
@@ -946,7 +945,8 @@ export function AdminPage() {
 
         {/* PERSONNEL & ACCESS TAB */}
         {activeTab === 'personnel' && (
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 animate-in fade-in duration-500">
+          <MatrixPasscodeGate allowedRoles={['root', 'admin', 'shift_lead']}>
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 animate-in fade-in duration-500">
           
           {/* User Access Management */}
           <section className="tactical-card p-10 space-y-10 xl:col-span-4 bg-indigo-500/[0.02]">
@@ -1130,11 +1130,13 @@ export function AdminPage() {
           </div>
         </section>
         </div>
+          </MatrixPasscodeGate>
         )}
 
         {/* FLEET CONFIGURATION TAB */}
         {activeTab === 'fleet' && (
-          <div className="space-y-12 animate-in fade-in duration-500">
+          <MatrixPasscodeGate allowedRoles={['root', 'admin', 'shift_lead']}>
+            <div className="space-y-12 animate-in fade-in duration-500">
         {/* Level 3: Fleet Configuration Management */}
         <section className="tactical-card p-10 space-y-10">
           <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-brand-border">
@@ -1203,6 +1205,7 @@ export function AdminPage() {
           </div>
         </section>
         </div>
+          </MatrixPasscodeGate>
         )}
 
         {/* LINKS & FEEDS TAB */}

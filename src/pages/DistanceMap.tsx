@@ -216,6 +216,14 @@ export default function DistanceMap() {
     return all[0] || null;
   }, [transportResults, qrvResults]);
 
+  const displayTransports = useMemo(() => {
+    return transportResults.length > 0 ? transportResults : activeTransportUnits.map(u => ({ name: u.name, addr: u.addr }));
+  }, [transportResults, activeTransportUnits]);
+
+  const displayQrvs = useMemo(() => {
+    return qrvResults.length > 0 ? qrvResults : activeQrvUnits.map(u => ({ name: u.name, addr: u.addr }));
+  }, [qrvResults, activeQrvUnits]);
+
   return (
     <div data-theme="midnight" className="relative flex flex-col technical-grid text-text-main font-sans p-8 pt-12 overflow-hidden bg-bg-main h-screen">
       {/* Background Decor */}
@@ -356,8 +364,8 @@ export default function DistanceMap() {
         </div>
 
         {/* Right Column (Results) */}
-        <div className="flex-1 flex flex-col gap-8 min-h-0">
-          <div className="flex-1 min-h-0">
+        <div className="flex-1 flex flex-col gap-8 min-h-0 h-full">
+          <div className="flex-1 min-h-0 h-full">
             <AnimatePresence mode="wait">
               {view === 'list' ? (
                 <motion.div 
@@ -372,14 +380,14 @@ export default function DistanceMap() {
                        <Truck className="w-4 h-4 text-brand-indigo" />
                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-text-main">Fleet Deployments</h4>
                     </div>
-                    <UnitTable units={transportResults} loading={loading} title="Primary Assets" />
+                    <UnitTable units={displayTransports} loading={loading} title="Primary Assets" />
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center gap-3 mb-2 px-2">
                        <Zap className="w-4 h-4 text-brand-emerald" />
                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-text-main">QRV Support</h4>
                     </div>
-                    <UnitTable units={qrvResults} loading={loading} title="Operational QRVs" />
+                    <UnitTable units={displayQrvs} loading={loading} title="Operational QRVs" />
                   </div>
                 </motion.div>
               ) : (

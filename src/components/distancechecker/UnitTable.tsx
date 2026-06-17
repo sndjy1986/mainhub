@@ -27,23 +27,23 @@ export default function UnitTable({ title, units, loading }: UnitTableProps) {
             </tr>
           </thead>
           <tbody>
-            <AnimatePresence mode="popLayout">
+             <AnimatePresence mode="popLayout">
               {units.map((unit, idx) => (
                 <motion.tr 
                   key={unit.name}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
-                  className={`border-b border-brand-border/30 transition-colors hover:bg-brand-indigo/5 ${idx === 0 ? 'bg-brand-indigo/10 border-l-2 border-l-brand-indigo' : ''}`}
+                  className={`border-b border-brand-border/30 transition-colors hover:bg-brand-indigo/5 ${idx === 0 ? 'bg-brand-indigo/15 border-l-2 border-l-brand-indigo' : ''}`}
                 >
-                  <td className="px-4 py-3 text-text-main">
-                    <div className="font-bold">{unit.name}</div>
-                    <div className="text-[10px] text-text-dim truncate max-w-[170px] uppercase font-semibold mt-0.5 tracking-wider">{unit.addr}</div>
+                  <td className="px-4 py-3">
+                    <div className="font-extrabold text-sm text-white tracking-wide">{unit.name}</div>
+                    <div className="text-[11px] text-zinc-300 truncate max-w-[190px] uppercase font-bold mt-0.5 tracking-wider">{unit.addr}</div>
                   </td>
-                  <td className="px-4 py-3 text-text-dim font-mono text-xs">
+                  <td className="px-4 py-3 text-indigo-200 font-mono text-xs font-semibold">
                     {unit.distance !== undefined ? `${unit.distance.toFixed(2)}mi` : '--'}
                   </td>
-                  <td className={`px-4 py-3 font-mono text-xs text-right ${idx === 0 ? 'text-brand-emerald font-semibold animate-pulse' : 'text-text-dim'}`}>
+                  <td className={`px-4 py-3 font-mono text-xs text-right ${idx === 0 ? 'text-brand-emerald font-extrabold shadow-sm' : 'text-zinc-400'}`}>
                     {unit.duration !== undefined ? `${unit.duration}m` : '--'}
                   </td>
                 </motion.tr>

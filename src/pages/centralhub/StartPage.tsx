@@ -95,6 +95,7 @@ interface WeatherSettings {
   fontWeight: string;
   animatedIcons: boolean;
   hideAlertsIfEmpty: boolean;
+  zipCode?: string;
   showPressure?: boolean;
   showTimeline?: boolean;
   showTomorrow?: boolean;

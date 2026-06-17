@@ -34,6 +34,7 @@ import { cn } from '../../lib/utils';
 import { useTerminal } from '../../context/TerminalContext';
 import { onSnapshot, doc, db } from '../../lib/firebase';
 import type { SidebarLink as SidebarLinkType } from '../../lib/firebase';
+import { Modal } from './Modal';
 
 const iconMap: Record<string, any> = {
   LayoutDashboard, Activity, Terminal, MapIcon, Camera, FileText, 
@@ -75,12 +76,16 @@ export function Sidebar() {
     setEmergencyOpacity,
     terminalUser,
     logoutTerminalUser,
+    loginTerminalUser,
     firebaseUser,
     appTheme,
     appBackgroundImage
   } = useTerminal();
 
   const [isToolsOpen, setIsToolsOpen] = React.useState(false);
+  const [isSysLinkOpen, setIsSysLinkOpen] = React.useState(false);
+  const [passcode, setPasscode] = React.useState('');
+  const [authStatus, setAuthStatus] = React.useState('');
 
   React.useEffect(() => {
     const unsub = onSnapshot(doc(db, 'settings', 'global'), (s) => {
@@ -285,7 +290,17 @@ export function Sidebar() {
 
       <div className="px-4 py-6 space-y-4 relative">
         <div className="px-4">
-          <span className="text-[9px] font-black uppercase tracking-[0.3em] text-text-dim">System Link</span>
+          <button 
+            type="button"
+            onClick={() => {
+              setIsSysLinkOpen(true);
+              setAuthStatus('');
+            }}
+            className="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-2 cursor-pointer w-full group"
+          >
+            <LinkIcon className="w-3 h-3 group-hover:scale-110 transition-transform" />
+            System Link
+          </button>
         </div>
 
 
@@ -293,7 +308,11 @@ export function Sidebar() {
         <div className="flex flex-col gap-2">
           <motion.div 
             {...bouncyProps}
-            className="flex items-center justify-between px-4 py-3 bg-black/5 border border-white/10 rounded-2xl group shadow-inner"
+            onClick={() => {
+              setIsSysLinkOpen(true);
+              setAuthStatus('');
+            }}
+            className="flex items-center justify-between px-4 py-3 bg-black/5 border border-white/10 rounded-2xl group shadow-inner cursor-pointer hover:border-white/20 transition-all"
           >
              <div className="flex items-center gap-3 min-w-0">
                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 group-hover:border-indigo-500/40 transition-all">
@@ -309,7 +328,8 @@ export function Sidebar() {
                </div>
              </div>
              <button 
-              onClick={async () => {
+              onClick={async (e) => {
+                e.stopPropagation();
                 if (window.confirm("TERMINATE SESSION?")) {
                   logoutTerminalUser();
                   if (firebaseUser) {
@@ -349,6 +369,121 @@ export function Sidebar() {
           </motion.div>
         </div>
       </div>
+
+      {/* SYSTEM LINK GOOGLE AUTHENTICATION MODAL */}
+      <Modal 
+        isOpen={isSysLinkOpen} 
+        onClose={() => setIsSysLinkOpen(false)} 
+        title="SYSTEM OVERRIDES & GOOGLE LINK"
+        icon={<Shield className="w-5 h-5 text-indigo-400" />}
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-6 text-slate-300">
+          <div className="p-5 rounded-2xl border border-white/5 bg-black/40 space-y-4">
+            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400 block border-b border-white/5 pb-2">Active Session Context</span>
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <span className="block text-[8px] text-zinc-500 uppercase font-bold tracking-wider">Identity node</span>
+                <span className="font-extrabold text-white uppercase">{terminalUser?.username || 'GUEST OPERATOR'}</span>
+              </div>
+              <div>
+                <span className="block text-[8px] text-zinc-500 uppercase font-bold tracking-wider">Clearance level</span>
+                <span className="font-extrabold text-white uppercase">{terminalUser?.role || 'GUEST / OPERATOR'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 block border-b border-white/5 pb-2">Google Cloud Sync</span>
+            
+            {firebaseUser ? (
+              <div className="space-y-3">
+                <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-xs flex flex-col gap-1">
+                  <span className="font-bold text-white">LINKED GOOGLE ACCOUNT:</span>
+                  <span className="font-mono text-[11px] text-zinc-400">{firebaseUser.email}</span>
+                  <p className="text-[10px] text-zinc-500 uppercase tracking-wide font-semibold mt-2">Personalized settings, custom theme selections, and configurations are synced in the cloud.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const { auth } = await import('../../lib/firebase');
+                    await auth.signOut();
+                    setAuthStatus('SUCCESS: Google Link dissociated.');
+                  }}
+                  className="w-full py-3 rounded-xl border border-rose-500/20 text-[9px] font-black uppercase tracking-[0.2em] text-rose-400 hover:bg-rose-500/10 transition-all"
+                >
+                  Unlink Google Account
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3 font-semibold">
+                <p className="text-zinc-400 font-semibold leading-relaxed uppercase text-[10px]">
+                  Link this terminal interface with your personal Google credentials to store your custom layout settings and theme overrides permanently.
+                </p>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const { signInWithPopup, GoogleAuthProvider, auth } = await import('../../lib/firebase');
+                    try {
+                      await signInWithPopup(auth, new GoogleAuthProvider());
+                      setAuthStatus('SUCCESS: Google authentication logged.');
+                    } catch (err: any) {
+                      setAuthStatus(`ERROR: ${err.message || 'Authentication rejected'}`);
+                    }
+                  }}
+                  className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-600/20"
+                >
+                  <Shield size={14} />
+                  Link Google Console Profile
+                </button>
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const clean = passcode.trim();
+            if (clean === 'Russell1') {
+              loginTerminalUser('sndjy', 'root');
+              setAuthStatus('SUCCESS: Root admin override authorized.');
+              setPasscode('');
+            } else if (clean.toLowerCase() === 'lead123') {
+              loginTerminalUser('Shift Lead', 'shift_lead');
+              setAuthStatus('SUCCESS: Shift Lead override authorized.');
+              setPasscode('');
+            } else if (clean.toLowerCase() === 'williams' || clean === 'Williams911') {
+              loginTerminalUser('G. Williams', 'shift_lead');
+              setAuthStatus('SUCCESS: Shift Lead override authorized.');
+              setPasscode('');
+            } else {
+              setAuthStatus('ERROR: Access Denied.');
+            }
+          }} className="space-y-3 pt-4 border-t border-white/5 font-semibold">
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#f0af45] block border-b border-white/5 pb-2">Node Passcode Bypass</span>
+            <div className="space-y-2">
+              <input 
+                type="password"
+                placeholder="ENTER BYPASS GATEWAY PASSCODE..."
+                value={passcode}
+                onChange={(e) => setPasscode(e.target.value)}
+                className="w-full h-11 bg-black/40 border border-white/5 rounded-xl text-center text-text-main font-mono text-xs tracking-widest focus:border-indigo-500/50 outline-none transition-all placeholder:text-text-dim/20"
+              />
+              <button 
+                type="submit"
+                className="w-full py-2.5 rounded-xl border border-zinc-600 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-300 hover:border-white hover:text-white transition-all bg-white/[0.02]"
+              >
+                Apply Local Authorization Override
+              </button>
+            </div>
+          </form>
+
+          {authStatus && (
+            <div className={`p-4 rounded-xl text-xs font-bold text-center border uppercase tracking-wider ${authStatus.startsWith('SUCCESS') ? 'bg-emerald-500/5 border-emerald-500/10 text-emerald-400' : 'bg-rose-500/5 border-rose-500/10 text-rose-500'}`}>
+              {authStatus}
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }
