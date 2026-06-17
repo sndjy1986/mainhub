@@ -217,7 +217,7 @@ export default function DistanceMap() {
   }, [transportResults, qrvResults]);
 
   return (
-    <div className="relative flex flex-col technical-grid text-text-main font-sans p-8 pt-12 overflow-hidden bg-bg-main min-h-screen">
+    <div data-theme="midnight" className="relative flex flex-col technical-grid text-text-main font-sans p-8 pt-12 overflow-hidden bg-bg-main h-screen">
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="radar-sweep !opacity-10" />
@@ -251,8 +251,8 @@ export default function DistanceMap() {
 
       <div className="flex gap-8 flex-1 min-h-0 relative z-10 overflow-hidden">
         {/* Left Column (Search & Summary) */}
-        <div className="w-[350px] flex flex-col gap-8 shrink-0">
-          <div className="tactical-card p-8 space-y-6 shadow-2xl relative overflow-hidden group bg-brand-panel/80">
+        <div className="w-[350px] flex flex-col gap-8 shrink-0 min-h-0">
+          <div className="tactical-card p-8 space-y-6 shadow-2xl relative overflow-hidden group bg-brand-panel/80 shrink-0">
             <div className="absolute inset-0 bg-gradient-to-br from-brand-indigo/5 to-transparent pointer-events-none" />
                 <div className="space-y-4"> 
                   <div className="flex items-center gap-2">
@@ -299,16 +299,16 @@ export default function DistanceMap() {
             )}
           </div>
 
-          <div className="flex-1 tactical-card flex flex-col overflow-hidden bg-brand-panel/40">
-            <div className="p-6 border-b border-brand-border bg-brand-indigo/5 flex justify-between items-center"> 
+          <div className="flex-1 tactical-card flex flex-col min-h-0 overflow-hidden bg-brand-panel/40">
+            <div className="p-6 border-b border-brand-border bg-brand-indigo/5 flex justify-between items-center shrink-0"> 
               <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-indigo">Response Matrix</h3> 
               <div className="flex gap-1.5">
                 <div className="w-8 h-[2px] bg-brand-indigo rounded-full shadow-brand-indigo"></div>
                 <div className="w-4 h-[2px] bg-brand-border rounded-full"></div>
               </div>
             </div>
-            <div className="p-8 space-y-8 flex-1 flex flex-col"> 
-              <div className="space-y-4">
+            <div className="p-8 space-y-8 flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar"> 
+              <div className="space-y-4 shrink-0">
                 <div className="flex justify-between items-center group/item hover:bg-brand-indigo/5 p-2 -mx-2 rounded-xl transition-all"> 
                   <span className="text-text-dim text-[10px] font-black uppercase tracking-widest group-hover/item:text-text-main">Fleet Units</span> 
                   <span className="text-text-main font-mono bg-brand-bg/50 px-3 py-1 rounded-lg text-[10px] border border-brand-border border-b-brand-indigo/50">{activeTransportUnits.length} ACTIVE</span> 
@@ -319,7 +319,7 @@ export default function DistanceMap() {
                 </div> 
               </div>
 
-              <div className="pt-8 border-t border-brand-border mt-4"> 
+              <div className="pt-8 border-t border-brand-border mt-4 shrink-0"> 
                 <div className="text-center bg-brand-bg/50 rounded-[2rem] p-8 border border-brand-border relative group overflow-hidden shadow-inner"> 
                   <div className="absolute inset-0 bg-brand-indigo/[0.02] group-hover:bg-brand-indigo/[0.05] transition-all" />
                   <span className="block text-6xl font-black text-text-main mb-2 leading-none">
@@ -333,7 +333,7 @@ export default function DistanceMap() {
               </div>
 
               {/* View Toggle */}
-              <div className="mt-auto pt-8">
+              <div className="mt-auto pt-8 shrink-0">
                 <div className="bg-brand-bg/60 p-1.5 rounded-2xl border border-brand-border flex shadow-inner">
                   <button 
                     onClick={() => setView('list')}
@@ -356,7 +356,7 @@ export default function DistanceMap() {
         </div>
 
         {/* Right Column (Results) */}
-        <div className="flex-1 flex flex-col gap-8">
+        <div className="flex-1 flex flex-col gap-8 min-h-0">
           <div className="flex-1 min-h-0">
             <AnimatePresence mode="wait">
               {view === 'list' ? (
