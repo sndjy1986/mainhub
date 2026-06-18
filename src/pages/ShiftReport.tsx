@@ -271,6 +271,31 @@ export default function ShiftReport() {
     setData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleTextareaTab = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      
+      const target = e.target as HTMLTextAreaElement;
+      const start = target.selectionStart;
+      const end = target.selectionEnd;
+      
+      const newValue = target.value.substring(0, start) + "    " + target.value.substring(end);
+      
+      const event = {
+        target: {
+          name: target.name,
+          value: newValue,
+        }
+      } as React.ChangeEvent<HTMLTextAreaElement>;
+      
+      handleChange(event);
+      
+      setTimeout(() => {
+        target.selectionStart = target.selectionEnd = start + 4;
+      }, 0);
+    }
+  };
+
   const clearData = async () => {
     if (window.confirm("Are you sure you want to clear all form data? (This will also archive a backup to the cloud)")) {
       // Save to Firebase History (Only if logged in) before clearing
@@ -778,6 +803,7 @@ export default function ShiftReport() {
                       name="lateTrucks" 
                       value={data.lateTrucks} 
                       onChange={handleChange} 
+                      onKeyDown={handleTextareaTab}
                       rows={3} 
                       className="w-full tactical-input p-4 text-xs font-mono"
                       placeholder="UNIT / TIME / REASON..." 
@@ -792,6 +818,7 @@ export default function ShiftReport() {
                       name="outOfChute" 
                       value={data.outOfChute} 
                       onChange={handleChange} 
+                      onKeyDown={handleTextareaTab}
                       rows={3} 
                       className="w-full tactical-input p-4 text-xs font-mono"
                       placeholder="ANOMALIES..." 
@@ -823,6 +850,7 @@ export default function ShiftReport() {
                   name="issues" 
                   value={data.issues} 
                   onChange={handleChange} 
+                  onKeyDown={handleTextareaTab}
                   rows={10} 
                   className="w-full tactical-input p-6 text-sm font-mono leading-relaxed"
                   placeholder="RECORD ALL SIGNIFICANT ACTIONS, FAILURES, AND RECOVERY STEPS..." 
@@ -833,6 +861,7 @@ export default function ShiftReport() {
                     name="pasteNotes" 
                     value={data.pasteNotes} 
                     onChange={handleChange} 
+                    onKeyDown={handleTextareaTab}
                     rows={4} 
                     className="w-full tactical-input p-4 text-xs font-mono"
                     placeholder="LOAD ROSTER DATA / TIME UP LOGS..." 
@@ -847,6 +876,7 @@ export default function ShiftReport() {
                     name="otherEvents" 
                     value={data.otherEvents} 
                     onChange={handleChange} 
+                    onKeyDown={handleTextareaTab}
                     rows={6} 
                     className="w-full tactical-input p-4 text-xs font-mono"
                     placeholder="MISCELLANEOUS EVENTS, NOTIFICATIONS, AND EXTERNAL UPDATES..." 
