@@ -560,6 +560,7 @@ export function AdminPage() {
       { icon: 'Phone', label: 'Directory', path: '/directory', external: false, id: 'dir' },
       { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/137BOp88NqFXFuoYJ-VBIR0n-xGfOq4_U/view?usp=drive_link', external: true, id: 'coroner' },
       { icon: 'Table', label: 'Daily Worksheet', path: 'https://docs.google.com/spreadsheets/d/1-4Uwh00g4orCaOQoOrLIcRkamAhdxrBNhVVOt2IEOoY/edit?gid=534085027#gid=534085027', external: true, id: 'worksheet' },
+      { icon: 'Table', label: 'AVL Cleanup Tool', path: 'https://docs.google.com/spreadsheets/d/12V94dal4UvVJcsRMBd3fCj49pJjiOXFMTgZa1tdaEE0/edit?gid=1621560398#gid=1621560398', external: true, id: 'avl_cleanup' },
       { icon: 'CreditCard', label: 'PayCom Online', path: 'https://www.paycomonline.net/v4/ee/web.php/app/login', external: true, id: 'paycom' },
     ];
 
@@ -1256,6 +1257,7 @@ export function AdminPage() {
                   { icon: 'Phone', label: 'Directory', path: '/directory', external: false, id: 'dir' },
                   { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/137BOp88NqFXFuoYJ-VBIR0n-xGfOq4_U/view?usp=drive_link', external: true, id: 'coroner' },
                   { icon: 'Table', label: 'Daily Worksheet', path: 'https://docs.google.com/spreadsheets/d/1-4Uwh00g4orCaOQoOrLIcRkamAhdxrBNhVVOt2IEOoY/edit?gid=534085027#gid=534085027', external: true, id: 'worksheet' },
+                  { icon: 'Table', label: 'AVL Cleanup Tool', path: 'https://docs.google.com/spreadsheets/d/12V94dal4UvVJcsRMBd3fCj49pJjiOXFMTgZa1tdaEE0/edit?gid=1621560398#gid=1621560398', external: true, id: 'avl_cleanup' },
                   { icon: 'CreditCard', label: 'PayCom Online', path: 'https://www.paycomonline.net/v4/ee/web.php/app/login', external: true, id: 'paycom' },
                 ]).map((link) => (
                   <div key={link.id} className="p-6 bg-black/40 border border-white/5 rounded-2xl group hover:border-indigo-500/40 transition-all space-y-4">

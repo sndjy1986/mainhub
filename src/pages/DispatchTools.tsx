@@ -26,6 +26,14 @@ const TOOLS = [
     icon: Flame,
     tag: "FIRE PROTOCOLS",
     theme: "rose"
+  },
+  {
+    title: "AVL Cleanup Tool",
+    description: "Automated Vehicle Location cleanup and verification matrix.",
+    url: "https://docs.google.com/spreadsheets/d/12V94dal4UvVJcsRMBd3fCj49pJjiOXFMTgZa1tdaEE0/edit?gid=1621560398#gid=1621560398",
+    icon: Truck,
+    tag: "FLEET OVERSIGHT",
+    theme: "emerald"
   }
 ];
 
@@ -57,7 +65,9 @@ export default function DispatchTools() {
             className="tactical-card p-0 overflow-hidden group flex flex-col md:flex-row hover:border-indigo-500/30 transition-all border-white/5 bg-[#101014]/40"
           >
             <div className={`w-full md:w-64 p-10 flex items-center justify-center bg-gradient-to-br transition-all duration-700 ${
-              tool.theme === 'indigo' ? 'from-indigo-600 to-indigo-900 group-hover:from-indigo-500' : 'from-rose-600 to-rose-900 group-hover:from-rose-500'
+              tool.theme === 'indigo' ? 'from-indigo-600 to-indigo-900 group-hover:from-indigo-500' : 
+              tool.theme === 'emerald' ? 'from-emerald-600 to-emerald-900 group-hover:from-emerald-500' :
+              'from-rose-600 to-rose-900 group-hover:from-rose-500'
             }`}>
                <tool.icon size={64} className="text-white drop-shadow-2xl group-hover:scale-125 transition-transform duration-700" />
             </div>
