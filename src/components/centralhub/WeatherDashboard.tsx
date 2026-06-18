@@ -400,7 +400,7 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
                         <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
                         <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.4em]">Live Telemetry</span>
                       </div>
-                      <h2 className="text-xl font-black text-slate-500 uppercase tracking-widest italic opacity-60">
+                      <h2 className="text-xl font-black text-slate-300 uppercase tracking-widest italic opacity-90">
                         Sector: {weather?.location?.split(',')[0]}
                       </h2>
                     </div>
@@ -625,7 +625,7 @@ export function WeatherDashboard({ settings, compact = false }: { settings?: Wea
       {(activeModules.showCurrent || !compact) && (
         <div className="flex flex-wrap items-end justify-between gap-8 pb-10 border-b border-white/5">
           <div className="space-y-4">
-            <div className="flex items-center gap-3 text-slate-500 text-[10px] uppercase font-black tracking-[0.3em]">
+            <div className="flex items-center gap-3 text-slate-300 text-[10px] uppercase font-black tracking-[0.3em]">
               <MapPin className="w-4 h-4 text-indigo-500" />
               Sector {weather?.location} Matrix
             </div>

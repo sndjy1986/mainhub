@@ -370,8 +370,9 @@ export default function ShiftReport() {
       reportParts.push(""); // spacer
     };
 
+    reportParts.push(`Report Subject: ${data.reportType || "Mid-Shift Report"}\n`);
+
     addSection("Info", [
-      `Report Subject: ${data.reportType || "Mid-Shift Report"}`,
       `Name: ${data.name || "N/A"}`,
       `Date: ${data.date || "N/A"}`,
       `Shift: ${data.shift}`
@@ -438,7 +439,7 @@ export default function ShiftReport() {
           if (colonIndex !== -1) {
             const label = line.substring(0, colonIndex);
             const value = line.substring(colonIndex + 2);
-            parts.push(`<div style="${dataStyle}"><strong style="font-size: 20pt;">${label}:</strong> ${value}</div>`);
+            parts.push(`<div style="${dataStyle}"><strong>${label}:</strong> ${value}</div>`);
           } else {
             parts.push(`<div style="${dataStyle}">${line}</div>`);
           }
@@ -458,7 +459,7 @@ export default function ShiftReport() {
                 const cell = row[i] || "";
                 const cellStyle = `border: 1px solid #000; padding: 4px 8px; text-align: left; width: ${widths[i] || "auto"}; min-width: 50px;`;
                 if (rowIndex === 0) {
-                  table += `<th style="${cellStyle} background-color: #D9D9D9; font-weight: bold; font-size: 20pt;">${cell}</th>`;
+                  table += `<th style="${cellStyle} background-color: #D9D9D9; font-weight: bold;">${cell}</th>`;
                 } else {
                   table += `<td style="${cellStyle}">${cell}</td>`;
                 }
@@ -482,8 +483,9 @@ export default function ShiftReport() {
       }
     };
 
+    parts.push(`<div style="${dataStyle}"><strong>Report Subject:</strong> ${data.reportType || "Mid-Shift Report"}</div>`);
+
     addHtmlSection("Info", [
-      `Report Subject: ${data.reportType || "Mid-Shift Report"}`,
       `Name: ${data.name || "N/A"}`,
       `Date: ${data.date || "N/A"}`,
       `Shift: ${data.shift}`
