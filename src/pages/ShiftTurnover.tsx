@@ -112,12 +112,12 @@ export default function ShiftTurnover({ isEmbedded = false }: { isEmbedded?: boo
     return () => unsubscribe();
   }, []);
 
-  // Compute clean lists of Team Leads from database + fallback lists
-  const teamLeadOptions = React.useMemo(() => {
-    const dbNames = personnel.map(p => p.name);
-    const combined = Array.from(new Set([...dbNames, ...TEAM_MEMBERS]));
-    return combined.sort();
-  }, [personnel]);
+  const SHIFT_LEADS = [
+    { name: 'Corrine Skelly', email: 'cskelly@medshore.com' },
+    { name: 'Erin Brandenburg', email: 'ebrandenburg@medshore.com' },
+    { name: 'Joey Sanders', email: 'jsanders@medshore.com' },
+    { name: 'Crystal Culbertson', email: 'cculbertson@medshore.com' }
+  ];
 
   const handleToggle = (key: keyof TurnoverData) => {
     setTurnoverData(prev => ({ 
@@ -186,19 +186,15 @@ SPECIAL EVENTS & BRIEFING
 ${finalData.specialEvents || "None"}
 `;
       await navigator.clipboard.writeText(copyText);
-      alert("Turnover report has been copied to the clipboard!\n\nEmail window is launching with the oncoming Team Lead and George Williams pre-loaded.");
+      alert("Turnover report has been copied to the clipboard!\n\nEmail window is launching with the oncoming Team Lead and Geneva Williams pre-loaded.");
 
       // Email formatting & launch
-      const oncomingLeadObj = personnel.find(p => p.name === turnoverData.oncomingTeamLead);
+      const oncomingLeadObj = SHIFT_LEADS.find(p => p.name === turnoverData.oncomingTeamLead);
       const oncomingEmail = oncomingLeadObj?.email || '';
       
       const emailsList = [
         oncomingEmail, 
-        "gwilliams@medshore.com",
-        "cskelly@medshore.com",
-        "ebrandenburg@medshore.com",
-        "jsanders@medshore.com",
-        "cculbertson@medshore.com"
+        "gwilliams@medshore.com"
       ].filter(Boolean).join(";");
       
       const formatDateForSubject = (dateStr: string) => {
@@ -285,9 +281,9 @@ ${finalData.specialEvents || "None"}
                   onChange={(e) => setTurnoverData(prev => ({ ...prev, currentTeamLead: e.target.value }))}
                   className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-xs font-black uppercase text-white outline-none focus:border-indigo-500/50 transition-all"
                 >
-                  <option value="">-- SELECT CURRENT TEAM LEAD --</option>
-                  {teamLeadOptions.map(name => (
-                    <option key={name} value={name}>{name}</option>
+                  <option className="bg-[#1a1a24] text-white" value="">-- SELECT CURRENT TEAM LEAD --</option>
+                  {SHIFT_LEADS.map(lead => (
+                    <option className="bg-[#1a1a24] text-white" key={lead.name} value={lead.name}>{lead.name}</option>
                   ))}
                 </select>
               </div>
@@ -299,9 +295,9 @@ ${finalData.specialEvents || "None"}
                   onChange={(e) => setTurnoverData(prev => ({ ...prev, oncomingTeamLead: e.target.value }))}
                   className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-xs font-black uppercase text-white outline-none focus:border-indigo-500/50 transition-all"
                 >
-                  <option value="">-- SELECT ONCOMING TEAM LEAD --</option>
-                  {teamLeadOptions.map(name => (
-                    <option key={name} value={name}>{name}</option>
+                  <option className="bg-[#1a1a24] text-white" value="">-- SELECT ONCOMING TEAM LEAD --</option>
+                  {SHIFT_LEADS.map(lead => (
+                    <option className="bg-[#1a1a24] text-white" key={lead.name} value={lead.name}>{lead.name}</option>
                   ))}
                 </select>
               </div>
@@ -319,9 +315,9 @@ ${finalData.specialEvents || "None"}
                   onChange={(e) => setTurnoverData(prev => ({ ...prev, alssup: e.target.value }))}
                   className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-xs font-black uppercase text-white outline-none focus:border-indigo-500/50 transition-all"
                 >
-                  <option value="">-- SELECT --</option>
+                  <option className="bg-[#1a1a24] text-white" value="">-- SELECT --</option>
                   {ALSSUP_OPTIONS.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
+                    <option className="bg-[#1a1a24] text-white" key={opt} value={opt}>{opt}</option>
                   ))}
                 </select>
               </div>
@@ -333,9 +329,9 @@ ${finalData.specialEvents || "None"}
                   onChange={(e) => setTurnoverData(prev => ({ ...prev, medsup: e.target.value }))}
                   className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-xs font-black uppercase text-white outline-none focus:border-indigo-500/50 transition-all"
                 >
-                  <option value="">-- SELECT --</option>
+                  <option className="bg-[#1a1a24] text-white" value="">-- SELECT --</option>
                   {MEDSUP_OPTIONS.map(opt => (
-                    <option key={opt} value={opt}>{opt}</option>
+                    <option className="bg-[#1a1a24] text-white" key={opt} value={opt}>{opt}</option>
                   ))}
                 </select>
               </div>
@@ -447,10 +443,10 @@ ${finalData.specialEvents || "None"}
                 onChange={(e) => setTurnoverData(prev => ({ ...prev, systemStatusLevel: e.target.value }))}
                 className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-xs font-black uppercase tracking-widest text-white outline-none focus:border-indigo-500/50 transition-all"
               >
-                <option value="Normal">Level: Normal</option>
-                <option value="Elevated">Level: Elevated</option>
-                <option value="Critical">Level: Critical</option>
-                <option value="Overdrive">Level: Overdrive</option>
+                <option className="bg-[#1a1a24] text-white" value="Normal">Level: Normal</option>
+                <option className="bg-[#1a1a24] text-white" value="Elevated">Level: Elevated</option>
+                <option className="bg-[#1a1a24] text-white" value="Critical">Level: Critical</option>
+                <option className="bg-[#1a1a24] text-white" value="Overdrive">Level: Overdrive</option>
               </select>
             </div>
           </div>
