@@ -61,6 +61,8 @@ const TOOLS_LINKS = [
 const PORTAL_LINKS = [
   { icon: 'ClockIcon', label: 'Time Clock', path: '/time-clock', id: 'clock' },
   { icon: 'Phone', label: 'Directory', path: '/directory', id: 'dir' },
+  { icon: 'Shield', label: 'Vanguard', path: 'https://vanguard.vlitech.com/', external: true, id: 'vanguard' },
+  { icon: 'LinkIcon', label: 'ESO Portal', path: 'https://scheduling.esosuite.net/', external: true, id: 'eso' },
   { icon: 'Calendar', label: 'Coroner Schedule', path: 'https://drive.google.com/file/d/137BOp88NqFXFuoYJ-VBIR0n-xGfOq4_U/view?usp=drive_link', external: true, id: 'coroner' },
   { icon: 'Table', label: 'Daily Worksheet', path: 'https://docs.google.com/spreadsheets/d/1-4Uwh00g4orCaOQoOrLIcRkamAhdxrBNhVVOt2IEOoY/edit?gid=534085027#gid=534085027', external: true, id: 'worksheet' },
   { icon: 'Table', label: 'AVL Cleanup Tool', path: 'https://docs.google.com/spreadsheets/d/12V94dal4UvVJcsRMBd3fCj49pJjiOXFMTgZa1tdaEE0/edit?gid=1621560398#gid=1621560398', external: true, id: 'avl_cleanup' },

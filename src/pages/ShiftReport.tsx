@@ -869,21 +869,7 @@ export default function ShiftReport() {
                     placeholder="LOAD ROSTER DATA / TIME UP LOGS..." 
                   />
                 </div>
-                <div className="pt-4 mt-4 border-t border-white/5 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[9px] font-black uppercase tracking-[0.3em] text-slate-600 block">Other Events</label>
-                    <PendingUpdatesSync onAppend={(text) => setData(prev => ({ ...prev, otherEvents: prev.otherEvents ? `${prev.otherEvents}\n${text}` : text }))} />
-                  </div>
-                  <textarea 
-                    name="otherEvents" 
-                    value={data.otherEvents} 
-                    onChange={handleChange} 
-                    onKeyDown={handleTextareaTab}
-                    rows={6} 
-                    className="w-full tactical-input p-4 text-xs font-mono"
-                    placeholder="MISCELLANEOUS EVENTS, NOTIFICATIONS, AND EXTERNAL UPDATES..." 
-                  />
-                </div>
+
               </section>
             ) : (
               <section className="tactical-card p-12 flex flex-col items-center justify-center text-center gap-6 border-white/5 bg-white/[0.02]">
