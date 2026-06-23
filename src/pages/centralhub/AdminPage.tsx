@@ -19,6 +19,7 @@ import {
   Maximize2,
   Mail,
   CheckCircle2,
+  Check,
   X,
   Plus,
   Edit2,
@@ -1312,6 +1313,15 @@ export function AdminPage() {
                             <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">External</span>
                           </label>
                         </div>
+                      </div>
+                      <div className="pt-2">
+                        <button
+                          onClick={() => setShowToast("LINK_CONFIGURATION_SAVED")}
+                          className="w-full flex items-center justify-center gap-2 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                        >
+                          <Check className="w-3 h-3" />
+                          Apply Link Configuration
+                        </button>
                       </div>
                     </div>
                   </div>

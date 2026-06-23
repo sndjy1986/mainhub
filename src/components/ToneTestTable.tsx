@@ -12,7 +12,8 @@ import {
 } from 'firebase/firestore';
 import { ToneTestRecord } from '../types';
 import { useAuthRole as useRole } from '../hooks/useAuthRole';
-import { Check, X, Loader2, Plus, Trash2, Users, ClipboardCopy, Trash, RefreshCw, Clock, Activity } from 'lucide-react';
+import { Check, X, Loader2, Plus, Trash2, Users, ClipboardCopy, Trash, RefreshCw, Clock, Activity, Upload } from 'lucide-react';
+import { Modal } from './centralhub/Modal';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -25,8 +26,11 @@ export default function ToneTestTable() {
     date: new Date().toLocaleDateString(), 
     time: '', 
     callSign: '', 
-    tenFortyTwo: '' 
+    tenFortyTwo: '',
+    lateStatus: ''
   });
+  const [isImporting, setIsImporting] = useState(false);
+  const [pastedRoster, setPastedRoster] = useState('');
   const [focusedTimeField, setFocusedTimeField] = useState<string | null>(null); // 'new' or record.id
   const { isEditor, isAdmin } = useRole();
 
@@ -175,10 +179,83 @@ export default function ToneTestTable() {
         updatedBy: auth.currentUser?.email
       };
       await addDoc(collection(db, 'toneTests'), entry);
-      setNewUnit({ unit: '', date: '', time: '', callSign: '', tenFortyTwo: '' });
+      setNewUnit({ unit: '', date: new Date().toLocaleDateString(), time: '', callSign: '', tenFortyTwo: '', lateStatus: '' });
       setIsAdding(false);
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'toneTests/new');
+    }
+  };
+
+  const handleImportRoster = async () => {
+    if (!pastedRoster.trim()) return;
+    try {
+      const lines = pastedRoster.split('\n');
+      let updatedCount = 0;
+      let addedCount = 0;
+
+      for (let line of lines) {
+        line = line.trim();
+        if (!line || line.toUpperCase().startsWith('UNIT') || line.includes('Roster') || line.includes('**')) continue;
+
+        let cols: string[] = [];
+        if (line.includes('\t')) {
+          cols = line.split('\t').map(c => c.trim());
+        } else {
+          cols = line.split(/\s{2,}/).map(c => c.trim());
+          if (cols.length < 3) {
+            cols = line.split(/\s+/).map(c => c.trim());
+          }
+        }
+
+        if (cols.length >= 3) {
+          const unit = cols[0].toUpperCase();
+          const date = cols[1] === 'XXX' ? new Date().toLocaleDateString() : cols[1];
+          const time = cols[2] === 'XXX' ? '' : cols[2];
+          
+          let callSign = '';
+          let tenFortyTwo = '';
+          
+          if (cols.length === 5) {
+            callSign = cols[3] === 'XXX' ? '' : cols[3];
+            tenFortyTwo = cols[4] === 'XXX' ? '' : cols[4];
+          } else if (cols.length === 4) {
+            const val = cols[3];
+            if (val.includes(':') || val === 'XXX') {
+              tenFortyTwo = val === 'XXX' ? '' : val;
+            } else {
+              callSign = val;
+            }
+          }
+
+          // Check if this unit already exists in the records list
+          const existingRecord = records.find(r => r.unit.toUpperCase() === unit);
+          
+          const entry = {
+            unit,
+            date: date || new Date().toLocaleDateString(),
+            time: time || '',
+            callSign: unit.startsWith('MED') ? '' : (callSign || ''),
+            tenFortyTwo: tenFortyTwo || '',
+            ttDone: !!time,
+            updatedAt: new Date().toISOString(),
+            updatedBy: auth.currentUser?.email
+          };
+
+          if (existingRecord?.id) {
+            await setDoc(doc(db, 'toneTests', existingRecord.id), entry, { merge: true });
+            updatedCount++;
+          } else {
+            await addDoc(collection(db, 'toneTests'), entry);
+            addedCount++;
+          }
+        }
+      }
+
+      alert(`Import complete! Successfully updated ${updatedCount} and added ${addedCount} units.`);
+      setPastedRoster('');
+      setIsImporting(false);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.WRITE, 'toneTests/import');
     }
   };
 
@@ -253,7 +330,15 @@ export default function ToneTestTable() {
               )}
             >
               <Plus className={cn("w-4 h-4 transition-transform duration-300", isAdding && "rotate-45")} />
-              {isAdding ? "Decline Addition" : "Initialize Unit"}
+              {isAdding ? "Close" : "Add Truck"}
+            </button>
+
+            <button
+              onClick={() => setIsImporting(true)}
+              className="flex items-center gap-3 px-6 py-3 bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-600 hover:text-white text-[11px] font-black uppercase tracking-[0.2em] transition-all rounded-xl active:scale-95"
+            >
+              <Upload className="w-4 h-4" />
+              Import Roster & Times
             </button>
 
             <button
@@ -287,6 +372,7 @@ export default function ToneTestTable() {
               <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">Up-Time</th>
               <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">Call-Sign</th>
               <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">10-42 Code</th>
+              <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">Status</th>
               <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 tracking-[0.3em] text-center">Bio-Sync</th>
               {isAdmin && <th className="w-16 p-6 border-l border-white/5"></th>}
             </tr>
@@ -363,6 +449,21 @@ export default function ToneTestTable() {
                       placeholder="STNDBY"
                     />
                   </td>
+                  <td className="px-6 py-4 border-r border-white/5">
+                    <select
+                      value={record.lateStatus || ''}
+                      disabled={!isEditor}
+                      onChange={(e) => handleFieldUpdate(record.id!, 'lateStatus', e.target.value)}
+                      className={cn(
+                        "bg-transparent border-none focus:ring-0 outline-none w-full font-black tracking-widest text-[10px] uppercase cursor-pointer appearance-none",
+                        record.lateStatus === 'LATE' ? "text-rose-500" : record.lateStatus === 'ON TIME' ? "text-emerald-500" : "text-slate-500"
+                      )}
+                    >
+                      <option value="" className="bg-bg-surface text-slate-500">--</option>
+                      <option value="ON TIME" className="bg-bg-surface text-emerald-500">ON TIME</option>
+                      <option value="LATE" className="bg-bg-surface text-rose-500">LATE</option>
+                    </select>
+                  </td>
                   <td className="px-6 py-4 text-center">
                     <button
                       onClick={() => toggleTtDone(record)}
@@ -407,23 +508,17 @@ export default function ToneTestTable() {
                     <Activity className="w-4 h-4 mx-auto animate-pulse" />
                   </td>
                   <td className="px-6 py-4 border-r border-white/5">
-                    <select
+                    <input
+                      list="truck-list"
+                      type="text"
                       className="bg-black/40 border border-white/10 focus:border-indigo-500/50 rounded-xl px-4 py-2 outline-none text-white font-black text-xs w-full uppercase tracking-widest transition-all"
                       value={newUnit.unit}
-                      onChange={e => setNewUnit({...newUnit, unit: e.target.value})}
-                    >
-                      <option value="">SELECT TRUCK</option>
-                      <optgroup label="MED Units">
-                        {ALL_UNITS.filter(u => u.startsWith('MED')).map(u => (
-                          <option key={u} value={u}>{u}</option>
-                        ))}
-                      </optgroup>
-                      <optgroup label="ALS Units">
-                        {ALL_UNITS.filter(u => u.startsWith('ALS')).map(u => (
-                          <option key={u} value={u}>{u}</option>
-                        ))}
-                      </optgroup>
-                    </select>
+                      placeholder="ENTER TRUCK..."
+                      onChange={e => setNewUnit({...newUnit, unit: e.target.value.toUpperCase()})}
+                    />
+                    <datalist id="truck-list">
+                      {ALL_UNITS.map(u => <option key={u} value={u} />)}
+                    </datalist>
                   </td>
                   <td className="px-6 py-4 border-r border-white/5">
                     <span className="text-[10px] text-slate-500 font-black tracking-[0.2em] block px-3 py-1 bg-black/20 rounded-full border border-white/5 text-center">
@@ -450,7 +545,7 @@ export default function ToneTestTable() {
                     )}
                   </td>
                   <td className="px-6 py-4 border-r border-white/5 text-center">
-                    {newUnit.unit && newUnit.unit.startsWith('ALS') ? (
+                    {!(newUnit.unit && newUnit.unit.startsWith('MED')) ? (
                       <input
                         type="text"
                         placeholder="ID_CODE"
@@ -494,6 +589,170 @@ export default function ToneTestTable() {
           </tbody>
         </table>
       </div>
+
+      <Modal 
+        isOpen={isAdding} 
+        onClose={() => setIsAdding(false)} 
+        title="Unit Activation Menu" 
+        icon={<Activity className="w-5 h-5 text-indigo-500" />}
+      >
+        <div className="space-y-6">
+          {/* Sketch Subheader Banner */}
+          <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 rounded-xl">
+            <span className="text-[10px] font-black uppercase tracking-[0.25em] text-emerald-400">Place unit en-service</span>
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          </div>
+
+          {/* Unit Num & Truck Up Time on same line as in sketch */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Unit Num:</label>
+              <input
+                list="truck-list"
+                type="text"
+                className="border-b-2 border-slate-700 bg-transparent text-white font-black text-xl tracking-wide pb-1.5 outline-none focus:border-indigo-500 transition-all uppercase w-full placeholder:text-slate-700"
+                value={newUnit.unit}
+                placeholder="e.g. MED-4"
+                onChange={e => setNewUnit({...newUnit, unit: e.target.value.toUpperCase()})}
+              />
+              <datalist id="truck-list">
+                {ALL_UNITS.map(u => <option key={u} value={u} />)}
+              </datalist>
+            </div>
+
+            <div className="space-y-2 relative">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">truck UP time</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="07:32"
+                  className="bg-black/60 border-2 border-slate-800 rounded-xl px-4 py-3 text-white font-mono text-base text-center w-full focus:border-indigo-500 outline-none transition-all"
+                  value={newUnit.time}
+                  onChange={e => setNewUnit({...newUnit, time: e.target.value})}
+                />
+                <button
+                  type="button"
+                  onClick={() => setNewUnit({...newUnit, time: getCurrentTime()})}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-indigo-600 text-white text-[9px] font-black px-2 py-1 rounded hover:bg-indigo-500 transition-all uppercase tracking-widest"
+                >
+                  NOW
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Personnel Field: Only shows if unit starts with ALS or A- */}
+          {(newUnit.unit.startsWith('ALS') || newUnit.unit.startsWith('A-')) ? (
+            <div className="space-y-2 animate-in fade-in duration-300">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block">Personell - (Will set up names)</label>
+              <input
+                type="text"
+                placeholder="A-3"
+                className="border-b-2 border-slate-700 bg-transparent text-white font-black text-lg pb-1.5 outline-none focus:border-indigo-500 transition-all uppercase w-full tracking-widest"
+                value={newUnit.callSign}
+                onChange={e => setNewUnit({...newUnit, callSign: e.target.value.toUpperCase()})}
+              />
+              <span className="text-[9px] text-slate-500 italic block mt-1 tracking-wider">Only shows/needed if unit is ALS-??</span>
+            </div>
+          ) : (
+            newUnit.unit && (
+              <div className="text-[10px] text-slate-600 italic">
+                Personnel field hidden (only shown for ALS-?? units)
+              </div>
+            )
+          )}
+
+          {/* Unit 10-42 Time & Late status */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Unit 10-42 time</label>
+              <input
+                type="text"
+                placeholder="18:30"
+                className="bg-black/60 border-2 border-slate-800 rounded-xl px-4 py-3 text-white font-mono text-base text-center w-full focus:border-indigo-500 outline-none transition-all"
+                value={newUnit.tenFortyTwo}
+                onChange={e => setNewUnit({...newUnit, tenFortyTwo: e.target.value})}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Late / On Time</label>
+              <select
+                className="bg-black/60 border-2 border-slate-800 rounded-xl px-4 py-3 outline-none text-white font-black text-xs w-full uppercase tracking-widest transition-all appearance-none"
+                value={newUnit.lateStatus || ''}
+                onChange={e => setNewUnit({...newUnit, lateStatus: e.target.value})}
+              >
+                <option value="" className="bg-bg-surface text-slate-500">-- SELECT --</option>
+                <option value="ON TIME" className="bg-bg-surface text-emerald-500 font-bold">ON TIME</option>
+                <option value="LATE" className="bg-bg-surface text-rose-500 font-bold">LATE</option>
+              </select>
+            </div>
+          </div>
+
+          {/* OK button in the bottom right */}
+          <div className="flex justify-end pt-4 border-t border-white/5">
+            <button
+              onClick={() => {
+                handleAddUnit();
+                setIsAdding(false);
+              }}
+              disabled={!newUnit.unit}
+              className={cn(
+                "px-10 py-3.5 rounded-xl text-xs font-black uppercase tracking-[0.2em] transition-all",
+                newUnit.unit ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)] active:scale-95 cursor-pointer" : "bg-white/5 text-slate-700 cursor-not-allowed"
+              )}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Roster & 10-41 Times Import Modal */}
+      <Modal
+        isOpen={isImporting}
+        onClose={() => setIsImporting(false)}
+        title="Import Roster & 10-41 Times"
+        icon={<Upload className="w-5 h-5 text-indigo-400" />}
+      >
+        <div className="space-y-6">
+          <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl text-[11px] text-indigo-300 leading-relaxed font-mono">
+            Paste tabular data from your dispatch roster spreadsheet or text list. We will match columns automatically by tab-separation or spacing!
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Roster Data Matrix</label>
+            <textarea
+              className="w-full h-64 bg-black/40 border border-white/10 rounded-2xl p-4 text-white font-mono text-xs focus:border-indigo-500/50 focus:bg-black/60 outline-none transition-all resize-none"
+              placeholder="Unit	Date	Time	Call-Sign	10-42&#10;MED-4	6/18	06:11		18:30&#10;ALS-03	6/18	06:44	C-4	19:00"
+              value={pastedRoster}
+              onChange={e => setPastedRoster(e.target.value)}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
+            <button
+              onClick={() => {
+                setPastedRoster('');
+                setIsImporting(false);
+              }}
+              className="px-6 py-3 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white rounded-xl text-xs font-black uppercase tracking-[0.2em] transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleImportRoster}
+              disabled={!pastedRoster.trim()}
+              className={cn(
+                "px-8 py-3.5 rounded-xl text-xs font-black uppercase tracking-[0.2em] transition-all",
+                pastedRoster.trim() ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)] active:scale-95 cursor-pointer" : "bg-white/5 text-slate-700 cursor-not-allowed"
+              )}
+            >
+              Import & Sync Fleet
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

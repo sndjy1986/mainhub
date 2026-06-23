@@ -79,6 +79,7 @@ import {
 
 import { useNavigate } from "react-router-dom";
 import { OpsCalendar } from "../../components/centralhub/OpsCalendar";
+import { GoogleSearchWidget } from "../../components/centralhub/GoogleSearchWidget";
 
 interface ClockSettings {
   fontFamily: string;
@@ -120,6 +121,7 @@ interface WidgetItem {
     | "custom_new"
     | "news"
     | "wotd"
+    | "search"
     | "scanner";
   title: string;
   size?: "sm" | "md" | "lg" | "xl";
@@ -869,6 +871,12 @@ export function StartPage() {
               size: "sm",
               desc: "Post operations",
             },
+            {
+              type: "search",
+              title: "Global Search",
+              size: "md",
+              desc: "Web query interface",
+            },
           ]
             .filter((widget) => {
               if (
@@ -992,6 +1000,8 @@ function SortableWidget({
         return <ScannerVFD />;
       case "shift_report":
         return <ShiftReportAddContent onClose={() => {}} />;
+      case "search":
+        return <GoogleSearchWidget />;
       default:
         return (
           <div className="p-12 text-slate-500 uppercase font-black text-[10px] tracking-widest text-center">

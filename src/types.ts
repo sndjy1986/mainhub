@@ -34,6 +34,7 @@ export interface ToneTestRecord {
   callSign: string;
   tenFortyTwo: string;
   ttDone: boolean;
+  lateStatus?: string;
   updatedAt?: string;
   updatedBy?: string;
 }

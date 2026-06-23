@@ -106,6 +106,20 @@ export function Sidebar() {
     transition: { type: "spring", stiffness: 400, damping: 10 } as const
   };
 
+  const activeCoreCommands = React.useMemo(() => {
+    if (customLinks && customLinks.length > 0) {
+      return customLinks.filter(l => !l.external);
+    }
+    return CORE_COMMANDS;
+  }, [customLinks]);
+
+  const activePortalLinks = React.useMemo(() => {
+    if (customLinks && customLinks.length > 0) {
+      return customLinks.filter(l => l.external);
+    }
+    return PORTAL_LINKS;
+  }, [customLinks]);
+
   return (
     <div 
       className={cn(
@@ -135,53 +149,82 @@ export function Sidebar() {
       </div>
       
       <nav className="flex-1 min-h-0 px-4 py-2 relative flex flex-col">
-        <div className="flex-1 overflow-y-auto scrollbar-hide space-y-4 pr-1">
-          {/* Core Commands Section */}
-          <div>
-            <div className="px-4 mb-2 flex items-center gap-2">
-              <div className="w-1 h-3 bg-indigo-500 rounded-full" />
-              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-400">Core Command</span>
+        <div className="flex-1 overflow-y-auto scrollbar-hide flex flex-col justify-between pr-1">
+          <div className="space-y-4">
+            {/* Core Commands Section */}
+            <div>
+              <div className="px-4 mb-2 flex items-center gap-2">
+                <div className="w-1 h-3 bg-indigo-500 rounded-full" />
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-indigo-400">Core Command</span>
+              </div>
+              <div className="space-y-0.5">
+                {activeCoreCommands.filter((item) => {
+                  if (item.id === 'report') {
+                    return terminalUser?.role?.toLowerCase() !== 'dispatcher';
+                  }
+                  return true;
+                }).map((item) => {
+                  const IconComponent = iconMap[item.icon] || LinkIcon;
+                  return (
+                    <motion.div key={item.path} {...bouncyProps}>
+                      <NavLink
+                        to={item.path}
+                        className={({ isActive }) => `
+                          flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-300 group relative
+                            ${isActive ? 'text-text-main font-black' : 'text-text-dim hover:text-text-main'}
+                        `}
+                      >
+                        {({ isActive }) => (
+                          <>
+                            <IconComponent className={cn("w-4 h-4 flex-shrink-0 transition-colors relative z-10", isActive ? "text-indigo-500" : "group-hover:text-indigo-300")} />
+                            <span className="text-[11px] font-black uppercase tracking-widest relative z-10">{item.label}</span>
+                            {isActive && (
+                              <motion.div 
+                                layoutId="nav-active"
+                                className="absolute inset-0 bg-white/10 border border-white/5 rounded-xl shadow-inner shadow-indigo-500/10"
+                                initial={false}
+                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 } as const}
+                              />
+                            )}
+                          </>
+                        )}
+                      </NavLink>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
-            <div className="space-y-0.5">
-              {CORE_COMMANDS.filter((item) => {
-                if (item.id === 'report') {
-                  return terminalUser?.role?.toLowerCase() !== 'dispatcher';
-                }
-                return true;
-              }).map((item) => {
-                const IconComponent = iconMap[item.icon] || LinkIcon;
-                return (
-                  <motion.div key={item.path} {...bouncyProps}>
-                    <NavLink
-                      to={item.path}
-                      className={({ isActive }) => `
-                        flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-300 group relative
-                          ${isActive ? 'text-text-main font-black' : 'text-text-dim hover:text-text-main'}
-                      `}
+
+            {/* Portal Links Section - Spaced much tighter ("Closer") */}
+            <div className="pt-3 mt-4 border-t border-white/5">
+              <div className="px-4 mb-2 flex items-center gap-2">
+                <div className="w-1 h-3 bg-emerald-500 rounded-full" />
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-400">Portal Links</span>
+              </div>
+              <div className="space-y-0.5">
+                {activePortalLinks.map((item) => {
+                  const IconComponent = iconMap[item.icon] || LinkIcon;
+                  return (
+                    <motion.a
+                      key={item.path}
+                      href={item.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      {...bouncyProps}
+                      className="flex items-center gap-3 px-4 py-1.5 rounded-xl transition-all duration-200 text-text-dim hover:bg-white/5 hover:text-text-main border border-transparent group relative"
                     >
-                      {({ isActive }) => (
-                        <>
-                          <IconComponent className={cn("w-4 h-4 flex-shrink-0 transition-colors relative z-10", isActive ? "text-indigo-500" : "group-hover:text-indigo-300")} />
-                          <span className="text-[11px] font-black uppercase tracking-widest relative z-10">{item.label}</span>
-                          {isActive && (
-                            <motion.div 
-                              layoutId="nav-active"
-                              className="absolute inset-0 bg-white/10 border border-white/5 rounded-xl shadow-inner shadow-indigo-500/10"
-                              initial={false}
-                              transition={{ type: "spring", bounce: 0.2, duration: 0.6 } as const}
-                            />
-                          )}
-                        </>
-                      )}
-                    </NavLink>
-                  </motion.div>
-                );
-              })}
+                      <IconComponent className="w-4 h-4 flex-shrink-0 group-hover:text-emerald-400 transition-colors" />
+                      <span className="text-[11px] font-bold uppercase tracking-widest">{item.label}</span>
+                      <ExternalLink className="w-2.5 h-2.5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </motion.a>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Tools Trigger - MUST BE OUTSIDE CLIPPING CONTAINER IF POSSIBLE, BUT WE'LL USE A FLEX WRAPPER */}
-          <div className="relative">
+          {/* Tools Trigger - Moved to bottom of the scrollable container */}
+          <div className="pt-4 mt-auto border-t border-white/5 relative">
             <div 
               className="relative"
               onMouseEnter={() => setIsToolsOpen(true)}
@@ -224,7 +267,7 @@ export function Sidebar() {
                     transitionEnd: { display: "none" } 
                   }
                 }}
-                className="fixed left-[240px] top-1/3 -translate-y-1/2 w-52 bg-bg-main border border-white/10 rounded-2xl shadow-[20px_0_50px_rgba(0,0,0,0.5)] p-2 z-[100] backdrop-blur-xl"
+                className="fixed left-[240px] bottom-28 w-52 bg-bg-main border border-white/10 rounded-2xl shadow-[20px_0_50px_rgba(0,0,0,0.5)] p-2 z-[100] backdrop-blur-xl"
               >
                 {/* Visual Bridge */}
                 <div className="absolute -left-10 top-0 bottom-0 w-10" />
@@ -257,33 +300,6 @@ export function Sidebar() {
                   })}
                 </div>
               </motion.div>
-            </div>
-          </div>
-
-          {/* Links Section */}
-          <div className="pt-6 mt-8 border-t border-white/5">
-            <div className="px-4 mb-2 flex items-center gap-2">
-              <div className="w-1 h-3 bg-emerald-500 rounded-full" />
-              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-emerald-400">Portal Links</span>
-            </div>
-            <div className="space-y-0.5">
-              {PORTAL_LINKS.map((item) => {
-                const IconComponent = iconMap[item.icon] || LinkIcon;
-                return (
-                  <motion.a
-                    key={item.path}
-                    href={item.path}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    {...bouncyProps}
-                    className="flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-200 text-text-dim hover:bg-white/5 hover:text-text-main border border-transparent group relative"
-                  >
-                    <IconComponent className="w-4 h-4 flex-shrink-0 group-hover:text-emerald-400 transition-colors" />
-                    <span className="text-[11px] font-bold uppercase tracking-widest">{item.label}</span>
-                    <ExternalLink className="w-2.5 h-2.5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                </motion.a>
-                );
-              })}
             </div>
           </div>
         </div>
