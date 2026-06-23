@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { ToneTestRecord } from '../types';
 import { useAuthRole as useRole } from '../hooks/useAuthRole';
+import { useTerminal } from '../context/TerminalContext';
 import { Check, X, Loader2, Plus, Trash2, Users, ClipboardCopy, Trash, RefreshCw, Clock, Activity, Upload } from 'lucide-react';
 import { Modal } from './centralhub/Modal';
 import { cn } from '../lib/utils';
@@ -32,7 +33,11 @@ export default function ToneTestTable() {
   const [isImporting, setIsImporting] = useState(false);
   const [pastedRoster, setPastedRoster] = useState('');
   const [focusedTimeField, setFocusedTimeField] = useState<string | null>(null); // 'new' or record.id
-  const { isEditor, isAdmin } = useRole();
+  const { isEditor: isFbEditor, isAdmin: isFbAdmin } = useRole();
+  const { terminalUser } = useTerminal();
+  
+  const isEditor = isFbEditor || !!terminalUser;
+  const isAdmin = isFbAdmin || terminalUser?.role === 'root' || terminalUser?.role === 'admin';
 
   const ALL_UNITS = [
     ...Array.from({ length: 25 }, (_, i) => `MED-${i}`),
