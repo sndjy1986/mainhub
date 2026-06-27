@@ -253,7 +253,9 @@ export function StartPage() {
   const updateWidgets = (newWidgetsOrUpdater: WidgetItem[] | ((prev: WidgetItem[]) => WidgetItem[])) => {
     setWidgets((prev) => {
       const result = typeof newWidgetsOrUpdater === 'function' ? newWidgetsOrUpdater(prev) : newWidgetsOrUpdater;
-      updateUserSettings("startPageWidgets", result);
+      setTimeout(() => {
+        updateUserSettings("startPageWidgets", result);
+      }, 0);
       return result;
     });
   };

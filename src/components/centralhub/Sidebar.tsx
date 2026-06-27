@@ -503,7 +503,13 @@ export function Sidebar() {
                   accessGranted = true;
                   terminalUsername = person.username || person.name;
                   
-                  const SHIFT_LEADS = ['corrine skelly', 'erin brandenburg', 'joey sanders', 'crystal culbertson', 'g. williams', 'geneva williams', 'shift lead'];
+                  const SHIFT_LEADS = [
+                    'corrine skelly', 'cskel',
+                    'erin brandenburg', 'ebrand',
+                    'joseph sanders', 'joey sanders', 'jsand',
+                    'crystal culbertson', 'cculb',
+                    'g. williams', 'geneva williams', 'shift lead'
+                  ];
                   const isLead = SHIFT_LEADS.includes(person.name.toLowerCase().trim()) || 
                                  (person.username && SHIFT_LEADS.includes(person.username.toLowerCase().trim()));
                   

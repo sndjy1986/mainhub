@@ -414,7 +414,7 @@ export function AdminPage() {
       { id: crypto.randomUUID(), name: "Brian Blair", shift: 'A' },
       { id: crypto.randomUUID(), name: "Corrine Skelly", shift: 'B' },
       { id: crypto.randomUUID(), name: "Dayonna", shift: 'B' },
-      { id: crypto.randomUUID(), name: "Joey Sanders", shift: 'C' },
+      { id: crypto.randomUUID(), name: "Joseph Sanders", shift: 'C' },
       { id: crypto.randomUUID(), name: "Michael Senn", shift: 'C' },
       { id: crypto.randomUUID(), name: "Rea Roberson", shift: 'C' },
       { id: crypto.randomUUID(), name: "Erin Brandenburg", shift: 'D' },

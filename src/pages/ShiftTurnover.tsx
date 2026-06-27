@@ -115,7 +115,7 @@ export default function ShiftTurnover({ isEmbedded = false }: { isEmbedded?: boo
   const SHIFT_LEADS = [
     { name: 'Corrine Skelly', email: 'cskelly@medshore.com' },
     { name: 'Erin Brandenburg', email: 'ebrandenburg@medshore.com' },
-    { name: 'Joey Sanders', email: 'jsanders@medshore.com' },
+    { name: 'Joseph Sanders', email: 'jsanders@medshore.com' },
     { name: 'Crystal Culbertson', email: 'cculbertson@medshore.com' }
   ];
 
@@ -186,7 +186,7 @@ SPECIAL EVENTS & BRIEFING
 ${finalData.specialEvents || "None"}
 `;
       await navigator.clipboard.writeText(copyText);
-      alert("Turnover report has been copied to the clipboard!\n\nEmail window is launching with the oncoming Team Lead and Geneva Williams pre-loaded.");
+      alert("Turnover report has been copied to the clipboard!\n\nEmail window is launching with the oncoming Team Lead and Supervisor pre-loaded.");
 
       // Email formatting & launch
       const oncomingLeadObj = SHIFT_LEADS.find(p => p.name === turnoverData.oncomingTeamLead);

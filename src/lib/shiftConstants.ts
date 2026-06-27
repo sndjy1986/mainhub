@@ -18,7 +18,7 @@ export const SHIFT_TEAMS: Record<string, { lead: string; members: string[] }> = 
     members: ["Dayonna"]
   },
   "Charlie": {
-    lead: "Joey Sanders",
+    lead: "Joseph Sanders",
     members: ["Michael Senn", "Rea Roberson"]
   },
   "Delta": {
