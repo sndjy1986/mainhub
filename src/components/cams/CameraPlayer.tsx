@@ -226,7 +226,6 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
         muted
         autoPlay
         playsInline
-        crossOrigin="anonymous"
       />
 
       {/* Signal Lost Overlay */}
