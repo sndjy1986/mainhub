@@ -169,32 +169,30 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
-    const checkAndSchedule = () => {
-      if (globalAiEnabled && !isAnalyzing) {
-        const remainingTime = getCooldownRemaining();
-        if (document.hidden) return;
-        
-        const delay = remainingTime > 0 ? remainingTime : 1000;
-        timeout = setTimeout(() => {
-          handleAnalyze();
-        }, delay);
+    let isActive = true;
+
+    const runLoop = async () => {
+      if (!isActive) return;
+      
+      if (globalAiEnabled && !document.hidden) {
+        await handleAnalyze();
       }
+      
+      if (!isActive) return;
+      const remainingTime = getCooldownRemaining();
+      const delay = remainingTime > 0 ? remainingTime : 1000;
+      timeout = setTimeout(runLoop, delay);
     };
 
-    checkAndSchedule();
+    if (globalAiEnabled) {
+      runLoop();
+    }
     
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        checkAndSchedule();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
+      isActive = false;
       clearTimeout(timeout);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [globalAiEnabled, isAnalyzing, handleAnalyze, getCooldownRemaining, refreshInterval]);
+  }, [globalAiEnabled, handleAnalyze, getCooldownRemaining]);
 
   const toggleFullscreen = () => {
     const wrapper = videoRef.current?.parentElement;
