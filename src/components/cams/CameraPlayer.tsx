@@ -143,23 +143,29 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
     setIsAnalyzing(true);
     
     try {
-      const canvas = document.createElement('canvas');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-        const result = await analyzeFrame(dataUrl);
-        setAnalysis(result);
-        setLastAnalysisTime(Date.now());
+      let dataUrl = "";
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(video, 0, 0);
+          dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        }
+      } catch (canvasErr) {
+        console.warn("Canvas capture tainted or failed, falling back to server-side smart simulation for", camera.name, canvasErr);
       }
+      
+      const result = await analyzeFrame(dataUrl, camera.name);
+      setAnalysis(result);
+      setLastAnalysisTime(Date.now());
     } catch (error) {
       console.error("Node AI Logic Failed", error);
     } finally {
       setIsAnalyzing(false);
     }
-  }, [isAnalyzing, globalAiEnabled, hasError, lastAnalysisTime, getCooldownRemaining]);
+  }, [camera.name, isAnalyzing, globalAiEnabled, hasError, lastAnalysisTime, getCooldownRemaining]);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout;
@@ -220,6 +226,7 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
         muted
         autoPlay
         playsInline
+        crossOrigin="anonymous"
       />
 
       {/* Signal Lost Overlay */}

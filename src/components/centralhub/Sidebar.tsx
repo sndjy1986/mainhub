@@ -459,23 +459,85 @@ export function Sidebar() {
             )}
           </div>
 
-          <form onSubmit={(e) => {
+          <form onSubmit={async (e) => {
             e.preventDefault();
             const clean = passcode.trim();
+            const normalizedUsername = clean.toLowerCase();
+
+            // Built-in root fallbacks
             if (clean === 'Russell1') {
               loginTerminalUser('sndjy', 'root');
               setAuthStatus('SUCCESS: Root admin override authorized.');
               setPasscode('');
+              setTimeout(() => { setIsSysLinkOpen(false); setAuthStatus(''); }, 1000);
+              return;
             } else if (clean.toLowerCase() === 'lead123') {
               loginTerminalUser('Shift Lead', 'shift_lead');
               setAuthStatus('SUCCESS: Shift Lead override authorized.');
               setPasscode('');
+              setTimeout(() => { setIsSysLinkOpen(false); setAuthStatus(''); }, 1000);
+              return;
             } else if (clean.toLowerCase() === 'williams' || clean === 'Williams911') {
               loginTerminalUser('G. Williams', 'shift_lead');
               setAuthStatus('SUCCESS: Shift Lead override authorized.');
               setPasscode('');
-            } else {
-              setAuthStatus('ERROR: Access Denied.');
+              setTimeout(() => { setIsSysLinkOpen(false); setAuthStatus(''); }, 1000);
+              return;
+            }
+
+            try {
+              const { getDoc } = await import('firebase/firestore');
+              const globalDoc = await getDoc(doc(db, 'settings', 'global'));
+              let accessGranted = false;
+              let userRole = 'personnel';
+              let terminalUsername = normalizedUsername;
+
+              if (globalDoc.exists()) {
+                const personnel = globalDoc.data().personnel || [];
+                const person = personnel.find((p: any) => 
+                  (p.username || '').toLowerCase().trim() === normalizedUsername || 
+                  p.name.toLowerCase().trim() === normalizedUsername
+                );
+                
+                if (person) {
+                  accessGranted = true;
+                  terminalUsername = person.username || person.name;
+                  
+                  const SHIFT_LEADS = ['corrine skelly', 'erin brandenburg', 'joey sanders', 'crystal culbertson', 'g. williams', 'geneva williams', 'shift lead'];
+                  const isLead = SHIFT_LEADS.includes(person.name.toLowerCase().trim()) || 
+                                 (person.username && SHIFT_LEADS.includes(person.username.toLowerCase().trim()));
+                  
+                  userRole = isLead ? 'shift_lead' : 'dispatcher';
+                }
+              }
+
+              // Special fallback case for shift leads just in case
+              if (!accessGranted && ['shift lead', 'g. williams'].includes(normalizedUsername)) {
+                 accessGranted = true;
+                 userRole = 'shift_lead';
+                 terminalUsername = normalizedUsername;
+              }
+              
+              if (!accessGranted && normalizedUsername === 'msenn') {
+                 accessGranted = true;
+                 userRole = 'dispatcher';
+                 terminalUsername = 'msenn';
+              }
+
+              if (accessGranted) {
+                loginTerminalUser(terminalUsername, userRole);
+                setAuthStatus('SUCCESS: Node override authorized via directory.');
+                setPasscode('');
+                setTimeout(() => {
+                  setIsSysLinkOpen(false);
+                  setAuthStatus('');
+                }, 1000);
+              } else {
+                setAuthStatus('ERROR: Access Denied.');
+              }
+            } catch (err) {
+              console.error("Sidebar passcode error:", err);
+              setAuthStatus('ERROR: Validation failed.');
             }
           }} className="space-y-3 pt-4 border-t border-white/5 font-semibold">
             <span className="text-[10px] font-black uppercase tracking-widest text-[#f0af45] block border-b border-white/5 pb-2">Node Passcode Bypass</span>

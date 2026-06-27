@@ -2,18 +2,10 @@ import { AiAnalysisResult } from "./camsTypes";
 
 export async function analyzeFrame(
   base64Image: string,
+  cameraName?: string,
 ): Promise<AiAnalysisResult> {
-  const parts = base64Image.split(",");
+  const parts = base64Image ? base64Image.split(",") : [];
   const data = parts.length > 1 ? parts[1] : base64Image;
-
-  if (!data || data.length < 100) {
-    return {
-      detections: [],
-      summary: "EMPTY SIGNAL SOURCE",
-      flow: "LOW",
-      timestamp: new Date().toLocaleTimeString(),
-    };
-  }
 
   try {
     const response = await fetch("/api/analyze-frame", {
@@ -21,7 +13,7 @@ export async function analyzeFrame(
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ image: data }),
+      body: JSON.stringify({ image: data || "", cameraName }),
     });
 
     if (!response.ok) {

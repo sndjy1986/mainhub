@@ -161,13 +161,6 @@ const DEFAULT_NEWS_SETTINGS: NewsSettings = {
 
 const DEFAULT_WIDGETS: WidgetItem[] = [
   {
-    id: "widget-scanner",
-    type: "scanner",
-    title: "Tactical Radio Uplink",
-    size: "md",
-    isVisible: true,
-  },
-  {
     id: "widget-weather",
     type: "weather",
     title: "Environment Monitor",
@@ -828,12 +821,6 @@ export function StartPage() {
               title: "Local Time",
               size: "sm",
               desc: "Chronometer node",
-            },
-            {
-              type: "scanner",
-              title: "VFD Scanner",
-              size: "md",
-              desc: "SNDJY Tactical Uplink",
             },
             {
               type: "weather",

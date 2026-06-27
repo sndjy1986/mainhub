@@ -52,15 +52,26 @@ export function LoginPage() {
         if (person) {
           accessGranted = true;
           terminalUsername = person.username || person.name;
-          userRole = person.shift === 'Other' ? 'staff' : 'shift_lead';
+          
+          const SHIFT_LEADS = ['corrine skelly', 'erin brandenburg', 'joey sanders', 'crystal culbertson', 'g. williams', 'geneva williams', 'shift lead'];
+          const isLead = SHIFT_LEADS.includes(person.name.toLowerCase().trim()) || 
+                         (person.username && SHIFT_LEADS.includes(person.username.toLowerCase().trim()));
+          
+          userRole = isLead ? 'shift_lead' : 'dispatcher';
         }
       }
 
       // Special fallback case for shift leads just in case
-      if (!accessGranted && ['shift lead', 'g. williams', 'msenn'].includes(normalizedUsername)) {
+      if (!accessGranted && ['shift lead', 'g. williams'].includes(normalizedUsername)) {
          accessGranted = true;
          userRole = 'shift_lead';
          terminalUsername = normalizedUsername;
+      }
+      
+      if (!accessGranted && normalizedUsername === 'msenn') {
+         accessGranted = true;
+         userRole = 'dispatcher';
+         terminalUsername = 'msenn';
       }
 
       if (accessGranted) {

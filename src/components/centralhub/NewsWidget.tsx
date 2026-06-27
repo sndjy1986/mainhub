@@ -43,17 +43,16 @@ export function NewsWidget({ settings, compact = false }: NewsWidgetProps) {
   const fetchNews = async () => {
     setLoading(true);
     try {
-      const feedUrl = NEWS_FEEDS[source] || NEWS_FEEDS.google;
-      const response = await fetch('https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(feedUrl));
+      const response = await fetch(`/api/news?source=${source}`);
       if (!response.ok) throw new Error('News broadcast interrupted');
       
       const resData = await response.json();
-      const items = resData.items.map((item: any) => ({
-        title: item.title,
-        link: item.link,
-        pubDate: item.pubDate,
-        contentSnippet: item.description ? item.description.replace(/<[^>]*>?/gm, '').replace(/\n\s*\n/g, '\n').trim() : '',
-        source: resData.feed.title || source
+      const items = (resData.items || []).map((item: any) => ({
+        title: item.title || '',
+        link: item.link || '#',
+        pubDate: item.pubDate || '',
+        contentSnippet: item.contentSnippet ? item.contentSnippet.replace(/<[^>]*>?/gm, '').replace(/\n\s*\n/g, '\n').trim() : '',
+        source: item.source || resData.title || source
       }));
       setNews(items.slice(0, articleCount));
       setError(null);
