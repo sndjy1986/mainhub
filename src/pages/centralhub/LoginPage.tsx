@@ -33,9 +33,44 @@ export function LoginPage() {
          setTimeout(() => {
            loginTerminalUser('sndjy', 'root');
          }, 500);
+         return;
+      }
+      
+      // Look up personnel in global settings
+      const globalDoc = await getDoc(doc(db, 'settings', 'global'));
+      let accessGranted = false;
+      let userRole = 'personnel';
+      let terminalUsername = normalizedUsername;
+
+      if (globalDoc.exists()) {
+        const personnel = globalDoc.data().personnel || [];
+        const person = personnel.find((p: any) => 
+          (p.username || '').toLowerCase().trim() === normalizedUsername || 
+          p.name.toLowerCase().trim() === normalizedUsername
+        );
+        
+        if (person) {
+          accessGranted = true;
+          terminalUsername = person.username || person.name;
+          userRole = person.shift === 'Other' ? 'staff' : 'shift_lead';
+        }
+      }
+
+      // Special fallback case for shift leads just in case
+      if (!accessGranted && ['shift lead', 'g. williams', 'msenn'].includes(normalizedUsername)) {
+         accessGranted = true;
+         userRole = 'shift_lead';
+         terminalUsername = normalizedUsername;
+      }
+
+      if (accessGranted) {
+         setStatus('success');
+         setTimeout(() => {
+           loginTerminalUser(terminalUsername, userRole);
+         }, 500);
       } else {
          setStatus('error');
-         setErrorMsg('ACCESS_DENIED // INVALID_CREDENTIALS');
+         setErrorMsg('ACCESS_DENIED // UNKNOWN_OPERATOR');
       }
     } catch (err: any) {
       console.error("Critical Login Error:", err);
