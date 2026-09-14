@@ -64,7 +64,14 @@ export const CameraGrid: React.FC = React.memo(() => {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setActiveCameras(parsed);
+          // Pad the array with defaults if it's smaller than the max grid size (6)
+          let padded = [...parsed];
+          const defaultCamIds = ['cam2', 'cam3', 'cam6', 'cam9', 'cam1', 'cam4'];
+          while (padded.length < 6) {
+            const nextId = defaultCamIds[padded.length] || 'cam1';
+            padded.push(ALL_CAMERAS.find(c => c.id === nextId) || ALL_CAMERAS[0]);
+          }
+          setActiveCameras(padded);
           return;
         }
       } catch (e) {
@@ -73,7 +80,7 @@ export const CameraGrid: React.FC = React.memo(() => {
     }
     
     if (activeCameras.length === 0) {
-      const defaultCamIds = ['cam2', 'cam3', 'cam6', 'cam9'];
+      const defaultCamIds = ['cam2', 'cam3', 'cam6', 'cam9', 'cam1', 'cam4'];
       setActiveCameras(defaultCamIds.map(id => ALL_CAMERAS.find(c => c.id === id) || ALL_CAMERAS[0]));
     }
   }, []);
@@ -182,7 +189,11 @@ export const CameraGrid: React.FC = React.memo(() => {
       {/* Global Context Menu */}
       <AnimatePresence>
         {contextMenu && (
-          <div className="fixed inset-0 z-[9999]" onClick={() => setContextMenu(null)}>
+          <div 
+            className="fixed inset-0 z-[9999]" 
+            onClick={() => setContextMenu(null)}
+            onContextMenu={(e) => { e.preventDefault(); setContextMenu(null); }}
+          >
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
