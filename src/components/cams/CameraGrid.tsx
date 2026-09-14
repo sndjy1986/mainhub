@@ -180,6 +180,7 @@ export const CameraGrid: React.FC = React.memo(() => {
                  globalAiEnabled={globalAiEnabled}
                  onToggleAi={() => setGlobalAiEnabled(!globalAiEnabled)}
                  refreshInterval={REFRESH_RATE}
+                 onContextMenu={(e) => handleContextMenu(e, camera.id, idx)}
                />
             </div>
           </div>

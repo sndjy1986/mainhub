@@ -22,6 +22,7 @@ interface CameraPlayerProps {
   globalAiEnabled: boolean;
   onToggleAi: () => void;
   refreshInterval: number;
+  onContextMenu?: (e: React.MouseEvent) => void;
 }
 
 export const CameraPlayer: React.FC<CameraPlayerProps> = ({ 
@@ -30,7 +31,8 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
   availableCameras,
   globalAiEnabled,
   onToggleAi,
-  refreshInterval
+  refreshInterval,
+  onContextMenu
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -212,18 +214,22 @@ export const CameraPlayer: React.FC<CameraPlayerProps> = ({
   // Interaction Layer - simplified, Menu now handled by CameraGrid
   return (
     <div 
+      ref={wrapperRef}
       className="relative w-full h-full bg-bg-main group overflow-hidden transition-colors duration-500"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => {
         setIsHovered(false);
       }}
+      onContextMenu={onContextMenu}
     >
+      {/* Video Element */}
       <video
         ref={videoRef}
         className="w-full h-full object-cover pointer-events-none transition-opacity duration-700 font-mono"
         muted
         autoPlay
         playsInline
+        onContextMenu={onContextMenu}
       />
 
       {/* Signal Lost Overlay */}
