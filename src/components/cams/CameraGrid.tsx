@@ -162,7 +162,7 @@ export const CameraGrid: React.FC = React.memo(() => {
           <div 
             key={`${idx}-${camera.id}`} 
             className="relative tactical-card p-1 overflow-hidden group"
-            onContextMenu={(e) => handleContextMenu(e, camera.id, idx)}
+            onContextMenuCapture={(e) => handleContextMenu(e, camera.id, idx)}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative h-full rounded-[1.5rem] overflow-hidden">
